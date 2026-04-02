@@ -1,4 +1,5 @@
-import "dotenv/config";
+import { config } from "dotenv";
+config();
 import express from "express";
 import cors from "cors";
 import { requireAuth } from "./middleware/auth.js";
@@ -18,7 +19,7 @@ import supplierQuotesRouter from "./routes/supplierQuotes.js";
 const app = express();
 const port = parseInt(process.env.PORT || "3000", 10);
 
-app.use(cors({ origin: process.env.CORS_ORIGIN || "http://localhost:8080", credentials: true }));
+app.use(cors({ origin: process.env.CORS_ORIGIN || true, credentials: true }));
 app.use(express.json());
 
 app.get("/api/health", (_req, res) => {
