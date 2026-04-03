@@ -1,20 +1,21 @@
-import { config } from "dotenv";
-config();
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { requireAuth } from "./middleware/auth.js";
 import { errorHandler } from "./middleware/errorHandler.js";
-import receiptsRouter from "./routes/receipts.js";
-import salesRouter from "./routes/sales.js";
-import itemsRouter from "./routes/items.js";
-import suppliersRouter from "./routes/suppliers.js";
-import locationsRouter from "./routes/locations.js";
-import categoriesRouter from "./routes/categories.js";
-import channelsRouter from "./routes/channels.js";
-import customersRouter from "./routes/customers.js";
-import inventoryRouter from "./routes/inventory.js";
-import usersRouter from "./routes/users.js";
-import supplierQuotesRouter from "./routes/supplierQuotes.js";
+import {
+  requireAuth,
+  receiptRouter,
+  saleRouter,
+  itemRouter,
+  supplierRouter,
+  locationRouter,
+  categoryRouter,
+  channelRouter,
+  customerRouter,
+  inventoryRouter,
+  userRouter,
+  supplierQuoteRouter,
+} from "./container.js";
 
 const app = express();
 const port = parseInt(process.env.PORT || "3000", 10);
@@ -26,17 +27,17 @@ app.get("/api/health", (_req, res) => {
   res.json({ status: "ok", timestamp: new Date().toISOString() });
 });
 
-app.use("/api/receipts", requireAuth, receiptsRouter);
-app.use("/api/sales", requireAuth, salesRouter);
-app.use("/api/items", requireAuth, itemsRouter);
-app.use("/api/suppliers", requireAuth, suppliersRouter);
-app.use("/api/locations", requireAuth, locationsRouter);
-app.use("/api/categories", requireAuth, categoriesRouter);
-app.use("/api/channels", requireAuth, channelsRouter);
-app.use("/api/customers", requireAuth, customersRouter);
+app.use("/api/receipts", requireAuth, receiptRouter);
+app.use("/api/sales", requireAuth, saleRouter);
+app.use("/api/items", requireAuth, itemRouter);
+app.use("/api/suppliers", requireAuth, supplierRouter);
+app.use("/api/locations", requireAuth, locationRouter);
+app.use("/api/categories", requireAuth, categoryRouter);
+app.use("/api/channels", requireAuth, channelRouter);
+app.use("/api/customers", requireAuth, customerRouter);
 app.use("/api/inventory", requireAuth, inventoryRouter);
-app.use("/api/users", requireAuth, usersRouter);
-app.use("/api/supplier-quotes", requireAuth, supplierQuotesRouter);
+app.use("/api/users", requireAuth, userRouter);
+app.use("/api/supplier-quotes", requireAuth, supplierQuoteRouter);
 
 app.use(errorHandler);
 

@@ -1,36 +1,25 @@
-import { Router, Request, Response, NextFunction } from "express";
-import { z } from "zod";
-import { supabase } from "../services/supabase.js";
+import { Router, Request, Response } from "express";
+import type { LocationService } from "../services/location.service.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
+import { paginationSchema } from "../schemas/index.js";
 
-const router = Router();
+export function createLocationRouter(service: LocationService): Router {
+  const router = Router();
 
-const locationInputSchema = z.object({
-  location_code: z.string().trim().min(1).max(50),
-});
+  router.get("/", asyncHandler(async (req: Request, res: Response) => {
+    const pagination = paginationSchema.parse(req.query);
+    res.json(await service.listLocations(pagination));
+  }));
 
-router.get("/", async (_req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { data, error } = await supabase.from("locations").select("*").order("location_code");
-    if (error) throw error;
-    res.json(data);
-  } catch (err) { next(err); }
-});
-
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const validated = locationInputSchema.parse(req.body);
-    const { data, error } = await supabase.from("locations").insert(validated).select().single();
-    if (error) throw error;
+  router.post("/", asyncHandler(async (req: Request, res: Response) => {
+    const data = await service.createLocation(req.body);
     res.status(201).json(data);
-  } catch (err) { next(err); }
-});
+  }));
 
-router.delete("/:id", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const { error } = await supabase.from("locations").delete().eq("location_id", req.params.id);
-    if (error) throw error;
+  router.delete("/:id", asyncHandler(async (req: Request, res: Response) => {
+    await service.deleteLocation(req.params.id);
     res.json({ success: true });
-  } catch (err) { next(err); }
-});
+  }));
 
-export default router;
+  return router;
+}

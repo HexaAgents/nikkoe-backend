@@ -1,38 +1,18 @@
-import { Router, Request, Response, NextFunction } from "express";
-import { z } from "zod";
-import { supabase } from "../services/supabase.js";
+import { Router, Request, Response } from "express";
+import type { UserService } from "../services/user.service.js";
+import { asyncHandler } from "../middleware/asyncHandler.js";
 
-const router = Router();
+export function createUserRouter(service: UserService): Router {
+  const router = Router();
 
-router.get("/me", async (req: Request, res: Response) => {
-  if (!req.user?.profile) {
-    res.status(404).json({ error: "User profile not found" });
-    return;
-  }
-  res.json(req.user.profile);
-});
+  router.get("/me", asyncHandler(async (req: Request, res: Response) => {
+    res.json(service.getProfile(req.user?.profile));
+  }));
 
-router.post("/", async (req: Request, res: Response, next: NextFunction) => {
-  try {
-    const schema = z.object({
-      email: z.string().email(),
-      password: z.string().min(6, "Password must be at least 6 characters"),
-    });
-    const { email, password } = schema.parse(req.body);
+  router.post("/", asyncHandler(async (req: Request, res: Response) => {
+    const user = await service.createUser(req.body);
+    res.status(201).json({ user });
+  }));
 
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true,
-    });
-
-    if (error) {
-      res.status(400).json({ error: error.message });
-      return;
-    }
-
-    res.status(201).json({ user: { id: data.user.id, email: data.user.email } });
-  } catch (err) { next(err); }
-});
-
-export default router;
+  return router;
+}
