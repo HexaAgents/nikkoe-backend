@@ -97,6 +97,29 @@ app/
     supplier_quotes.py POST/DELETE /api/supplier-quotes
     users.py           GET /api/users/me, POST /api/users
 
+tests/
+  conftest.py          Shared fixtures (TestClient, mock users, auth overrides)
+  test_health.py       Smoke test — app boots and /api/health responds
+  test_schemas.py      Pydantic model validation rules (19 schemas, ~80 tests)
+  test_errors.py       Error classes and exception handlers
+  test_services.py     Business logic with mocked repositories (~40 tests)
+  test_routers.py      HTTP endpoints via TestClient (~60 tests)
+
+docs/
+  login-flow.drawio              Step-by-step login authentication flowchart
+  create-sale-flow.drawio        Step-by-step sale creation flowchart
+  create-receipt-flow.drawio     Step-by-step receipt creation flowchart
+  endpoint-flowcharts/           Per-endpoint flowcharts
+
 supabase/
   migrations/          SQL migrations (atomic receipt/sale creation RPCs)
 ```
+
+## Testing
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
+pytest --tb=short -q
+```
+
+182 tests covering schemas, services, routers, error handlers, and the health endpoint. All tests use mocked repositories and auth — no database or network required. See `tests/README.md` for detailed documentation of every test.
