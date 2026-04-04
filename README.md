@@ -41,7 +41,7 @@ The server starts on `http://localhost:3000`. All routes are under `/api/`. Inte
 - `SUPABASE_SERVICE_ROLE_KEY` -- Service role key (server-side only, never expose to the client).
 - `SUPABASE_ANON_KEY` -- Anon/publishable key.
 - `PORT` -- Server port (default: 3000).
-- `CORS_ORIGIN` -- Allowed frontend origin (default: `http://localhost:8080`).
+- `CORS_ORIGINS` -- Comma-separated list of allowed frontend origins (default: `http://localhost:8080`). For production, include the deployed frontend URL e.g. `http://localhost:8080,https://nikkoe-frontend.vercel.app`.
 
 ## Project Structure
 
@@ -84,7 +84,7 @@ app/
     user.py            User profile and creation logic
 
   routers/
-    auth.py            POST /api/auth/login, /signup, /change-password
+    auth.py            POST /api/auth/login, /signup, /change-password + GET /api/auth/me
     categories.py      GET/POST/DELETE /api/categories
     channels.py        GET /api/channels
     customers.py       GET/POST /api/customers

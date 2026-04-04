@@ -82,16 +82,16 @@
                 <mxCell id="n5" value="const data = await authFetch&lt;AuthSessionResponse&gt;(&quot;/auth/login&quot;, { email, password })&#10;  Calls authFetch with the path and the user's email/password as the body.&#10;📄 AuthContext.tsx : line 74 → authFetch function at lines 9-25" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="300" y="642" width="420" height="50" as="geometry"/>
                 </mxCell>
-                <mxCell id="s4" value="STEP 4 — authFetch sends the HTTP request (AuthContext.tsx lines 9-25)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                <mxCell id="s4" value="STEP 4 — authPost sends the HTTP request (AuthContext.tsx lines 44-57)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
                     <mxGeometry x="40" y="712" width="1040" height="26" as="geometry"/>
                 </mxCell>
-                <mxCell id="n6" value="Line 10: Reads any existing session token from Supabase client (localStorage).&#10;  On first login this is null.&#10;Lines 11-18: Sends the HTTP request:&#10;  POST ${API_BASE}/auth/login&#10;  Headers: Content-Type: application/json&#10;           Authorization: Bearer &lt;token&gt;  (if session exists, otherwise omitted)&#10;  Body: JSON.stringify({ email, password })&#10;📄 AuthContext.tsx : lines 10-18" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                <mxCell id="n6" value="authPost(&quot;/auth/login&quot;, { email, password }) sends the HTTP request:&#10;  POST ${API_BASE}/auth/login&#10;  Headers: Content-Type: application/json&#10;  Body: JSON.stringify({ email, password })&#10;  No Authorization header needed — this is the login request itself.&#10;📄 AuthContext.tsx : lines 44-57" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="290" y="758" width="440" height="118" as="geometry"/>
                 </mxCell>
                 <mxCell id="en" value="NETWORK ERROR — fetch() throws&#10;(no internet, DNS failure, server down, timeout)&#10;Caught by signIn's catch → returns { user: null, error }" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="-100" y="789.5" width="210" height="55" as="geometry"/>
                 </mxCell>
-                <mxCell id="n6b" value="Lines 20-24: Checks the response.&#10;  If !res.ok → reads error from body, throws new Error(data.error || ...)&#10;  If res.ok  → parses JSON body, returns the data&#10;📄 AuthContext.tsx : lines 20-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
+                <mxCell id="n6b" value="Checks the response.&#10;  If !res.ok → reads error from body, throws new Error(data.error || ...)&#10;  If res.ok  → parses JSON body, returns the data&#10;📄 AuthContext.tsx : lines 50-54" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
                     <mxGeometry x="300" y="896" width="420" height="64" as="geometry"/>
                 </mxCell>
                 <mxCell id="s5" value="STEP 5 — Backend receives the request (auth.py lines 11-12, schemas.py lines 138-140)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
@@ -139,7 +139,7 @@
                 <mxCell id="err" value="All backend errors (400/401) return as HTTP error JSON responses" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
                     <mxGeometry x="50" y="1768" width="220" height="35" as="geometry"/>
                 </mxCell>
-                <mxCell id="s8" value="STEP 8 — Response arrives back in the browser (AuthContext.tsx lines 76-83)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                <mxCell id="s8" value="STEP 8 — Response arrives back in the browser (AuthContext.tsx lines 87-97)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
                     <mxGeometry x="40" y="1876" width="1040" height="26" as="geometry"/>
                 </mxCell>
                 <mxCell id="n12" value="authFetch receives the HTTP response." style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
@@ -151,10 +151,10 @@
                 <mxCell id="e4" value="Not OK — authFetch reads error from body, throws new Error(data.error).&#10;Caught by signIn's catch → returns { user: null, error }.&#10;📄 AuthContext.tsx : lines 20-23, 84-86" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="50" y="1975" width="270" height="55" as="geometry"/>
                 </mxCell>
-                <mxCell id="n13" value="res.ok is true — JSON parsed, data returned to signIn.&#10;signIn now saves the tokens into the browser:&#10;  supabase.auth.setSession({ access_token, refresh_token })&#10;This stores them in localStorage so the user stays logged in across page refreshes.&#10;📄 AuthContext.tsx : lines 76-80&#10;📄 supabase/client.ts : lines 7-11 (persistSession: true, autoRefreshToken: true)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                <mxCell id="n13" value="res.ok is true — JSON parsed, data returned to signIn.&#10;signIn saves the access_token directly to localStorage:&#10;  setStoredToken(data.session.access_token)&#10;  → localStorage.setItem(&quot;nikkoe_access_token&quot;, token)&#10;Then updates React state: setSession(data.session), setUser(data.user)&#10;📄 AuthContext.tsx : lines 90-94&#10;📄 api.ts : lines 7-9 (setStoredToken)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="290" y="2072" width="440" height="88" as="geometry"/>
                 </mxCell>
-                <mxCell id="n14" value="setSession() triggers the onAuthStateChange listener (registered on mount):&#10;  setSession(session)&#10;  setUser(session?.user ?? null)&#10;  setLoading(false)&#10;Now every component using useAuth() knows the user is logged in.&#10;📄 AuthContext.tsx : lines 55-61" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                <mxCell id="n14" value="React state updated — all components using useAuth() re-render:&#10;  session now contains { access_token, refresh_token, expires_in, token_type }&#10;  user now contains { id, email }&#10;  ProtectedRoute sees session is not null → allows access&#10;📄 AuthContext.tsx : lines 90-94" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
                     <mxGeometry x="300" y="2180" width="420" height="88" as="geometry"/>
                 </mxCell>
                 <mxCell id="n15" value="signIn returns { user: { id, email }, error: null }&#10;📄 AuthContext.tsx : line 83" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
@@ -199,13 +199,13 @@
                 <mxCell id="r5" value="Server → Browser        HTTP 200 JSON: { user: {id, email}, session: {access_token, refresh_token, ...} }" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
                     <mxGeometry x="140" y="2884" width="740" height="22" as="geometry"/>
                 </mxCell>
-                <mxCell id="r6" value="Browser → localStorage  supabase.auth.setSession({ access_token, refresh_token }) persists the tokens" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                <mxCell id="r6" value="Browser → localStorage  setStoredToken(access_token) saves the JWT as &quot;nikkoe_access_token&quot;" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
                     <mxGeometry x="140" y="2910" width="740" height="22" as="geometry"/>
                 </mxCell>
                 <mxCell id="ftr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1">
                     <mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/>
                 </mxCell>
-                <mxCell id="ftrt" value="Login.tsx:52 → handleLogin:21 → signIn:72 → authFetch:9 → POST /api/auth/login → LoginInput:138 → sign_in_with_password:14 → setSession:77 → navigate(/sales):36" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                <mxCell id="ftrt" value="Login.tsx:52 → handleLogin:21 → signIn:85 → authPost:44 → POST /api/auth/login → LoginInput:138 → sign_in_with_password:14 → setStoredToken → setUser → navigate(/sales):36" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
                     <mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/>
                 </mxCell>
                 <mxCell id="a1" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n1" target="n2" edge="1">
