@@ -1,0 +1,58 @@
+from datetime import datetime, timezone
+
+from dotenv import load_dotenv as _load_dotenv
+
+_load_dotenv()
+
+from fastapi import FastAPI  # noqa: E402
+from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
+
+from app.config import settings  # noqa: E402
+from app.errors import AppError, app_error_handler, general_error_handler, validation_error_handler  # noqa: E402
+from app.routers import (  # noqa: E402
+    auth,
+    categories,
+    channels,
+    customers,
+    inventory,
+    items,
+    locations,
+    receipts,
+    sales,
+    supplier_quotes,
+    suppliers,
+    users,
+)
+
+app = FastAPI(title="nikkoe-backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[settings.CORS_ORIGIN],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.add_exception_handler(AppError, app_error_handler)
+app.add_exception_handler(ValidationError, validation_error_handler)
+app.add_exception_handler(Exception, general_error_handler)
+
+app.include_router(auth.router)
+app.include_router(receipts.router)
+app.include_router(sales.router)
+app.include_router(items.router)
+app.include_router(suppliers.router)
+app.include_router(locations.router)
+app.include_router(categories.router)
+app.include_router(channels.router)
+app.include_router(customers.router)
+app.include_router(inventory.router)
+app.include_router(users.router)
+app.include_router(supplier_quotes.router)
+
+
+@app.get("/api/health")
+def health():
+    return {"status": "ok", "timestamp": datetime.now(timezone.utc).isoformat()}

@@ -1,5 +1,9 @@
-node_modules/
-dist/
+__pycache__/
+*.pyc
+*.pyo
+.venv/
 .env
 .env.local
 .DS_Store
+dist/
+*.egg-info/

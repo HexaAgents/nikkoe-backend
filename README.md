@@ -1,89 +1,102 @@
 # nikkoe-backend
 
-Express.js API for the Nikkoe inventory management platform.
+Python/FastAPI REST API for the Nikkoe inventory management platform. It handles authentication, CRUD for inventory entities (items, receipts, sales, suppliers, etc.), and exposes a paginated REST API consumed by the React frontend. The backend uses Supabase for both authentication and Postgres database access.
+
+## How it works
+
+Every request flows through four layers: Router → Service → Repository → Database. The router receives the HTTP request, validates input with Pydantic schemas, and resolves the auth dependency. The service enforces business rules — such as converting a missing record into a `NotFoundError` — and orchestrates queries across multiple repositories when needed. Each repository builds and executes Supabase queries for a single domain table, returning raw dicts. For multi-row atomic operations (receipt/sale creation, voiding), the repository calls a Postgres RPC function to ensure all-or-nothing behavior inside a database transaction.
+
+## Why this design
+
+Separating the code into layers (routing, business logic, data access) keeps each layer independently testable and enforces separation of concerns — routers never touch the database, repositories never raise HTTP errors, and services bridge the two.
 
 ## Setup
 
-```bash
-cp .env.example .env
-# Fill in SUPABASE_SERVICE_ROLE_KEY (from Supabase dashboard > Settings > API)
-npm install
-npm run dev
-```
+1. **Copy the environment template** and fill in your Supabase credentials (find the service role key under Supabase Dashboard > Settings > API):
+   ```bash
+   cp .env.example .env
+   ```
 
-The server starts on `http://localhost:3000`. All routes are under `/api/`.
+2. **Create and activate a virtual environment** so dependencies are isolated from the system Python:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate
+   ```
+
+3. **Install dependencies**:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+4. **Start the dev server** (auto-reloads on file changes):
+   ```bash
+   uvicorn app.main:app --reload --port 3000
+   ```
+
+The server starts on `http://localhost:3000`. All routes are under `/api/`. Interactive Swagger docs are at `http://localhost:3000/docs`.
 
 ## Environment Variables
 
-| Variable | Description |
-|----------|-------------|
-| `SUPABASE_URL` | Supabase project URL |
-| `SUPABASE_SERVICE_ROLE_KEY` | Service role key (server-side only, never expose) |
-| `SUPABASE_ANON_KEY` | Anon/publishable key |
-| `PORT` | Server port (default: 3000) |
-| `CORS_ORIGIN` | Allowed frontend origin (default: http://localhost:8080) |
-
-## Authentication
-
-All `/api/*` routes (except `/api/health`) require a `Bearer` token in the `Authorization` header. The token is a Supabase Auth JWT obtained by the frontend via `supabase.auth.getSession()`.
-
-## API Endpoints
-
-- `GET /api/health` -- Health check
-- `GET/POST /api/receipts`, `GET /api/receipts/:id`, `GET /api/receipts/:id/lines`, `POST /api/receipts/:id/void`
-- `GET/POST /api/sales`, `GET /api/sales/:id`, `GET /api/sales/:id/lines`, `POST /api/sales/:id/void`
-- `GET/POST/PUT/DELETE /api/items`, `GET /api/items/:id/quotes`, `GET /api/items/:id/inventory`, `GET /api/items/:id/receipts`, `GET /api/items/:id/sales`
-- `GET/POST/DELETE /api/suppliers`
-- `GET/POST/DELETE /api/locations`
-- `GET/POST/DELETE /api/categories`
-- `GET /api/channels`
-- `GET/POST /api/customers`
-- `GET /api/inventory/movements`, `GET /api/inventory/on-hand`
-- `GET /api/users/me`, `POST /api/users`
-- `POST/DELETE /api/supplier-quotes`
-
-All list endpoints support `?limit=` and `?offset=` query parameters and return `{ data: [...], total: N }`.
+- `SUPABASE_URL` -- Supabase project URL.
+- `SUPABASE_SERVICE_ROLE_KEY` -- Service role key (server-side only, never expose to the client).
+- `SUPABASE_ANON_KEY` -- Anon/publishable key.
+- `PORT` -- Server port (default: 3000).
+- `CORS_ORIGIN` -- Allowed frontend origin (default: `http://localhost:8080`).
 
 ## Project Structure
 
 ```
-src/
-  server.ts              App entry point -- creates Express, mounts routes, starts listening
-  container.ts           Composition root -- wires all repositories, services, and routers
-
-  infrastructure/
-    supabase.ts          Supabase client singleton (service role key)
+app/
+  main.py              FastAPI app -- CORS, router mounting, exception handlers, health endpoint
+  config.py            Pydantic Settings loading env vars
+  dependencies.py      Supabase client singleton
+  errors.py            AppError, NotFoundError, ConflictError, ForbiddenError + exception handlers
+  schemas.py           All Pydantic request/response models
 
   middleware/
-    asyncHandler.ts      Wraps async route handlers to auto-catch errors
-    auth.ts              JWT auth middleware -- verifies token, attaches user to request
-    errorHandler.ts      Global error handler -- maps Zod/AppError/Postgres errors to HTTP responses
-
-  errors/
-    index.ts             AppError base class plus NotFoundError (404), ConflictError (409), ForbiddenError (403)
-
-  types/
-    domain.types.ts      All domain entity interfaces (Category, Item, Receipt, Sale, Supplier, etc.)
-    db.types.ts          DbClient type alias for the Supabase client
-    express.d.ts         Extends Express Request with a user property
-    pagination.types.ts  PaginationParams and PaginatedResult interfaces
-
-  schemas/
-    index.ts             All Zod validation schemas (one per entity plus shared primitives)
+    auth.py            JWT auth dependency -- verifies token via Supabase, attaches user to request
 
   repositories/
-    interfaces.ts        All repository interfaces defining data-access contracts
-    utils/
-      batchLoad.ts       Generic helper for batch-fetching rows by ID into a Map
-    *.repository.ts      Supabase implementations (one per domain entity)
+    base.py            batch_load utility for efficient relation loading
+    category.py        Category CRUD queries
+    channel.py         Channel read-only queries
+    customer.py        Customer queries
+    inventory.py       Inventory movements and balances with relation stitching
+    item.py            Item queries with multi-table relation assembly
+    location.py        Location CRUD queries
+    receipt.py         Receipt queries, atomic creation via RPC, voiding via RPC
+    sale.py            Sale queries, atomic creation via RPC, voiding via RPC
+    supplier.py        Supplier CRUD queries
+    supplier_quote.py  Supplier quote queries
+    user.py            User creation via Supabase Auth admin API
 
   services/
-    interfaces.ts        All service interfaces defining business-logic contracts
-    *.service.ts          Business logic (one per domain) -- validates input, enforces rules, delegates to repos
+    category.py        Category business logic
+    channel.py         Channel business logic
+    customer.py        Customer business logic
+    inventory.py       Inventory business logic
+    item.py            Item business logic (takes 5 repositories for cross-domain queries)
+    location.py        Location business logic
+    receipt.py         Receipt business logic with NotFoundError handling
+    sale.py            Sale business logic with NotFoundError handling
+    supplier.py        Supplier business logic
+    supplier_quote.py  Supplier quote business logic
+    user.py            User profile and creation logic
 
-  routes/
-    *.ts                 Express routers (one per domain) -- parse HTTP, call services, return responses
+  routers/
+    auth.py            POST /api/auth/login, /signup, /change-password
+    categories.py      GET/POST/DELETE /api/categories
+    channels.py        GET /api/channels
+    customers.py       GET/POST /api/customers
+    inventory.py       GET /api/inventory/movements, GET /api/inventory/on-hand
+    items.py           9 endpoints for items and sub-resources
+    locations.py       GET/POST/DELETE /api/locations
+    receipts.py        GET/POST /api/receipts, void endpoint
+    sales.py           GET/POST /api/sales, void endpoint
+    suppliers.py       GET/POST/DELETE /api/suppliers
+    supplier_quotes.py POST/DELETE /api/supplier-quotes
+    users.py           GET /api/users/me, POST /api/users
 
 supabase/
-  migrations/            SQL migrations (e.g. atomic receipt/sale creation RPCs)
+  migrations/          SQL migrations (atomic receipt/sale creation RPCs)
 ```
