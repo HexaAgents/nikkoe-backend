@@ -304,9 +304,9 @@ class TestInventoryService:
         return InventoryService(MagicMock())
 
     def test_list_movements(self, service):
-        service.repo.find_all.return_value = {"data": [], "total": 0}
+        service.repo.find_movements.return_value = {"data": [], "total": 0}
         service.list_movements(50, 0)
-        service.repo.find_all.assert_called_once()
+        service.repo.find_movements.assert_called_once()
 
     def test_list_on_hand(self, service):
         service.repo.find_on_hand.return_value = []
