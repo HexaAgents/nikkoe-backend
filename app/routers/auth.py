@@ -58,6 +58,22 @@ def signup(body: SignupInput):
     }
 
 
+@router.get("/me")
+def get_me(user: CurrentUser = Depends(get_current_user)):
+    return {
+        "user": {"id": user.id, "email": user.email},
+        "profile": (
+            {
+                "user_id": user.profile.user_id,
+                "name": user.profile.name,
+                "email_address": user.profile.email_address,
+            }
+            if user.profile
+            else None
+        ),
+    }
+
+
 @router.post("/change-password")
 def change_password(body: ChangePasswordInput, user: CurrentUser = Depends(get_current_user)):
     try:

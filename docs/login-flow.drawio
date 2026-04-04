@@ -1,197 +1,336 @@
 <mxfile host="65bd71144e">
     <diagram id="login-flow" name="Login Authentication Flow">
-        <mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="6400" math="0" shadow="1">
+        <mxGraphModel dx="965" dy="628" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="6400" math="0" shadow="1">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-
-                <!-- HEADER -->
-                <mxCell id="hdr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="1040" height="80" as="geometry"/></mxCell>
-                <mxCell id="hdr-t" value="NIKKOE PLATFORM" style="text;html=1;fontSize=26;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=20;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="4" width="600" height="36" as="geometry"/></mxCell>
-                <mxCell id="hdr-s" value="Login Authentication Flow — Step-by-Step with Exact Code References" style="text;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=20;" vertex="1" parent="1"><mxGeometry x="40" y="42" width="800" height="20" as="geometry"/></mxCell>
-
-                <!-- LEGEND -->
-                <mxCell id="key" value="" style="rounded=0;fillColor=#37474F;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="40" y="90" width="1040" height="36" as="geometry"/></mxCell>
-                <mxCell id="k1" value="" style="ellipse;fillColor=#1565C0;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="60" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k1l" value="UI" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="80" y="98" width="30" height="18" as="geometry"/></mxCell>
-                <mxCell id="k2" value="" style="ellipse;fillColor=#2E7D32;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="120" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k2l" value="Browser logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="140" y="98" width="90" height="18" as="geometry"/></mxCell>
-                <mxCell id="k3" value="" style="ellipse;fillColor=#E65100;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="240" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k3l" value="Network" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="260" y="98" width="55" height="18" as="geometry"/></mxCell>
-                <mxCell id="k4" value="" style="ellipse;fillColor=#4A148C;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="325" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k4l" value="Server logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="345" y="98" width="80" height="18" as="geometry"/></mxCell>
-                <mxCell id="k5" value="" style="ellipse;fillColor=#37474F;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="435" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k5l" value="Supabase" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="455" y="98" width="60" height="18" as="geometry"/></mxCell>
-                <mxCell id="k6" value="" style="ellipse;fillColor=#C62828;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="525" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k6l" value="Error" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="545" y="98" width="40" height="18" as="geometry"/></mxCell>
-                <mxCell id="k7" value="" style="ellipse;fillColor=#F9A825;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="595" y="100" width="14" height="14" as="geometry"/></mxCell>
-                <mxCell id="k7l" value="Decision" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1"><mxGeometry x="615" y="98" width="55" height="18" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 1                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s1" value="STEP 1 — User clicks &quot;Sign in&quot;" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="136" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n1" value="Email and password are stored in React state (useState).&#10;The button is inside a &lt;form&gt;, so clicking it fires onSubmit.&#10;  &lt;form onSubmit={handleLogin}&gt;&#10;📄 Login.tsx : line 52" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="176" width="400" height="64" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 2                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s2" value="STEP 2 — handleLogin starts (Login.tsx lines 21-25)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="260" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n2" value="e.preventDefault()&#10;  Stops the browser from reloading the page.&#10;setLoading(true)&#10;  Disables the button and shows a spinner.&#10;📄 Login.tsx : lines 22-23" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="306" width="400" height="78" as="geometry"/></mxCell>
-
-                <mxCell id="n3" value="const { user, error } = await signIn(email, password)&#10;  Calls signIn (from useAuth hook, line 15) and waits for the result.&#10;  signIn comes from AuthContext — never throws, always returns { user, error }.&#10;📄 Login.tsx : line 25&#10;→ signIn defined at AuthContext.tsx : lines 72-87&#10;→ useAuth defined at useAuth.ts : lines 4-9" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="404" width="440" height="88" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 3                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s3" value="STEP 3 — signIn in AuthContext (AuthContext.tsx lines 72-87)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="512" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n4" value="Wrapped in try/catch — guarantees it always returns { user, error }, never throws.&#10;  try: calls authFetch, saves session, returns { user: data.user, error: null }&#10;  catch: wraps the error, returns { user: null, error: Error }&#10;📄 AuthContext.tsx : lines 72-87" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="558" width="400" height="64" as="geometry"/></mxCell>
-
-                <mxCell id="n5" value="const data = await authFetch&lt;AuthSessionResponse&gt;(&quot;/auth/login&quot;, { email, password })&#10;  Calls authFetch with the path and the user's email/password as the body.&#10;📄 AuthContext.tsx : line 74 → authFetch function at lines 9-25" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="642" width="420" height="50" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 4                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s4" value="STEP 4 — authFetch sends the HTTP request (AuthContext.tsx lines 9-25)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="712" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n6" value="Line 10: Reads any existing session token from Supabase client (localStorage).&#10;  On first login this is null.&#10;Lines 11-18: Sends the HTTP request:&#10;  POST ${API_BASE}/auth/login&#10;  Headers: Content-Type: application/json&#10;           Authorization: Bearer &lt;token&gt;  (if session exists, otherwise omitted)&#10;  Body: JSON.stringify({ email, password })&#10;📄 AuthContext.tsx : lines 10-18" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="758" width="440" height="118" as="geometry"/></mxCell>
-
-                <mxCell id="en" value="NETWORK ERROR — fetch() throws&#10;(no internet, DNS failure, server down, timeout)&#10;Caught by signIn's catch → returns { user: null, error }" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="775" width="210" height="55" as="geometry"/></mxCell>
-
-                <mxCell id="n6b" value="Lines 20-24: Checks the response.&#10;  If !res.ok → reads error from body, throws new Error(data.error || ...)&#10;  If res.ok  → parses JSON body, returns the data&#10;📄 AuthContext.tsx : lines 20-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="896" width="420" height="64" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 5                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s5" value="STEP 5 — Backend receives the request (auth.py lines 11-12, schemas.py lines 138-140)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="980" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n7" value="FastAPI matches POST /api/auth/login to:&#10;  @router.post(&quot;/login&quot;)&#10;  def login(body: LoginInput):&#10;📄 auth.py : lines 11-12" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="1026" width="400" height="64" as="geometry"/></mxCell>
-
-                <mxCell id="n8" value="Before login() runs, Pydantic auto-validates the JSON body against LoginInput:&#10;  email: EmailStr — must be valid email format&#10;  password: str — any string&#10;If email format is invalid → 400 error before the function body ever executes.&#10;📄 schemas.py : lines 138-140" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="1110" width="420" height="78" as="geometry"/></mxCell>
-
-                <mxCell id="d1" value="Valid email&#10;format?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="420" y="1208" width="180" height="80" as="geometry"/></mxCell>
-
-                <mxCell id="e1" value="Pydantic ValidationError → HTTP 400:&#10;  { error: &quot;Validation failed&quot;, details: [...] }&#10;📄 errors.py : lines 39-41" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="1218" width="260" height="50" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 6                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s6" value="STEP 6 — Backend asks Supabase to check credentials (auth.py lines 13-18)" style="rounded=0;fillColor=#37474F;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="1308" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n9" value="supabase.auth.sign_in_with_password({ email: body.email, password: body.password })&#10;  Backend Supabase client (service role key) sends email/password to Supabase.&#10;  Supabase looks up the email in auth.users and compares password against bcrypt hash.&#10;📄 auth.py : lines 14-16&#10;📄 dependencies.py : line 4 (Supabase client with SERVICE_ROLE_KEY)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#ECEFF1;strokeColor=#37474F;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="1354" width="440" height="78" as="geometry"/></mxCell>
-
-                <mxCell id="d2" value="Credentials&#10;correct?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="420" y="1452" width="180" height="80" as="geometry"/></mxCell>
-
-                <mxCell id="e2" value="Wrong email or password — Supabase throws an exception.&#10;  except block catches it: raise AppError(401, str(e))&#10;  → app_error_handler returns HTTP 401: { error: &quot;Invalid login credentials&quot; }&#10;📄 auth.py : lines 17-18&#10;📄 errors.py : lines 6-9, 35-36" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="1442" width="280" height="78" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 7                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s7" value="STEP 7 — Backend builds the success response (auth.py lines 20-34)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="1552" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n10" value="Supabase returned user + session objects. Safety check:&#10;  if not user or not session: raise AppError(401, &quot;Invalid email or password&quot;)&#10;📄 auth.py : lines 20-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="1598" width="400" height="50" as="geometry"/></mxCell>
-
-                <mxCell id="d3" value="user AND session&#10;not None?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="420" y="1668" width="180" height="80" as="geometry"/></mxCell>
-
-                <mxCell id="e3" value="Defensive check — user or session is None.&#10;  raise AppError(401, &quot;Invalid email or password&quot;)&#10;📄 auth.py : lines 23-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="1678" width="260" height="50" as="geometry"/></mxCell>
-
-                <mxCell id="n11" value="Packages just the fields the frontend needs and returns HTTP 200:&#10;  {&#10;    user: { id: user.id, email: user.email },&#10;    session: { access_token, refresh_token, expires_in, token_type }&#10;  }&#10;📄 auth.py : lines 26-34" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="1768" width="420" height="88" as="geometry"/></mxCell>
-
-                <!-- Error merge -->
-                <mxCell id="err" value="All backend errors (400/401) return as HTTP error JSON responses" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="1768" width="220" height="35" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 8                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s8" value="STEP 8 — Response arrives back in the browser (AuthContext.tsx lines 76-83)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="1876" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="n12" value="authFetch receives the HTTP response." style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="340" y="1922" width="340" height="30" as="geometry"/></mxCell>
-
-                <mxCell id="d4" value="res.ok?&#10;(status 200-299)" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="420" y="1972" width="180" height="80" as="geometry"/></mxCell>
-
-                <mxCell id="e4" value="Not OK — authFetch reads error from body, throws new Error(data.error).&#10;Caught by signIn's catch → returns { user: null, error }.&#10;📄 AuthContext.tsx : lines 20-23, 84-86" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="1975" width="270" height="55" as="geometry"/></mxCell>
-
-                <mxCell id="n13" value="res.ok is true — JSON parsed, data returned to signIn.&#10;signIn now saves the tokens into the browser:&#10;  supabase.auth.setSession({ access_token, refresh_token })&#10;This stores them in localStorage so the user stays logged in across page refreshes.&#10;📄 AuthContext.tsx : lines 76-80&#10;📄 supabase/client.ts : lines 7-11 (persistSession: true, autoRefreshToken: true)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="2072" width="440" height="88" as="geometry"/></mxCell>
-
-                <mxCell id="n14" value="setSession() triggers the onAuthStateChange listener (registered on mount):&#10;  setSession(session)&#10;  setUser(session?.user ?? null)&#10;  setLoading(false)&#10;Now every component using useAuth() knows the user is logged in.&#10;📄 AuthContext.tsx : lines 55-61" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="2180" width="420" height="88" as="geometry"/></mxCell>
-
-                <mxCell id="n15" value="signIn returns { user: { id, email }, error: null }&#10;📄 AuthContext.tsx : line 83" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="340" y="2288" width="340" height="35" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- STEP 9                                             -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="s9" value="STEP 9 — Back in handleLogin, checking the result (Login.tsx lines 27-37)" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="2343" width="1040" height="26" as="geometry"/></mxCell>
-
-                <mxCell id="d5" value="error?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="440" y="2389" width="140" height="70" as="geometry"/></mxCell>
-
-                <mxCell id="e5" value="LOGIN FAILED:&#10;  toast.error(error.message) — red notification with the error text&#10;  setLoading(false) — re-enables button, hides spinner&#10;User stays on /login, can retry.&#10;📄 Login.tsx : lines 28-29" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="2382" width="290" height="78" as="geometry"/></mxCell>
-
-                <mxCell id="e5b" value="User stays on /login page&#10;Can retry with correct credentials" style="ellipse;whiteSpace=wrap;fontSize=9;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="75" y="2480" width="240" height="50" as="geometry"/></mxCell>
-
-                <mxCell id="n16" value="error is null — login succeeded. Three things happen:&#10;&#10;1. analytics.identify(user.id, { email }) — links browser to user in PostHog&#10;   analytics.track(&quot;user_signed_in&quot;, { email }) — records the login event&#10;   📄 Login.tsx : lines 32-33 → analytics.ts : lines 4-9&#10;&#10;2. toast.success(&quot;Logged in successfully&quot;) — green notification&#10;   📄 Login.tsx : line 35&#10;&#10;3. navigate(&quot;/sales&quot;) — sends the user to the Sales page&#10;   📄 Login.tsx : line 36 → routes.tsx : line 34 → ProtectedRoute.tsx : lines 9-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="2484" width="440" height="155" as="geometry"/></mxCell>
-
-                <mxCell id="n17" value="Login complete — user is authenticated and viewing the Sales page.&#10;All future API calls include the access_token via apiFetch (api.ts : lines 5-15)." style="ellipse;whiteSpace=wrap;fontSize=9;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="310" y="2659" width="400" height="60" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- DATA BOUNDARY TABLE                                -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="tbl" value="" style="rounded=0;fillColor=#ECEFF1;strokeColor=#B0BEC5;" vertex="1" parent="1"><mxGeometry x="140" y="2749" width="740" height="200" as="geometry"/></mxCell>
-                <mxCell id="th" value="THE DATA AT EACH BOUNDARY" style="rounded=0;fillColor=#37474F;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="140" y="2749" width="740" height="26" as="geometry"/></mxCell>
-                <mxCell id="r1" value="User → Browser          Keystrokes into email/password inputs → stored in React state" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2780" width="740" height="22" as="geometry"/></mxCell>
-                <mxCell id="r2" value="Browser → Server        fetch() POST with { &quot;email&quot;: &quot;...&quot;, &quot;password&quot;: &quot;...&quot; } as JSON body" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2806" width="740" height="22" as="geometry"/></mxCell>
-                <mxCell id="r3" value="Server → Supabase       sign_in_with_password({ email, password }) via Python Supabase SDK" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2832" width="740" height="22" as="geometry"/></mxCell>
-                <mxCell id="r4" value="Supabase → Server       Response with .user (id, email) and .session (access_token, refresh_token)" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2858" width="740" height="22" as="geometry"/></mxCell>
-                <mxCell id="r5" value="Server → Browser        HTTP 200 JSON: { user: {id, email}, session: {access_token, refresh_token, ...} }" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2884" width="740" height="22" as="geometry"/></mxCell>
-                <mxCell id="r6" value="Browser → localStorage  supabase.auth.setSession({ access_token, refresh_token }) persists the tokens" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1"><mxGeometry x="140" y="2910" width="740" height="22" as="geometry"/></mxCell>
-
-                <!-- FOOTER -->
-                <mxCell id="ftr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/></mxCell>
-                <mxCell id="ftrt" value="Login.tsx:52 → handleLogin:21 → signIn:72 → authFetch:9 → POST /api/auth/login → LoginInput:138 → sign_in_with_password:14 → setSession:77 → navigate(/sales):36" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/></mxCell>
-
-                <!-- ═══════════════════════════════════════════════════ -->
-                <!-- EDGES                                              -->
-                <!-- ═══════════════════════════════════════════════════ -->
-                <mxCell id="a1" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n1" target="n2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a2" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n2" target="n3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a3" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n3" target="n4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a4" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n4" target="n5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a5" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n5" target="n6" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="anet" value="Network failure" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" edge="1" source="n6" target="en" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a6" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n6" target="n6b" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a7" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n6b" target="n7" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a8" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n7" target="n8" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a9" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n8" target="d1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a10" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d1" target="n9" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a11" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d1" target="e1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a12" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n9" target="d2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a13" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d2" target="n10" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a14" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d2" target="e2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a15" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n10" target="d3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a16" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d3" target="n11" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a17" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d3" target="e3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a18" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n11" target="n12" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a19" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n12" target="d4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a20" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d4" target="n13" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a21" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d4" target="e4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a22" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n13" target="n14" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a23" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n14" target="n15" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a24" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n15" target="d5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a25" value="Yes (error)" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d5" target="e5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a26" value="No (success)" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d5" target="n16" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a27" style="strokeColor=#C62828;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="e5" target="e5b" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="a28" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n16" target="n17" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-
-                <!-- Error convergence -->
-                <mxCell id="ae1" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="e1" target="err" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="ae2" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="e2" target="err" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="ae3" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="e3" target="err" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
-                <mxCell id="ae4" value="HTTP error → browser" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" edge="1" source="err" target="n12" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="160" y="1937"/></Array></mxGeometry></mxCell>
-                <mxCell id="ae5" value="Error → signIn catch → { user: null, error }" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" edge="1" source="e4" target="d5" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="185" y="2070"/><mxPoint x="185" y="2424"/></Array></mxGeometry></mxCell>
-                <mxCell id="aen" value="Caught by signIn catch" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" edge="1" source="en" target="e4" parent="1"><mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="10" y="803"/><mxPoint x="10" y="2003"/></Array></mxGeometry></mxCell>
-
+                <mxCell id="hdr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="40" width="1040" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="hdr-t" value="NIKKOE PLATFORM" style="text;html=1;fontSize=26;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=20;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="4" width="600" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="hdr-s" value="Login Authentication Flow — Step-by-Step with Exact Code References" style="text;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=20;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="42" width="800" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="key" value="" style="rounded=0;fillColor=#37474F;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="90" width="1040" height="36" as="geometry"/>
+                </mxCell>
+                <mxCell id="k1" value="" style="ellipse;fillColor=#1565C0;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="60" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k1l" value="UI" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="80" y="98" width="30" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k2" value="" style="ellipse;fillColor=#2E7D32;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="120" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k2l" value="Browser logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="98" width="90" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k3" value="" style="ellipse;fillColor=#E65100;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="240" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k3l" value="Network" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="260" y="98" width="55" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k4" value="" style="ellipse;fillColor=#4A148C;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="325" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k4l" value="Server logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="345" y="98" width="80" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k5" value="" style="ellipse;fillColor=#37474F;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="435" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k5l" value="Supabase" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="455" y="98" width="60" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k6" value="" style="ellipse;fillColor=#C62828;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="525" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k6l" value="Error" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="545" y="98" width="40" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="k7" value="" style="ellipse;fillColor=#F9A825;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="595" y="100" width="14" height="14" as="geometry"/>
+                </mxCell>
+                <mxCell id="k7l" value="Decision" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" vertex="1" parent="1">
+                    <mxGeometry x="615" y="98" width="55" height="18" as="geometry"/>
+                </mxCell>
+                <mxCell id="s1" value="STEP 1 — User clicks &quot;Sign in&quot;" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="136" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n1" value="Email and password are stored in React state (useState).&#10;The button is inside a &lt;form&gt;, so clicking it fires onSubmit.&#10;  &lt;form onSubmit={handleLogin}&gt;&#10;📄 Login.tsx : line 52" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="176" width="400" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="s2" value="STEP 2 — handleLogin starts (Login.tsx lines 21-25)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="260" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n2" value="e.preventDefault()&#10;  Stops the browser from reloading the page.&#10;setLoading(true)&#10;  Disables the button and shows a spinner.&#10;📄 Login.tsx : lines 22-23" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="306" width="400" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="n3" value="const { user, error } = await signIn(email, password)&#10;  Calls signIn (from useAuth hook, line 15) and waits for the result.&#10;  signIn comes from AuthContext — never throws, always returns { user, error }.&#10;📄 Login.tsx : line 25&#10;→ signIn defined at AuthContext.tsx : lines 72-87&#10;→ useAuth defined at useAuth.ts : lines 4-9" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="404" width="440" height="88" as="geometry"/>
+                </mxCell>
+                <mxCell id="s3" value="STEP 3 — signIn in AuthContext (AuthContext.tsx lines 72-87)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="512" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n4" value="Wrapped in try/catch — guarantees it always returns { user, error }, never throws.&#10;  try: calls authFetch, saves session, returns { user: data.user, error: null }&#10;  catch: wraps the error, returns { user: null, error: Error }&#10;📄 AuthContext.tsx : lines 72-87" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="558" width="400" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="n5" value="const data = await authFetch&lt;AuthSessionResponse&gt;(&quot;/auth/login&quot;, { email, password })&#10;  Calls authFetch with the path and the user's email/password as the body.&#10;📄 AuthContext.tsx : line 74 → authFetch function at lines 9-25" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="642" width="420" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="s4" value="STEP 4 — authFetch sends the HTTP request (AuthContext.tsx lines 9-25)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="712" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n6" value="Line 10: Reads any existing session token from Supabase client (localStorage).&#10;  On first login this is null.&#10;Lines 11-18: Sends the HTTP request:&#10;  POST ${API_BASE}/auth/login&#10;  Headers: Content-Type: application/json&#10;           Authorization: Bearer &lt;token&gt;  (if session exists, otherwise omitted)&#10;  Body: JSON.stringify({ email, password })&#10;📄 AuthContext.tsx : lines 10-18" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="758" width="440" height="118" as="geometry"/>
+                </mxCell>
+                <mxCell id="en" value="NETWORK ERROR — fetch() throws&#10;(no internet, DNS failure, server down, timeout)&#10;Caught by signIn's catch → returns { user: null, error }" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="-100" y="789.5" width="210" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="n6b" value="Lines 20-24: Checks the response.&#10;  If !res.ok → reads error from body, throws new Error(data.error || ...)&#10;  If res.ok  → parses JSON body, returns the data&#10;📄 AuthContext.tsx : lines 20-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
+                    <mxGeometry x="300" y="896" width="420" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="s5" value="STEP 5 — Backend receives the request (auth.py lines 11-12, schemas.py lines 138-140)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="980" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n7" value="FastAPI matches POST /api/auth/login to:&#10;  @router.post(&quot;/login&quot;)&#10;  def login(body: LoginInput):&#10;📄 auth.py : lines 11-12" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="1026" width="400" height="64" as="geometry"/>
+                </mxCell>
+                <mxCell id="n8" value="Before login() runs, Pydantic auto-validates the JSON body against LoginInput:&#10;  email: EmailStr — must be valid email format&#10;  password: str — any string&#10;If email format is invalid → 400 error before the function body ever executes.&#10;📄 schemas.py : lines 138-140" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="1110" width="420" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="d1" value="Valid email&#10;format?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="1208" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1" value="Pydantic ValidationError → HTTP 400:&#10;  { error: &quot;Validation failed&quot;, details: [...] }&#10;📄 errors.py : lines 39-41" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="1218" width="260" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="s6" value="STEP 6 — Backend asks Supabase to check credentials (auth.py lines 13-18)" style="rounded=0;fillColor=#37474F;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="1308" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n9" value="supabase.auth.sign_in_with_password({ email: body.email, password: body.password })&#10;  Backend Supabase client (service role key) sends email/password to Supabase.&#10;  Supabase looks up the email in auth.users and compares password against bcrypt hash.&#10;📄 auth.py : lines 14-16&#10;📄 dependencies.py : line 4 (Supabase client with SERVICE_ROLE_KEY)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#ECEFF1;strokeColor=#37474F;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="1354" width="440" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="d2" value="Credentials&#10;correct?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="1452" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2" value="Wrong email or password — Supabase throws an exception.&#10;  except block catches it: raise AppError(401, str(e))&#10;  → app_error_handler returns HTTP 401: { error: &quot;Invalid login credentials&quot; }&#10;📄 auth.py : lines 17-18&#10;📄 errors.py : lines 6-9, 35-36" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="1442" width="280" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="s7" value="STEP 7 — Backend builds the success response (auth.py lines 20-34)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="1552" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n10" value="Supabase returned user + session objects. Safety check:&#10;  if not user or not session: raise AppError(401, &quot;Invalid email or password&quot;)&#10;📄 auth.py : lines 20-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="1598" width="400" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="d3" value="user AND session&#10;not None?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="1668" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3" value="Defensive check — user or session is None.&#10;  raise AppError(401, &quot;Invalid email or password&quot;)&#10;📄 auth.py : lines 23-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="1678" width="260" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="n11" value="Packages just the fields the frontend needs and returns HTTP 200:&#10;  {&#10;    user: { id: user.id, email: user.email },&#10;    session: { access_token, refresh_token, expires_in, token_type }&#10;  }&#10;📄 auth.py : lines 26-34" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="1768" width="420" height="88" as="geometry"/>
+                </mxCell>
+                <mxCell id="err" value="All backend errors (400/401) return as HTTP error JSON responses" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
+                    <mxGeometry x="50" y="1768" width="220" height="35" as="geometry"/>
+                </mxCell>
+                <mxCell id="s8" value="STEP 8 — Response arrives back in the browser (AuthContext.tsx lines 76-83)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="1876" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="n12" value="authFetch receives the HTTP response." style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="1922" width="340" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="d4" value="res.ok?&#10;(status 200-299)" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="420" y="1972" width="180" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4" value="Not OK — authFetch reads error from body, throws new Error(data.error).&#10;Caught by signIn's catch → returns { user: null, error }.&#10;📄 AuthContext.tsx : lines 20-23, 84-86" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="50" y="1975" width="270" height="55" as="geometry"/>
+                </mxCell>
+                <mxCell id="n13" value="res.ok is true — JSON parsed, data returned to signIn.&#10;signIn now saves the tokens into the browser:&#10;  supabase.auth.setSession({ access_token, refresh_token })&#10;This stores them in localStorage so the user stays logged in across page refreshes.&#10;📄 AuthContext.tsx : lines 76-80&#10;📄 supabase/client.ts : lines 7-11 (persistSession: true, autoRefreshToken: true)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="2072" width="440" height="88" as="geometry"/>
+                </mxCell>
+                <mxCell id="n14" value="setSession() triggers the onAuthStateChange listener (registered on mount):&#10;  setSession(session)&#10;  setUser(session?.user ?? null)&#10;  setLoading(false)&#10;Now every component using useAuth() knows the user is logged in.&#10;📄 AuthContext.tsx : lines 55-61" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="300" y="2180" width="420" height="88" as="geometry"/>
+                </mxCell>
+                <mxCell id="n15" value="signIn returns { user: { id, email }, error: null }&#10;📄 AuthContext.tsx : line 83" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="340" y="2288" width="340" height="35" as="geometry"/>
+                </mxCell>
+                <mxCell id="s9" value="STEP 9 — Back in handleLogin, checking the result (Login.tsx lines 27-37)" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="2343" width="1040" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="d5" value="error?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+                    <mxGeometry x="440" y="2389" width="140" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5" value="LOGIN FAILED:&#10;  toast.error(error.message) — red notification with the error text&#10;  setLoading(false) — re-enables button, hides spinner&#10;User stays on /login, can retry.&#10;📄 Login.tsx : lines 28-29" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1">
+                    <mxGeometry x="-100" y="2459" width="290" height="78" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5b" value="User stays on /login page&#10;Can retry with correct credentials" style="ellipse;whiteSpace=wrap;fontSize=9;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;shadow=1;" vertex="1" parent="1">
+                    <mxGeometry x="-80" y="2639" width="240" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="n16" value="error is null — login succeeded. Three things happen:&#10;&#10;1. analytics.identify(user.id, { email }) — links browser to user in PostHog&#10;   analytics.track(&quot;user_signed_in&quot;, { email }) — records the login event&#10;   📄 Login.tsx : lines 32-33 → analytics.ts : lines 4-9&#10;&#10;2. toast.success(&quot;Logged in successfully&quot;) — green notification&#10;   📄 Login.tsx : line 35&#10;&#10;3. navigate(&quot;/sales&quot;) — sends the user to the Sales page&#10;   📄 Login.tsx : line 36 → routes.tsx : line 34 → ProtectedRoute.tsx : lines 9-24" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="290" y="2484" width="440" height="155" as="geometry"/>
+                </mxCell>
+                <mxCell id="n17" value="Login complete — user is authenticated and viewing the Sales page.&#10;All future API calls include the access_token via apiFetch (api.ts : lines 5-15)." style="ellipse;whiteSpace=wrap;fontSize=9;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;shadow=1;" parent="1" vertex="1">
+                    <mxGeometry x="310" y="2659" width="400" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="tbl" value="" style="rounded=0;fillColor=#ECEFF1;strokeColor=#B0BEC5;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2749" width="740" height="200" as="geometry"/>
+                </mxCell>
+                <mxCell id="th" value="THE DATA AT EACH BOUNDARY" style="rounded=0;fillColor=#37474F;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=center;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2749" width="740" height="26" as="geometry"/>
+                </mxCell>
+                <mxCell id="r1" value="User → Browser          Keystrokes into email/password inputs → stored in React state" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2780" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="r2" value="Browser → Server        fetch() POST with { &quot;email&quot;: &quot;...&quot;, &quot;password&quot;: &quot;...&quot; } as JSON body" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2806" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="r3" value="Server → Supabase       sign_in_with_password({ email, password }) via Python Supabase SDK" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2832" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="r4" value="Supabase → Server       Response with .user (id, email) and .session (access_token, refresh_token)" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2858" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="r5" value="Server → Browser        HTTP 200 JSON: { user: {id, email}, session: {access_token, refresh_token, ...} }" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2884" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="r6" value="Browser → localStorage  supabase.auth.setSession({ access_token, refresh_token }) persists the tokens" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="2910" width="740" height="22" as="geometry"/>
+                </mxCell>
+                <mxCell id="ftr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="ftrt" value="Login.tsx:52 → handleLogin:21 → signIn:72 → authFetch:9 → POST /api/auth/login → LoginInput:138 → sign_in_with_password:14 → setSession:77 → navigate(/sales):36" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1">
+                    <mxGeometry x="40" y="2969" width="1040" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="a1" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n1" target="n2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a2" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n2" target="n3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a3" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n3" target="n4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a4" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n4" target="n5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a5" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n5" target="n6" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="anet" value="Network failure" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" edge="1" parent="1" source="n6" target="en">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a6" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n6" target="n6b" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a7" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n6b" target="n7" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a8" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n7" target="n8" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a9" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n8" target="d1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a10" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d1" target="n9" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a11" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d1" target="e1" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a12" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n9" target="d2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a13" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d2" target="n10" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a14" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d2" target="e2" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a15" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n10" target="d3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a16" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d3" target="n11" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a17" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d3" target="e3" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a18" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n11" target="n12" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a19" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n12" target="d4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a20" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d4" target="n13" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a21" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d4" target="e4" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a22" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n13" target="n14" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a23" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n14" target="n15" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a24" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n15" target="d5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a25" value="Yes (error)" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d5" target="e5" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a26" value="No (success)" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d5" target="n16" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a27" style="strokeColor=#C62828;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e5" target="e5b" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="a28" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n16" target="n17" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ae1" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e1" target="err" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ae2" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e2" target="err" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ae3" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e3" target="err" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="ae4" value="HTTP error → browser" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" parent="1" source="err" target="n12" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="160" y="1937"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="ae5" value="" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" parent="1" source="e4" target="d5" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="185" y="2070"/>
+                            <mxPoint x="185" y="2424"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="4" value="&lt;span style=&quot;color: rgb(198, 40, 40); font-size: 8px;&quot;&gt;Error → signIn catch → { user: null, error }&lt;/span&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="ae5">
+                    <mxGeometry x="-0.4059" relative="1" as="geometry">
+                        <mxPoint as="offset"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="aen" value="Caught by signIn catch" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;exitDx=0;exitDy=0;" parent="1" source="en" target="e4" edge="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <Array as="points">
+                            <mxPoint x="10" y="2003"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
