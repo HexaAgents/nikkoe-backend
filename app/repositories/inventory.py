@@ -44,12 +44,7 @@ class InventoryRepository:
 
     def find_on_hand(self) -> list:
         try:
-            response = (
-                supabase.table("inventory_balances")
-                .select("*")
-                .gt("quantity_on_hand", 0)
-                .execute()
-            )
+            response = supabase.table("inventory_balances").select("*").gt("quantity_on_hand", 0).execute()
             return response.data or []
         except APIError as e:
             if e.code == "PGRST205":

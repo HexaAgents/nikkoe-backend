@@ -57,9 +57,7 @@ class SaleRepository:
         return response.data or []
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
-        response = supabase.rpc(
-            "create_sale", {"p_sale": sale, "p_lines": lines}
-        ).execute()
+        response = supabase.rpc("create_sale", {"p_sale": sale, "p_lines": lines}).execute()
         return response.data
 
     def void_sale(self, sale_id: str, user_id: str, reason: str) -> None:

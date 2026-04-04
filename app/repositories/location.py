@@ -13,9 +13,7 @@ class LocationRepository:
         return {"data": response.data or [], "total": response.count or 0}
 
     def create(self, data: dict) -> dict:
-        response = (
-            supabase.table("locations").insert(data).select().single().execute()
-        )
+        response = supabase.table("locations").insert(data).select().single().execute()
         return response.data
 
     def remove(self, id: str) -> None:

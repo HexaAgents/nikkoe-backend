@@ -11,9 +11,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/login")
 def login(body: LoginInput):
     try:
-        response = supabase.auth.sign_in_with_password(
-            {"email": body.email, "password": body.password}
-        )
+        response = supabase.auth.sign_in_with_password({"email": body.email, "password": body.password})
     except Exception as e:
         raise AppError(401, str(e))
 
@@ -37,9 +35,7 @@ def login(body: LoginInput):
 @router.post("/signup")
 def signup(body: SignupInput):
     try:
-        response = supabase.auth.sign_up(
-            {"email": body.email, "password": body.password}
-        )
+        response = supabase.auth.sign_up({"email": body.email, "password": body.password})
     except Exception as e:
         raise AppError(400, str(e))
 
@@ -65,16 +61,12 @@ def signup(body: SignupInput):
 @router.post("/change-password")
 def change_password(body: ChangePasswordInput, user: CurrentUser = Depends(get_current_user)):
     try:
-        supabase.auth.sign_in_with_password(
-            {"email": user.email or "", "password": body.current_password}
-        )
+        supabase.auth.sign_in_with_password({"email": user.email or "", "password": body.current_password})
     except Exception:
         raise AppError(400, "Current password is incorrect")
 
     try:
-        supabase.auth.admin.update_user_by_id(
-            user.id, {"password": body.new_password}
-        )
+        supabase.auth.admin.update_user_by_id(user.id, {"password": body.new_password})
     except Exception as e:
         raise AppError(400, str(e))
 

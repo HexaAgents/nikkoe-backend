@@ -27,13 +27,7 @@ class ReceiptRepository:
         return {"data": receipts, "total": total}
 
     def find_by_id(self, id: str) -> dict | None:
-        response = (
-            supabase.table("receipts")
-            .select("*")
-            .eq("receipt_id", id)
-            .maybe_single()
-            .execute()
-        )
+        response = supabase.table("receipts").select("*").eq("receipt_id", id).maybe_single().execute()
         receipt = response.data
         if not receipt:
             return None
@@ -49,24 +43,14 @@ class ReceiptRepository:
             receipt["suppliers"] = sup_resp.data
 
         if receipt.get("user_id"):
-            usr_resp = (
-                supabase.table("users")
-                .select("*")
-                .eq("user_id", receipt["user_id"])
-                .maybe_single()
-                .execute()
-            )
+            usr_resp = supabase.table("users").select("*").eq("user_id", receipt["user_id"]).maybe_single().execute()
             receipt["users"] = usr_resp.data
 
         return receipt
 
     def find_lines(self, receipt_id: str) -> list:
         response = (
-            supabase.table("receipt_lines")
-            .select("*")
-            .eq("receipt_id", receipt_id)
-            .order("created_at")
-            .execute()
+            supabase.table("receipt_lines").select("*").eq("receipt_id", receipt_id).order("created_at").execute()
         )
         return response.data or []
 
@@ -81,9 +65,7 @@ class ReceiptRepository:
         return response.data or []
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
-        response = supabase.rpc(
-            "create_receipt", {"p_receipt": receipt, "p_lines": lines}
-        ).execute()
+        response = supabase.rpc("create_receipt", {"p_receipt": receipt, "p_lines": lines}).execute()
         return response.data
 
     def void_receipt(self, receipt_id: str, user_id: str, reason: str) -> None:

@@ -13,9 +13,7 @@ class SupplierQuoteRepository:
         return response.data or []
 
     def create(self, data: dict) -> dict:
-        response = (
-            supabase.table("supplier_quotes").insert(data).select().single().execute()
-        )
+        response = supabase.table("supplier_quotes").insert(data).select().single().execute()
         return response.data
 
     def remove(self, id: str) -> None:
