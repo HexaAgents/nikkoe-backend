@@ -10,7 +10,6 @@ class UserProfile:
     user_id: str
     name: str
     email_address: str | None
-    role: str | None
 
 
 @dataclass
@@ -38,7 +37,7 @@ async def get_current_user(request: Request) -> CurrentUser:
 
     profile_response = (
         supabase.table("users")
-        .select("user_id, name, email_address, role")
+        .select("user_id, name, email_address")
         .eq("auth_id", user.id)
         .maybe_single()
         .execute()
@@ -51,7 +50,6 @@ async def get_current_user(request: Request) -> CurrentUser:
             user_id=p["user_id"],
             name=p["name"],
             email_address=p.get("email_address"),
-            role=p.get("role"),
         )
 
     return CurrentUser(id=user.id, email=user.email, profile=profile)

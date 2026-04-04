@@ -26,7 +26,6 @@ def mock_user():
             user_id="user-uuid-456",
             name="Test User",
             email_address="test@example.com",
-            role="admin",
         ),
     )
 
