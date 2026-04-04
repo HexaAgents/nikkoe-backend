@@ -36,11 +36,7 @@ async def get_current_user(request: Request) -> CurrentUser:
         return _unauthorized("Invalid or expired token")
 
     profile_response = (
-        supabase.table("users")
-        .select("user_id, name, email_address")
-        .eq("auth_id", user.id)
-        .maybe_single()
-        .execute()
+        supabase.table("users").select("user_id, name, email_address").eq("auth_id", user.id).maybe_single().execute()
     )
 
     profile = None
