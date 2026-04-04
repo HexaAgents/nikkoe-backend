@@ -58,4 +58,5 @@ jobs:
           gcloud run deploy nikkoe-backend \
             --source . \
             --region us-central1 \
+            --clear-base-image \
             --quiet
