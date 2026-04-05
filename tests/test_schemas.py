@@ -289,13 +289,13 @@ class TestCreateReceiptRequest:
 class TestSaleInput:
     def test_all_optional(self):
         s = SaleInput()
-        assert s.customer_id is None
-        assert s.channel_id is None
+        assert s.customer_id_id is None
+        assert s.channel_id_id is None
         assert s.note is None
 
     def test_fully_populated(self):
-        s = SaleInput(customer_id=1, channel_id=2, note="Urgent")
-        assert s.customer_id == 1
+        s = SaleInput(customer_id_id=1, channel_id_id=2, note="Urgent")
+        assert s.customer_id_id == 1
 
     def test_rejects_note_too_long(self):
         with pytest.raises(ValidationError):
