@@ -30,13 +30,7 @@ class SaleRepository:
         return {"data": sales, "total": total}
 
     def find_by_id(self, id: int) -> dict | None:
-        response = (
-            supabase.table("Sale")
-            .select("*")
-            .eq("id", id)
-            .maybe_single()
-            .execute()
-        )
+        response = supabase.table("Sale").select("*").eq("id", id).maybe_single().execute()
         sale = response.data
         if not sale:
             return None
@@ -60,12 +54,7 @@ class SaleRepository:
         return sale
 
     def find_lines(self, sale_id: int) -> list:
-        response = (
-            supabase.table("Sale_Stock")
-            .select("*")
-            .eq("sale_id", sale_id)
-            .execute()
-        )
+        response = supabase.table("Sale_Stock").select("*").eq("sale_id", sale_id).execute()
         lines = response.data or []
 
         stock_ids = list({ln["stock_id"] for ln in lines if ln.get("stock_id")})
@@ -79,11 +68,7 @@ class SaleRepository:
             ln["currencies"] = currencies_map.get(ln.get("currency_id"))
             if stock:
                 item_resp = (
-                    supabase.table("Item")
-                    .select("id, item_id")
-                    .eq("id", stock.get("item_id"))
-                    .maybe_single()
-                    .execute()
+                    supabase.table("Item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
                 )
                 loc_resp = (
                     supabase.table("Location")
@@ -103,12 +88,7 @@ class SaleRepository:
         if not stock_ids:
             return []
 
-        response = (
-            supabase.table("Sale_Stock")
-            .select("*")
-            .in_("stock_id", stock_ids)
-            .execute()
-        )
+        response = supabase.table("Sale_Stock").select("*").in_("stock_id", stock_ids).execute()
         return response.data or []
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
@@ -165,9 +145,11 @@ class SaleRepository:
     def void_sale(self, sale_id: int, user_id: int, reason: str) -> None:
         from datetime import datetime, timezone
 
-        supabase.table("Sale").update({
-            "status": "VOIDED",
-            "void_reason": reason,
-            "voided_at": datetime.now(timezone.utc).isoformat(),
-            "voided_by": user_id,
-        }).eq("id", sale_id).execute()
+        supabase.table("Sale").update(
+            {
+                "status": "VOIDED",
+                "void_reason": reason,
+                "voided_at": datetime.now(timezone.utc).isoformat(),
+                "voided_by": user_id,
+            }
+        ).eq("id", sale_id).execute()

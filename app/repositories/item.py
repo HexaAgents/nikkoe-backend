@@ -18,9 +18,7 @@ class ItemRepository:
         if not item_ids:
             return {"data": [], "total": total}
 
-        categories_map = batch_load(
-            "Category", "id", list({i["category_id"] for i in items if i.get("category_id")})
-        )
+        categories_map = batch_load("Category", "id", list({i["category_id"] for i in items if i.get("category_id")}))
 
         stock_resp = supabase.table("Stock").select("*").in_("item_id", item_ids).execute()
         stocks = stock_resp.data or []
@@ -31,25 +29,25 @@ class ItemRepository:
         stock_by_item: dict[int, list] = {}
         for s in stocks:
             loc_resp = (
-                supabase.table("Location")
-                .select("id, code")
-                .eq("id", s.get("location_id"))
-                .maybe_single()
-                .execute()
+                supabase.table("Location").select("id, code").eq("id", s.get("location_id")).maybe_single().execute()
             )
-            stock_by_item.setdefault(s["item_id"], []).append({
-                "quantity": s.get("quantity"),
-                "locations": loc_resp.data,
-            })
+            stock_by_item.setdefault(s["item_id"], []).append(
+                {
+                    "quantity": s.get("quantity"),
+                    "locations": loc_resp.data,
+                }
+            )
 
         stock_id_to_item: dict[int, int] = {s["id"]: s["item_id"] for s in stocks}
         rs_by_item: dict[int, list] = {}
         for rs in receipt_stocks:
             iid = stock_id_to_item.get(rs.get("stock_id"))
             if iid:
-                rs_by_item.setdefault(iid, []).append({
-                    "unit_price": rs.get("unit_price"),
-                })
+                rs_by_item.setdefault(iid, []).append(
+                    {
+                        "unit_price": rs.get("unit_price"),
+                    }
+                )
 
         for item in items:
             iid = item["id"]

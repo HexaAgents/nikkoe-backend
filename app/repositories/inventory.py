@@ -39,12 +39,7 @@ class InventoryRepository:
         return {"data": movements, "total": total}
 
     def find_by_item_id(self, item_id: int) -> list:
-        response = (
-            supabase.table("Stock")
-            .select("*, Location(code)")
-            .eq("item_id", item_id)
-            .execute()
-        )
+        response = supabase.table("Stock").select("*, Location(code)").eq("item_id", item_id).execute()
         return response.data or []
 
     def find_on_hand(self) -> list:

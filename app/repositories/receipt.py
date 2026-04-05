@@ -65,12 +65,7 @@ class ReceiptRepository:
         return receipt
 
     def find_lines(self, receipt_id: int) -> list:
-        response = (
-            supabase.table("Receipt_Stock")
-            .select("*")
-            .eq("receipt_id", receipt_id)
-            .execute()
-        )
+        response = supabase.table("Receipt_Stock").select("*").eq("receipt_id", receipt_id).execute()
         lines = response.data or []
 
         stock_ids = list({ln["stock_id"] for ln in lines if ln.get("stock_id")})
@@ -87,11 +82,7 @@ class ReceiptRepository:
             ln["suppliers"] = suppliers_map.get(ln.get("supplier_id"))
             if stock:
                 item_resp = (
-                    supabase.table("Item")
-                    .select("id, item_id")
-                    .eq("id", stock.get("item_id"))
-                    .maybe_single()
-                    .execute()
+                    supabase.table("Item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
                 )
                 loc_resp = (
                     supabase.table("Location")
@@ -111,12 +102,7 @@ class ReceiptRepository:
         if not stock_ids:
             return []
 
-        response = (
-            supabase.table("Receipt_Stock")
-            .select("*")
-            .in_("stock_id", stock_ids)
-            .execute()
-        )
+        response = supabase.table("Receipt_Stock").select("*").in_("stock_id", stock_ids).execute()
         return response.data or []
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
@@ -173,9 +159,11 @@ class ReceiptRepository:
     def void_receipt(self, receipt_id: int, user_id: int, reason: str) -> None:
         from datetime import datetime, timezone
 
-        supabase.table("Receipt").update({
-            "status": "VOIDED",
-            "void_reason": reason,
-            "voided_at": datetime.now(timezone.utc).isoformat(),
-            "voided_by": user_id,
-        }).eq("id", receipt_id).execute()
+        supabase.table("Receipt").update(
+            {
+                "status": "VOIDED",
+                "void_reason": reason,
+                "voided_at": datetime.now(timezone.utc).isoformat(),
+                "voided_by": user_id,
+            }
+        ).eq("id", receipt_id).execute()
