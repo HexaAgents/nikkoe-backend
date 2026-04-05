@@ -14,14 +14,30 @@ class ReceiptRepository:
         receipts = response.data or []
         total = response.count or 0
 
-        supplier_ids = list({r["supplier_id"] for r in receipts if r.get("supplier_id")})
         user_ids = list({r["user_id"] for r in receipts if r.get("user_id")})
-
-        suppliers_map = batch_load("Supplier", "id", supplier_ids)
         users_map = batch_load("User", "id", user_ids, "id, first_name, last_name")
 
+        receipt_ids = [r["id"] for r in receipts]
+        line_supplier_map: dict[int, int] = {}
+        if receipt_ids:
+            lines_resp = (
+                supabase.table("Receipt_Stock")
+                .select("receipt_id, supplier_id")
+                .in_("receipt_id", receipt_ids)
+                .execute()
+            )
+            for ln in lines_resp.data or []:
+                if ln.get("supplier_id") and ln["receipt_id"] not in line_supplier_map:
+                    line_supplier_map[ln["receipt_id"]] = ln["supplier_id"]
+
+        header_supplier_ids = list({r["supplier_id"] for r in receipts if r.get("supplier_id")})
+        line_supplier_ids = list(set(line_supplier_map.values()))
+        all_supplier_ids = list(set(header_supplier_ids + line_supplier_ids))
+        suppliers_map = batch_load("Supplier", "id", all_supplier_ids)
+
         for r in receipts:
-            r["suppliers"] = suppliers_map.get(r.get("supplier_id"))
+            sup_id = r.get("supplier_id") or line_supplier_map.get(r["id"])
+            r["suppliers"] = suppliers_map.get(sup_id) if sup_id else None
             r["users"] = users_map.get(r.get("user_id"))
 
         return {"data": receipts, "total": total}
