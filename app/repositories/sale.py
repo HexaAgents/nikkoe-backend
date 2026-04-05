@@ -104,22 +104,27 @@ class SaleRepository:
             location_id = line.pop("location_id", None)
 
             if not stock_id and item_id and location_id:
-                existing = (
-                    supabase.table("Stock")
-                    .select("id")
-                    .eq("item_id", item_id)
-                    .eq("location_id", location_id)
-                    .maybe_single()
-                    .execute()
-                )
-                if existing.data:
-                    stock_id = existing.data["id"]
-                else:
+                try:
+                    existing = (
+                        supabase.table("Stock")
+                        .select("id")
+                        .eq("item_id", item_id)
+                        .eq("location_id", location_id)
+                        .maybe_single()
+                        .execute()
+                    )
+                    if existing and existing.data:
+                        stock_id = existing.data["id"]
+                except Exception:
+                    existing = None
+
+                if not stock_id:
                     new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).execute()
                     stock_id = new_stock.data[0]["id"]
 
             line["sale_id"] = sale_id
-            line["stock_id"] = stock_id
+            if stock_id:
+                line["stock_id"] = stock_id
             supabase.table("Sale_Stock").insert(line).execute()
 
             if stock_id:
