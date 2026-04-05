@@ -45,7 +45,13 @@ class SaleRepository:
             ch = supabase.table("Channel").select("*").eq("id", sale["channel_id_id"]).maybe_single().execute()
             sale["channels"] = ch.data
         if sale.get("user_id"):
-            u = supabase.table("User").select("id, first_name, last_name").eq("id", sale["user_id"]).maybe_single().execute()
+            u = (
+                supabase.table("User")
+                .select("id, first_name, last_name")
+                .eq("id", sale["user_id"])
+                .maybe_single()
+                .execute()
+            )
             sale["users"] = u.data
         if sale.get("customer_id_id"):
             c = supabase.table("Customer").select("id, name").eq("id", sale["customer_id_id"]).maybe_single().execute()
@@ -72,8 +78,20 @@ class SaleRepository:
             ln["stock"] = stock
             ln["currencies"] = currencies_map.get(ln.get("currency_id"))
             if stock:
-                item_resp = supabase.table("Item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
-                loc_resp = supabase.table("Location").select("id, code").eq("id", stock.get("location_id")).maybe_single().execute()
+                item_resp = (
+                    supabase.table("Item")
+                    .select("id, item_id")
+                    .eq("id", stock.get("item_id"))
+                    .maybe_single()
+                    .execute()
+                )
+                loc_resp = (
+                    supabase.table("Location")
+                    .select("id, code")
+                    .eq("id", stock.get("location_id"))
+                    .maybe_single()
+                    .execute()
+                )
                 ln["items"] = item_resp.data
                 ln["locations"] = loc_resp.data
 
@@ -125,7 +143,11 @@ class SaleRepository:
                     existing = None
 
                 if not stock_id:
-                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).execute()
+                    new_stock = (
+                        supabase.table("Stock")
+                        .insert({"item_id": item_id, "location_id": location_id, "quantity": 0})
+                        .execute()
+                    )
                     stock_id = new_stock.data[0]["id"]
 
             line["sale_id"] = sale_id

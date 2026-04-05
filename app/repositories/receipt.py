@@ -53,7 +53,13 @@ class ReceiptRepository:
             receipt["suppliers"] = sup_resp.data
 
         if receipt.get("user_id"):
-            usr_resp = supabase.table("User").select("id, first_name, last_name").eq("id", receipt["user_id"]).maybe_single().execute()
+            usr_resp = (
+                supabase.table("User")
+                .select("id, first_name, last_name")
+                .eq("id", receipt["user_id"])
+                .maybe_single()
+                .execute()
+            )
             receipt["users"] = usr_resp.data
 
         return receipt
@@ -80,8 +86,20 @@ class ReceiptRepository:
             ln["currencies"] = currencies_map.get(ln.get("currency_id"))
             ln["suppliers"] = suppliers_map.get(ln.get("supplier_id"))
             if stock:
-                item_resp = supabase.table("Item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
-                loc_resp = supabase.table("Location").select("id, code").eq("id", stock.get("location_id")).maybe_single().execute()
+                item_resp = (
+                    supabase.table("Item")
+                    .select("id, item_id")
+                    .eq("id", stock.get("item_id"))
+                    .maybe_single()
+                    .execute()
+                )
+                loc_resp = (
+                    supabase.table("Location")
+                    .select("id, code")
+                    .eq("id", stock.get("location_id"))
+                    .maybe_single()
+                    .execute()
+                )
                 ln["items"] = item_resp.data
                 ln["locations"] = loc_resp.data
 
@@ -133,7 +151,11 @@ class ReceiptRepository:
                     existing = None
 
                 if not stock_id:
-                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).execute()
+                    new_stock = (
+                        supabase.table("Stock")
+                        .insert({"item_id": item_id, "location_id": location_id, "quantity": 0})
+                        .execute()
+                    )
                     stock_id = new_stock.data[0]["id"]
 
             line["receipt_id"] = receipt_id

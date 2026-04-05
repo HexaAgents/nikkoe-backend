@@ -30,7 +30,13 @@ class ItemRepository:
 
         stock_by_item: dict[int, list] = {}
         for s in stocks:
-            loc_resp = supabase.table("Location").select("id, code").eq("id", s.get("location_id")).maybe_single().execute()
+            loc_resp = (
+                supabase.table("Location")
+                .select("id, code")
+                .eq("id", s.get("location_id"))
+                .maybe_single()
+                .execute()
+            )
             stock_by_item.setdefault(s["item_id"], []).append({
                 "quantity": s.get("quantity"),
                 "locations": loc_resp.data,
