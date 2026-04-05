@@ -4,7 +4,7 @@ from app.dependencies import supabase
 class CategoryRepository:
     def find_all(self, limit: int = 50, offset: int = 0) -> dict:
         response = (
-            supabase.table("categories")
+            supabase.table("Category")
             .select("*", count="exact")
             .order("name")
             .range(offset, offset + limit - 1)
@@ -13,8 +13,8 @@ class CategoryRepository:
         return {"data": response.data or [], "total": response.count or 0}
 
     def create(self, data: dict) -> dict:
-        response = supabase.table("categories").insert(data).select().single().execute()
+        response = supabase.table("Category").insert(data).select().single().execute()
         return response.data
 
-    def remove(self, id: str) -> None:
-        supabase.table("categories").delete().eq("category_id", id).execute()
+    def remove(self, id: int) -> None:
+        supabase.table("Category").delete().eq("id", id).execute()

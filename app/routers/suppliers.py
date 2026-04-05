@@ -25,6 +25,6 @@ def create_supplier(body: SupplierInput, user: CurrentUser = Depends(get_current
 
 
 @router.delete("/{supplier_id}")
-def delete_supplier(supplier_id: str, user: CurrentUser = Depends(get_current_user)):
+def delete_supplier(supplier_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_supplier(supplier_id)
     return {"success": True}

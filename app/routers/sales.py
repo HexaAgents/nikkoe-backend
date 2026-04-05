@@ -21,12 +21,12 @@ def list_sales(
 
 
 @router.get("/{sale_id}")
-def get_sale(sale_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_sale(sale_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_sale(sale_id)
 
 
 @router.get("/{sale_id}/lines")
-def get_sale_lines(sale_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_sale_lines(sale_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_sale_lines(sale_id)
 
 
@@ -39,7 +39,7 @@ def create_sale(body: CreateSaleRequest, user: CurrentUser = Depends(get_current
 
 
 @router.post("/{sale_id}/void")
-def void_sale(sale_id: str, body: VoidRequest, user: CurrentUser = Depends(get_current_user)):
+def void_sale(sale_id: int, body: VoidRequest, user: CurrentUser = Depends(get_current_user)):
     if not user.profile or not user.profile.user_id:
         raise ForbiddenError("User profile is required to void a sale")
     service.void_sale(sale_id, user.profile.user_id, body.reason)

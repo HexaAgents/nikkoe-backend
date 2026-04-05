@@ -25,6 +25,6 @@ def create_location(body: LocationInput, user: CurrentUser = Depends(get_current
 
 
 @router.delete("/{location_id}")
-def delete_location(location_id: str, user: CurrentUser = Depends(get_current_user)):
+def delete_location(location_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_location(location_id)
     return {"success": True}

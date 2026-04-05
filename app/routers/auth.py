@@ -65,8 +65,8 @@ def get_me(user: CurrentUser = Depends(get_current_user)):
         "profile": (
             {
                 "user_id": user.profile.user_id,
-                "name": user.profile.name,
-                "email_address": user.profile.email_address,
+                "name": f"{user.profile.first_name} {user.profile.last_name}".strip(),
+                "email_address": user.profile.email,
             }
             if user.profile
             else None

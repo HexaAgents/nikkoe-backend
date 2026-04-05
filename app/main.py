@@ -14,6 +14,7 @@ from app.routers import (  # noqa: E402
     auth,
     categories,
     channels,
+    currencies,
     customers,
     inventory,
     items,
@@ -51,6 +52,7 @@ app.include_router(customers.router)
 app.include_router(inventory.router)
 app.include_router(users.router)
 app.include_router(supplier_quotes.router)
+app.include_router(currencies.router)
 
 
 @app.get("/api/health")

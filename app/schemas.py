@@ -22,79 +22,89 @@ class CategoryInput(BaseModel):
 
 
 class Category(BaseModel):
-    category_id: str
+    id: int
     name: str
 
 
 class CustomerInput(BaseModel):
     name: str = Field(min_length=1, max_length=255)
+    email: str | None = None
+    phone: str | None = None
+    address_line1: str | None = None
+    address_line2: str | None = None
+    address_line3: str | None = None
+    city: str | None = None
+    country: str | None = None
+    postal_code: str | None = None
 
 
 class Customer(BaseModel):
-    customer_id: str
+    id: int
     name: str
 
 
 class Channel(BaseModel):
-    channel_id: str
-    channel_name: str
+    id: int
+    name: str
 
 
 class LocationInput(BaseModel):
-    location_code: str = Field(min_length=1, max_length=50)
+    code: str = Field(min_length=1, max_length=50)
 
 
 class Location(BaseModel):
-    location_id: str
-    location_code: str
+    id: int
+    code: str
 
 
 class ItemInput(BaseModel):
-    part_number: str = Field(min_length=1, max_length=255)
+    item_id: str = Field(min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=1000)
-    category_id: str | None = None
+    category_id: int | None = None
 
 
 class ItemUpdateInput(BaseModel):
-    part_number: str | None = Field(default=None, min_length=1, max_length=255)
+    item_id: str | None = Field(default=None, min_length=1, max_length=255)
     description: str | None = Field(default=None, max_length=1000)
-    category_id: str | None = None
+    category_id: int | None = None
 
 
 class Item(BaseModel):
+    id: int
     item_id: str
-    part_number: str
     description: str | None = None
-    category_id: str | None = None
+    category_id: int | None = None
 
 
 class SupplierInput(BaseModel):
-    supplier_name: str = Field(min_length=1, max_length=255)
-    supplier_address: str | None = Field(default=None, max_length=500)
-    supplier_email: EmailStr | None = None
-    supplier_phone: str | None = Field(default=None, max_length=20)
+    name: str = Field(min_length=1, max_length=255)
+    address: str | None = Field(default=None, max_length=500)
+    email: EmailStr | None = None
+    phone: str | None = Field(default=None, max_length=20)
 
 
 class Supplier(BaseModel):
-    supplier_id: str
-    supplier_name: str
-    supplier_address: str | None = None
-    supplier_email: str | None = None
-    supplier_phone: str | None = None
+    id: int
+    name: str
+    address: str | None = None
+    email: str | None = None
+    phone: str | None = None
 
 
 class ReceiptInput(BaseModel):
-    supplier_id: str | None = None
+    supplier_id: int | None = None
     reference: str | None = Field(default=None, max_length=255)
     note: str | None = Field(default=None, max_length=1000)
 
 
 class ReceiptLineInput(BaseModel):
-    item_id: str
-    location_id: str
+    stock_id: int | None = None
+    item_id: int | None = None
+    location_id: int | None = None
     quantity: int = Field(gt=0)
-    unit_cost: float = Field(ge=0)
-    currency_code: str = Field(min_length=1, max_length=10)
+    unit_price: float = Field(ge=0)
+    currency_id: int
+    supplier_id: int | None = None
 
 
 class CreateReceiptRequest(BaseModel):
@@ -103,17 +113,19 @@ class CreateReceiptRequest(BaseModel):
 
 
 class SaleInput(BaseModel):
-    customer_name: str | None = Field(default=None, max_length=255)
-    channel_id: str | None = None
+    customer_id: int | None = None
+    channel_id: int | None = None
+    channel_ref: str | None = None
     note: str | None = Field(default=None, max_length=1000)
 
 
 class SaleLineInput(BaseModel):
-    item_id: str
-    location_id: str
+    stock_id: int | None = None
+    item_id: int | None = None
+    location_id: int | None = None
     quantity: int = Field(gt=0)
     unit_price: float = Field(ge=0)
-    currency_code: str = Field(min_length=1, max_length=10)
+    currency_id: int
 
 
 class CreateSaleRequest(BaseModel):
@@ -122,11 +134,11 @@ class CreateSaleRequest(BaseModel):
 
 
 class SupplierQuoteInput(BaseModel):
-    item_id: str
-    supplier_id: str
-    unit_cost: float = Field(ge=0)
-    currency: str = Field(min_length=1, max_length=10)
-    quoted_at: str | None = None
+    item_id: int
+    supplier_id: int
+    cost: float = Field(ge=0)
+    currency_id: int
+    date_time: str | None = None
     note: str | None = Field(default=None, max_length=500)
 
 

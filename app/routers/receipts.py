@@ -21,12 +21,12 @@ def list_receipts(
 
 
 @router.get("/{receipt_id}")
-def get_receipt(receipt_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_receipt(receipt_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_receipt(receipt_id)
 
 
 @router.get("/{receipt_id}/lines")
-def get_receipt_lines(receipt_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_receipt_lines(receipt_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_receipt_lines(receipt_id)
 
 
@@ -39,7 +39,7 @@ def create_receipt(body: CreateReceiptRequest, user: CurrentUser = Depends(get_c
 
 
 @router.post("/{receipt_id}/void")
-def void_receipt(receipt_id: str, body: VoidRequest, user: CurrentUser = Depends(get_current_user)):
+def void_receipt(receipt_id: int, body: VoidRequest, user: CurrentUser = Depends(get_current_user)):
     if not user.profile or not user.profile.user_id:
         raise ForbiddenError("User profile is required to void a receipt")
     service.void_receipt(receipt_id, user.profile.user_id, body.reason)

@@ -23,9 +23,10 @@ def mock_user():
         id="auth-user-id-123",
         email="test@example.com",
         profile=UserProfile(
-            user_id="user-uuid-456",
-            name="Test User",
-            email_address="test@example.com",
+            user_id=456,
+            first_name="Test",
+            last_name="User",
+            email="test@example.com",
         ),
     )
 

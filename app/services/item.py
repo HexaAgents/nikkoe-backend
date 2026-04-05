@@ -24,29 +24,29 @@ class ItemService:
     def list_items(self, limit: int = 50, offset: int = 0):
         return self.repo.find_all(limit, offset)
 
-    def get_item(self, id: str):
+    def get_item(self, id: int):
         item = self.repo.find_by_id(id)
         if item is None:
-            raise NotFoundError("Item", id)
+            raise NotFoundError("Item", str(id))
         return item
 
-    def get_item_quotes(self, item_id: str):
+    def get_item_quotes(self, item_id: int):
         return self.quote_repo.find_by_item_id(item_id)
 
-    def get_item_inventory(self, item_id: str):
+    def get_item_inventory(self, item_id: int):
         return self.inventory_repo.find_by_item_id(item_id)
 
-    def get_item_receipts(self, item_id: str):
+    def get_item_receipts(self, item_id: int):
         return self.receipt_repo.find_by_item_id(item_id)
 
-    def get_item_sales(self, item_id: str):
+    def get_item_sales(self, item_id: int):
         return self.sale_repo.find_by_item_id(item_id)
 
     def create_item(self, data: dict):
         return self.repo.create(data)
 
-    def update_item(self, id: str, data: dict):
+    def update_item(self, id: int, data: dict):
         return self.repo.update(id, data)
 
-    def delete_item(self, id: str):
+    def delete_item(self, id: int):
         return self.repo.remove(id)

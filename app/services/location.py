@@ -11,5 +11,5 @@ class LocationService:
     def create_location(self, data: dict):
         return self.repo.create(data)
 
-    def delete_location(self, id: str):
+    def delete_location(self, id: int):
         return self.repo.remove(id)

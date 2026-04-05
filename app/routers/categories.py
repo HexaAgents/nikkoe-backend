@@ -25,6 +25,6 @@ def create_category(body: CategoryInput, user: CurrentUser = Depends(get_current
 
 
 @router.delete("/{category_id}")
-def delete_category(category_id: str, user: CurrentUser = Depends(get_current_user)):
+def delete_category(category_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_category(category_id)
     return {"success": True}

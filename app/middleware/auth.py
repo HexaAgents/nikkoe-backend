@@ -7,9 +7,10 @@ from app.dependencies import supabase
 
 @dataclass
 class UserProfile:
-    user_id: str
-    name: str
-    email_address: str | None
+    user_id: int
+    first_name: str
+    last_name: str
+    email: str | None
 
 
 @dataclass
@@ -36,16 +37,21 @@ async def get_current_user(request: Request) -> CurrentUser:
         return _unauthorized("Invalid or expired token")
 
     profile_response = (
-        supabase.table("users").select("user_id, name, email_address").eq("auth_id", user.id).maybe_single().execute()
+        supabase.table("User")
+        .select("id, first_name, last_name, email")
+        .eq("auth_id", user.id)
+        .maybe_single()
+        .execute()
     )
 
     profile = None
     if profile_response.data:
         p = profile_response.data
         profile = UserProfile(
-            user_id=p["user_id"],
-            name=p["name"],
-            email_address=p.get("email_address"),
+            user_id=p["id"],
+            first_name=p["first_name"],
+            last_name=p.get("last_name", ""),
+            email=p.get("email"),
         )
 
     return CurrentUser(id=user.id, email=user.email, profile=profile)

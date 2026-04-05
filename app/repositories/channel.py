@@ -4,9 +4,9 @@ from app.dependencies import supabase
 class ChannelRepository:
     def find_all(self, limit: int = 50, offset: int = 0) -> dict:
         response = (
-            supabase.table("channels")
+            supabase.table("Channel")
             .select("*", count="exact")
-            .order("channel_name")
+            .order("name")
             .range(offset, offset + limit - 1)
             .execute()
         )

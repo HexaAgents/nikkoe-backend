@@ -8,5 +8,5 @@ class SupplierQuoteService:
     def create_quote(self, data: dict):
         return self.repo.create(data)
 
-    def delete_quote(self, id: str):
+    def delete_quote(self, id: int):
         return self.repo.remove(id)

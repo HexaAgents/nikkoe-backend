@@ -9,17 +9,17 @@ class ReceiptService:
     def list_receipts(self, limit: int = 50, offset: int = 0):
         return self.repo.find_all(limit, offset)
 
-    def get_receipt(self, id: str):
+    def get_receipt(self, id: int):
         receipt = self.repo.find_by_id(id)
         if receipt is None:
-            raise NotFoundError("Receipt", id)
+            raise NotFoundError("Receipt", str(id))
         return receipt
 
-    def get_receipt_lines(self, receipt_id: str):
+    def get_receipt_lines(self, receipt_id: int):
         return self.repo.find_lines(receipt_id)
 
     def create_receipt(self, receipt_data: dict, lines_data: list[dict]):
         return self.repo.create(receipt_data, lines_data)
 
-    def void_receipt(self, receipt_id: str, user_id: str, reason: str):
+    def void_receipt(self, receipt_id: int, user_id: int, reason: str):
         return self.repo.void_receipt(receipt_id, user_id, reason)

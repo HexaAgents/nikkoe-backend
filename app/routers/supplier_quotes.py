@@ -16,6 +16,6 @@ def create_quote(body: SupplierQuoteInput, user: CurrentUser = Depends(get_curre
 
 
 @router.delete("/{quote_id}")
-def delete_quote(quote_id: str, user: CurrentUser = Depends(get_current_user)):
+def delete_quote(quote_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_quote(quote_id)
     return {"success": True}

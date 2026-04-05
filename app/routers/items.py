@@ -28,27 +28,27 @@ def list_items(
 
 
 @router.get("/{item_id}")
-def get_item(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_item(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item(item_id)
 
 
 @router.get("/{item_id}/quotes")
-def get_item_quotes(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_item_quotes(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item_quotes(item_id)
 
 
 @router.get("/{item_id}/inventory")
-def get_item_inventory(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_item_inventory(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item_inventory(item_id)
 
 
 @router.get("/{item_id}/receipts")
-def get_item_receipts(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_item_receipts(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item_receipts(item_id)
 
 
 @router.get("/{item_id}/sales")
-def get_item_sales(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def get_item_sales(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item_sales(item_id)
 
 
@@ -58,11 +58,11 @@ def create_item(body: ItemInput, user: CurrentUser = Depends(get_current_user)):
 
 
 @router.put("/{item_id}")
-def update_item(item_id: str, body: ItemUpdateInput, user: CurrentUser = Depends(get_current_user)):
+def update_item(item_id: int, body: ItemUpdateInput, user: CurrentUser = Depends(get_current_user)):
     return service.update_item(item_id, body.model_dump(exclude_none=True))
 
 
 @router.delete("/{item_id}")
-def delete_item(item_id: str, user: CurrentUser = Depends(get_current_user)):
+def delete_item(item_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_item(item_id)
     return {"success": True}

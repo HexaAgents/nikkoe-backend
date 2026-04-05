@@ -11,5 +11,5 @@ class SupplierService:
     def create_supplier(self, data: dict):
         return self.repo.create(data)
 
-    def delete_supplier(self, id: str):
+    def delete_supplier(self, id: int):
         return self.repo.remove(id)
