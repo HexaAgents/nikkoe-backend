@@ -4,7 +4,7 @@ Python/FastAPI REST API for the Nikkoe inventory management platform. It handles
 
 ## How it works
 
-Every request flows through four layers: Router → Service → Repository → Database. The router receives the HTTP request, validates input with Pydantic schemas, and resolves the auth dependency. The service enforces business rules — such as converting a missing record into a `NotFoundError` — and orchestrates queries across multiple repositories when needed. Each repository builds and executes Supabase queries for a single domain table, returning raw dicts. For multi-row atomic operations (receipt/sale creation, voiding), the repository calls a Postgres RPC function to ensure all-or-nothing behavior inside a database transaction.
+Every request flows through four layers: Router → Service → Repository → Database. The router receives the HTTP request, validates input with Pydantic schemas, and resolves the auth dependency. The service enforces business rules — such as converting a missing record into a `NotFoundError` — and orchestrates queries across multiple repositories when needed. Each repository builds and executes Supabase queries against PascalCase tables (Item, Sale, Receipt, Stock, etc.) with integer primary keys. For sale/receipt creation, the repository performs multi-step inserts: creates the header row, looks up or creates Stock rows for each item+location combination, inserts line items (Sale_Stock/Receipt_Stock), and updates Stock quantities.
 
 ## Why this design
 
@@ -57,17 +57,18 @@ app/
     auth.py            JWT auth dependency -- verifies token via Supabase, loads User profile (first_name + last_name)
 
   repositories/
-    base.py            batch_load utility for efficient relation loading
-    category.py        Category CRUD queries
-    channel.py         Channel read-only queries
-    customer.py        Customer queries
-    inventory.py       Inventory movements and balances with relation stitching
-    item.py            Item queries with multi-table relation assembly
-    location.py        Location CRUD queries
-    receipt.py         Receipt queries, atomic creation via RPC, voiding via RPC
-    sale.py            Sale queries, atomic creation via RPC, voiding via RPC
-    supplier.py        Supplier CRUD queries
-    supplier_quote.py  Supplier quote queries
+    base.py            batch_load utility for efficient relation loading (integer IDs)
+    category.py        CRUD → Category table (id, name)
+    channel.py         Read-only → Channel table (id, name)
+    currency.py        Read-only → Currency table (id, name)
+    customer.py        List/create → Customer table (id, name, email, phone, address)
+    inventory.py       Transfer table (movements), Stock table (on-hand balances)
+    item.py            CRUD → Item table (id, item_id text, description, category_id)
+    location.py        CRUD → Location table (id, code)
+    receipt.py         Receipt + Receipt_Stock — multi-step inserts with Stock lookup, quantity increment
+    sale.py            Sale + Sale_Stock — multi-step inserts with Stock lookup, quantity decrement
+    supplier.py        CRUD → Supplier table (id, name, address, email, phone)
+    supplier_quote.py  CRUD → Item_supplier table (id, cost, currency_id, item_id, supplier_id)
     user.py            User creation via Supabase Auth admin API
 
   services/
@@ -113,7 +114,7 @@ docs/
   endpoint-flowcharts/           Per-endpoint flowcharts
 
 supabase/
-  migrations/          SQL migrations (atomic receipt/sale creation RPCs)
+  migrations/          SQL migrations (void/status columns for Sale and Receipt, auto-increment sequences)
 ```
 
 ## Testing
