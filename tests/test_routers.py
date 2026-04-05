@@ -186,11 +186,11 @@ class TestReceiptValidation:
 
 class TestVoidRequiresProfile:
     def test_void_sale_forbidden_without_profile(self, unauthed_client):
-        resp = unauthed_client.post("/api/sales/sale-1/void", json={})
+        resp = unauthed_client.post("/api/sales/1/void", json={})
         assert resp.status_code == 403
 
     def test_void_receipt_forbidden_without_profile(self, unauthed_client):
-        resp = unauthed_client.post("/api/receipts/r-1/void", json={})
+        resp = unauthed_client.post("/api/receipts/1/void", json={})
         assert resp.status_code == 403
 
 
