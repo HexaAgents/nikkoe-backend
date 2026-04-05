@@ -59,9 +59,9 @@ class TestItemService:
     def test_get_item_raises_not_found(self, service, repos):
         repos["repo"].find_by_id.return_value = None
         with pytest.raises(NotFoundError) as exc_info:
-            service.get_item("nonexistent")
+            service.get_item(999)
         assert exc_info.value.status_code == 404
-        assert "nonexistent" in exc_info.value.message
+        assert "999" in exc_info.value.message
 
     def test_create_item_delegates_to_repo(self, service, repos):
         data = {"part_number": "NEW-1"}

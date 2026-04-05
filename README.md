@@ -54,7 +54,7 @@ app/
   schemas.py           All Pydantic request/response models
 
   middleware/
-    auth.py            JWT auth dependency -- verifies token via Supabase, attaches user to request
+    auth.py            JWT auth dependency -- verifies token via Supabase, loads User profile (first_name + last_name)
 
   repositories/
     base.py            batch_load utility for efficient relation loading
@@ -85,17 +85,18 @@ app/
 
   routers/
     auth.py            POST /api/auth/login, /signup, /change-password + GET /api/auth/me
-    categories.py      GET/POST/DELETE /api/categories
-    channels.py        GET /api/channels
-    customers.py       GET/POST /api/customers
-    inventory.py       GET /api/inventory/movements, GET /api/inventory/on-hand
-    items.py           9 endpoints for items and sub-resources
-    locations.py       GET/POST/DELETE /api/locations
-    receipts.py        GET/POST /api/receipts, void endpoint
-    sales.py           GET/POST /api/sales, void endpoint
-    suppliers.py       GET/POST/DELETE /api/suppliers
-    supplier_quotes.py POST/DELETE /api/supplier-quotes
-    users.py           GET /api/users/me, POST /api/users
+    categories.py      GET/POST/DELETE /api/categories (→ Category table)
+    channels.py        GET /api/channels (→ Channel table)
+    currencies.py      GET /api/currencies (→ Currency table)
+    customers.py       GET/POST /api/customers (→ Customer table)
+    inventory.py       GET /api/inventory/movements (→ Transfer), GET /api/inventory/on-hand (→ Stock)
+    items.py           9 endpoints for items and sub-resources (→ Item table)
+    locations.py       GET/POST/DELETE /api/locations (→ Location table)
+    receipts.py        GET/POST /api/receipts, void endpoint (→ Receipt + Receipt_Stock)
+    sales.py           GET/POST /api/sales, void endpoint (→ Sale + Sale_Stock)
+    suppliers.py       GET/POST/DELETE /api/suppliers (→ Supplier table)
+    supplier_quotes.py POST/DELETE /api/supplier-quotes (→ Item_supplier table)
+    users.py           GET /api/users/me, POST /api/users (→ User table)
 
 tests/
   conftest.py          Shared fixtures (TestClient, mock users, auth overrides)

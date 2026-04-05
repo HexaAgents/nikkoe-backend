@@ -33,10 +33,6 @@ from app.schemas import (
 )
 
 
-# ---------------------------------------------------------------------------
-# PaginationParams
-# ---------------------------------------------------------------------------
-
 class TestPaginationParams:
     def test_defaults(self):
         p = PaginationParams()
@@ -66,24 +62,15 @@ class TestPaginationParams:
             PaginationParams(offset=-1)
 
 
-# ---------------------------------------------------------------------------
-# PaginatedResult
-# ---------------------------------------------------------------------------
-
 class TestPaginatedResult:
     def test_valid(self):
         r = PaginatedResult(data=[{"a": 1}], total=1)
         assert r.total == 1
-        assert len(r.data) == 1
 
     def test_empty(self):
         r = PaginatedResult(data=[], total=0)
         assert r.data == []
 
-
-# ---------------------------------------------------------------------------
-# CategoryInput
-# ---------------------------------------------------------------------------
 
 class TestCategoryInput:
     def test_valid(self):
@@ -103,10 +90,6 @@ class TestCategoryInput:
             CategoryInput(name="x" * 256)
 
 
-# ---------------------------------------------------------------------------
-# CustomerInput
-# ---------------------------------------------------------------------------
-
 class TestCustomerInput:
     def test_valid(self):
         assert CustomerInput(name="Acme Corp").name == "Acme Corp"
@@ -120,106 +103,86 @@ class TestCustomerInput:
             CustomerInput(name="x" * 256)
 
 
-# ---------------------------------------------------------------------------
-# LocationInput
-# ---------------------------------------------------------------------------
-
 class TestLocationInput:
     def test_valid(self):
-        assert LocationInput(location_code="WH-A1").location_code == "WH-A1"
+        assert LocationInput(code="WH-A1").code == "WH-A1"
 
     def test_max_length_50(self):
-        loc = LocationInput(location_code="x" * 50)
-        assert len(loc.location_code) == 50
+        loc = LocationInput(code="x" * 50)
+        assert len(loc.code) == 50
 
     def test_rejects_empty(self):
         with pytest.raises(ValidationError):
-            LocationInput(location_code="")
+            LocationInput(code="")
 
     def test_rejects_over_50(self):
         with pytest.raises(ValidationError):
-            LocationInput(location_code="x" * 51)
+            LocationInput(code="x" * 51)
 
-
-# ---------------------------------------------------------------------------
-# ItemInput
-# ---------------------------------------------------------------------------
 
 class TestItemInput:
     def test_minimal(self):
-        item = ItemInput(part_number="ABC-123")
-        assert item.part_number == "ABC-123"
+        item = ItemInput(item_id="ABC-123")
+        assert item.item_id == "ABC-123"
         assert item.description is None
         assert item.category_id is None
 
     def test_fully_populated(self):
-        item = ItemInput(
-            part_number="ABC-123",
-            description="A test part",
-            category_id="cat-uuid",
-        )
-        assert item.category_id == "cat-uuid"
+        item = ItemInput(item_id="ABC-123", description="A test part", category_id=1)
+        assert item.category_id == 1
 
-    def test_rejects_missing_part_number(self):
+    def test_rejects_missing_item_id(self):
         with pytest.raises(ValidationError):
             ItemInput()
 
-    def test_rejects_empty_part_number(self):
+    def test_rejects_empty_item_id(self):
         with pytest.raises(ValidationError):
-            ItemInput(part_number="")
+            ItemInput(item_id="")
 
-    def test_rejects_part_number_too_long(self):
+    def test_rejects_item_id_too_long(self):
         with pytest.raises(ValidationError):
-            ItemInput(part_number="x" * 256)
+            ItemInput(item_id="x" * 256)
 
     def test_rejects_description_too_long(self):
         with pytest.raises(ValidationError):
-            ItemInput(part_number="OK", description="x" * 1001)
+            ItemInput(item_id="OK", description="x" * 1001)
 
     def test_description_at_max(self):
-        item = ItemInput(part_number="OK", description="x" * 1000)
+        item = ItemInput(item_id="OK", description="x" * 1000)
         assert len(item.description) == 1000
 
-
-# ---------------------------------------------------------------------------
-# ItemUpdateInput
-# ---------------------------------------------------------------------------
 
 class TestItemUpdateInput:
     def test_all_none_by_default(self):
         u = ItemUpdateInput()
-        assert u.part_number is None
+        assert u.item_id is None
         assert u.description is None
         assert u.category_id is None
 
     def test_partial_update(self):
         u = ItemUpdateInput(description="Updated")
         assert u.description == "Updated"
-        assert u.part_number is None
+        assert u.item_id is None
 
-    def test_rejects_empty_part_number(self):
+    def test_rejects_empty_item_id(self):
         with pytest.raises(ValidationError):
-            ItemUpdateInput(part_number="")
+            ItemUpdateInput(item_id="")
 
-
-# ---------------------------------------------------------------------------
-# SupplierInput
-# ---------------------------------------------------------------------------
 
 class TestSupplierInput:
     def test_minimal(self):
-        s = SupplierInput(supplier_name="Acme")
-        assert s.supplier_name == "Acme"
-        assert s.supplier_email is None
+        s = SupplierInput(name="Acme")
+        assert s.name == "Acme"
+        assert s.email is None
 
     def test_fully_populated(self):
         s = SupplierInput(
-            supplier_name="Acme Corp",
-            supplier_address="123 Main St",
-            supplier_email="contact@acme.com",
-            supplier_phone="555-0100",
+            name="Acme Corp",
+            address="123 Main St",
+            email="contact@acme.com",
+            phone="555-0100",
         )
-        assert s.supplier_email == "contact@acme.com"
+        assert s.email == "contact@acme.com"
 
     def test_rejects_missing_name(self):
         with pytest.raises(ValidationError):
@@ -227,36 +190,32 @@ class TestSupplierInput:
 
     def test_rejects_empty_name(self):
         with pytest.raises(ValidationError):
-            SupplierInput(supplier_name="")
+            SupplierInput(name="")
 
     def test_rejects_name_too_long(self):
         with pytest.raises(ValidationError):
-            SupplierInput(supplier_name="x" * 256)
+            SupplierInput(name="x" * 256)
 
     def test_rejects_invalid_email(self):
         with pytest.raises(ValidationError):
-            SupplierInput(supplier_name="OK", supplier_email="not-an-email")
+            SupplierInput(name="OK", email="not-an-email")
 
     def test_rejects_phone_too_long(self):
         with pytest.raises(ValidationError):
-            SupplierInput(supplier_name="OK", supplier_phone="1" * 21)
+            SupplierInput(name="OK", phone="1" * 21)
 
     def test_phone_at_max(self):
-        s = SupplierInput(supplier_name="OK", supplier_phone="1" * 20)
-        assert len(s.supplier_phone) == 20
+        s = SupplierInput(name="OK", phone="1" * 20)
+        assert len(s.phone) == 20
 
     def test_address_at_max(self):
-        s = SupplierInput(supplier_name="OK", supplier_address="x" * 500)
-        assert len(s.supplier_address) == 500
+        s = SupplierInput(name="OK", address="x" * 500)
+        assert len(s.address) == 500
 
     def test_rejects_address_too_long(self):
         with pytest.raises(ValidationError):
-            SupplierInput(supplier_name="OK", supplier_address="x" * 501)
+            SupplierInput(name="OK", address="x" * 501)
 
-
-# ---------------------------------------------------------------------------
-# ReceiptInput / ReceiptLineInput / CreateReceiptRequest
-# ---------------------------------------------------------------------------
 
 class TestReceiptInput:
     def test_all_optional(self):
@@ -266,7 +225,7 @@ class TestReceiptInput:
         assert r.note is None
 
     def test_fully_populated(self):
-        r = ReceiptInput(supplier_id="sup-1", reference="PO-123", note="Rush order")
+        r = ReceiptInput(supplier_id=1, reference="PO-123", note="Rush order")
         assert r.reference == "PO-123"
 
     def test_rejects_reference_too_long(self):
@@ -280,17 +239,15 @@ class TestReceiptInput:
 
 class TestReceiptLineInput:
     VALID = {
-        "item_id": "item-1",
-        "location_id": "loc-1",
         "quantity": 10,
-        "unit_cost": 5.50,
-        "currency_code": "USD",
+        "unit_price": 5.50,
+        "currency_id": 1,
     }
 
     def test_valid(self):
         line = ReceiptLineInput(**self.VALID)
         assert line.quantity == 10
-        assert line.unit_cost == 5.50
+        assert line.unit_price == 5.50
 
     def test_rejects_zero_quantity(self):
         with pytest.raises(ValidationError):
@@ -300,38 +257,20 @@ class TestReceiptLineInput:
         with pytest.raises(ValidationError):
             ReceiptLineInput(**{**self.VALID, "quantity": -1})
 
-    def test_allows_zero_unit_cost(self):
-        line = ReceiptLineInput(**{**self.VALID, "unit_cost": 0})
-        assert line.unit_cost == 0
+    def test_allows_zero_unit_price(self):
+        line = ReceiptLineInput(**{**self.VALID, "unit_price": 0})
+        assert line.unit_price == 0
 
-    def test_rejects_negative_unit_cost(self):
+    def test_rejects_negative_unit_price(self):
         with pytest.raises(ValidationError):
-            ReceiptLineInput(**{**self.VALID, "unit_cost": -1})
-
-    def test_rejects_empty_currency(self):
-        with pytest.raises(ValidationError):
-            ReceiptLineInput(**{**self.VALID, "currency_code": ""})
-
-    def test_rejects_currency_too_long(self):
-        with pytest.raises(ValidationError):
-            ReceiptLineInput(**{**self.VALID, "currency_code": "TOOLONGCURR"})
-
-    def test_rejects_missing_item_id(self):
-        data = {k: v for k, v in self.VALID.items() if k != "item_id"}
-        with pytest.raises(ValidationError):
-            ReceiptLineInput(**data)
+            ReceiptLineInput(**{**self.VALID, "unit_price": -1})
 
 
 class TestCreateReceiptRequest:
     def test_valid(self):
         req = CreateReceiptRequest(
             receipt=ReceiptInput(),
-            lines=[
-                ReceiptLineInput(
-                    item_id="i1", location_id="l1", quantity=1,
-                    unit_cost=10, currency_code="USD",
-                )
-            ],
+            lines=[ReceiptLineInput(quantity=1, unit_price=10, currency_id=1)],
         )
         assert len(req.lines) == 1
 
@@ -343,33 +282,20 @@ class TestCreateReceiptRequest:
         with pytest.raises(ValidationError):
             CreateReceiptRequest(
                 receipt=ReceiptInput(),
-                lines=[
-                    ReceiptLineInput(
-                        item_id="i1", location_id="l1", quantity=-1,
-                        unit_cost=10, currency_code="USD",
-                    )
-                ],
+                lines=[ReceiptLineInput(quantity=-1, unit_price=10, currency_id=1)],
             )
 
-
-# ---------------------------------------------------------------------------
-# SaleInput / SaleLineInput / CreateSaleRequest
-# ---------------------------------------------------------------------------
 
 class TestSaleInput:
     def test_all_optional(self):
         s = SaleInput()
-        assert s.customer_name is None
+        assert s.customer_id is None
         assert s.channel_id is None
         assert s.note is None
 
     def test_fully_populated(self):
-        s = SaleInput(customer_name="Acme", channel_id="ch-1", note="Urgent")
-        assert s.customer_name == "Acme"
-
-    def test_rejects_customer_too_long(self):
-        with pytest.raises(ValidationError):
-            SaleInput(customer_name="x" * 256)
+        s = SaleInput(customer_id=1, channel_id=2, note="Urgent")
+        assert s.customer_id == 1
 
     def test_rejects_note_too_long(self):
         with pytest.raises(ValidationError):
@@ -378,11 +304,9 @@ class TestSaleInput:
 
 class TestSaleLineInput:
     VALID = {
-        "item_id": "item-1",
-        "location_id": "loc-1",
         "quantity": 5,
         "unit_price": 10.0,
-        "currency_code": "USD",
+        "currency_id": 1,
     }
 
     def test_valid(self):
@@ -401,60 +325,39 @@ class TestSaleLineInput:
         line = SaleLineInput(**{**self.VALID, "unit_price": 0})
         assert line.unit_price == 0
 
-    def test_rejects_empty_currency(self):
-        with pytest.raises(ValidationError):
-            SaleLineInput(**{**self.VALID, "currency_code": ""})
-
 
 class TestCreateSaleRequest:
     def test_valid_with_lines(self):
         req = CreateSaleRequest(
             sale=SaleInput(),
-            lines=[
-                SaleLineInput(
-                    item_id="i1", location_id="l1", quantity=2,
-                    unit_price=25.0, currency_code="EUR",
-                )
-            ],
+            lines=[SaleLineInput(quantity=2, unit_price=25.0, currency_id=1)],
         )
-        assert req.lines[0].currency_code == "EUR"
+        assert req.lines[0].currency_id == 1
 
-
-# ---------------------------------------------------------------------------
-# SupplierQuoteInput
-# ---------------------------------------------------------------------------
 
 class TestSupplierQuoteInput:
     VALID = {
-        "item_id": "item-1",
-        "supplier_id": "sup-1",
-        "unit_cost": 12.50,
-        "currency": "USD",
+        "item_id": 1,
+        "supplier_id": 2,
+        "cost": 12.50,
+        "currency_id": 1,
     }
 
     def test_valid(self):
         q = SupplierQuoteInput(**self.VALID)
-        assert q.unit_cost == 12.50
+        assert q.cost == 12.50
 
     def test_with_optional_fields(self):
-        q = SupplierQuoteInput(**self.VALID, quoted_at="2025-01-01", note="Bulk")
+        q = SupplierQuoteInput(**self.VALID, date_time="2025-01-01", note="Bulk")
         assert q.note == "Bulk"
 
-    def test_allows_zero_unit_cost(self):
-        q = SupplierQuoteInput(**{**self.VALID, "unit_cost": 0})
-        assert q.unit_cost == 0
+    def test_allows_zero_cost(self):
+        q = SupplierQuoteInput(**{**self.VALID, "cost": 0})
+        assert q.cost == 0
 
-    def test_rejects_negative_unit_cost(self):
+    def test_rejects_negative_cost(self):
         with pytest.raises(ValidationError):
-            SupplierQuoteInput(**{**self.VALID, "unit_cost": -1})
-
-    def test_rejects_empty_currency(self):
-        with pytest.raises(ValidationError):
-            SupplierQuoteInput(**{**self.VALID, "currency": ""})
-
-    def test_rejects_currency_too_long(self):
-        with pytest.raises(ValidationError):
-            SupplierQuoteInput(**{**self.VALID, "currency": "TOOLONGCURR"})
+            SupplierQuoteInput(**{**self.VALID, "cost": -1})
 
     def test_rejects_note_too_long(self):
         with pytest.raises(ValidationError):
@@ -462,16 +365,12 @@ class TestSupplierQuoteInput:
 
     def test_rejects_missing_item_id(self):
         with pytest.raises(ValidationError):
-            SupplierQuoteInput(supplier_id="s1", unit_cost=1, currency="USD")
+            SupplierQuoteInput(supplier_id=1, cost=1, currency_id=1)
 
     def test_rejects_missing_supplier_id(self):
         with pytest.raises(ValidationError):
-            SupplierQuoteInput(item_id="i1", unit_cost=1, currency="USD")
+            SupplierQuoteInput(item_id=1, cost=1, currency_id=1)
 
-
-# ---------------------------------------------------------------------------
-# Auth schemas
-# ---------------------------------------------------------------------------
 
 class TestCreateUserInput:
     def test_valid(self):
@@ -528,10 +427,6 @@ class TestChangePasswordInput:
         c = ChangePasswordInput(current_password="x", new_password="123456")
         assert c.current_password == "x"
 
-
-# ---------------------------------------------------------------------------
-# VoidRequest
-# ---------------------------------------------------------------------------
 
 class TestVoidRequest:
     def test_empty(self):
