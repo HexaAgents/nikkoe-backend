@@ -94,6 +94,12 @@ class SaleRepository:
         return response.data or []
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
+        from datetime import datetime, timezone
+
+        if not sale.get("date"):
+            sale["date"] = datetime.now(timezone.utc).isoformat()
+
+        sale = {k: v for k, v in sale.items() if v is not None}
         sale_resp = supabase.table("Sale").insert(sale).execute()
         sale_row = sale_resp.data[0]
         sale_id = sale_row["id"]

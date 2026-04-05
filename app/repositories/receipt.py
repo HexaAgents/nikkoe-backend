@@ -102,6 +102,12 @@ class ReceiptRepository:
         return response.data or []
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
+        from datetime import datetime, timezone
+
+        if not receipt.get("dateTime"):
+            receipt["dateTime"] = datetime.now(timezone.utc).isoformat()
+
+        receipt = {k: v for k, v in receipt.items() if v is not None}
         receipt_resp = supabase.table("Receipt").insert(receipt).execute()
         receipt_row = receipt_resp.data[0]
         receipt_id = receipt_row["id"]
