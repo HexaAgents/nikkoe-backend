@@ -1,320 +1,51 @@
 <mxfile host="65bd71144e">
     <diagram id="receipt-flow" name="Create Receipt Flow">
-        <mxGraphModel dx="1246" dy="817" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="7400" math="0" shadow="1">
+        <mxGraphModel dx="1800" dy="1000" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="0" pageScale="1" pageWidth="1400" pageHeight="3800" math="0" shadow="1">
             <root>
                 <mxCell id="0"/>
                 <mxCell id="1" parent="0"/>
-                <mxCell id="hdr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="40" width="1040" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="hdr-t" value="NIKKOE PLATFORM" style="text;html=1;fontSize=26;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=20;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="4" width="600" height="36" as="geometry"/>
-                </mxCell>
-                <mxCell id="hdr-s" value="Create Receipt Flow — Step-by-Step with Exact Code References" style="text;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=20;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="42" width="800" height="20" as="geometry"/>
-                </mxCell>
-                <mxCell id="key" value="" style="rounded=0;fillColor=#37474F;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="90" width="1040" height="36" as="geometry"/>
-                </mxCell>
-                <mxCell id="k1" value="" style="ellipse;fillColor=#1565C0;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="60" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k1l" value="UI" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="80" y="98" width="30" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k2" value="" style="ellipse;fillColor=#2E7D32;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="120" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k2l" value="Browser logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="98" width="90" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k3" value="" style="ellipse;fillColor=#E65100;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="240" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k3l" value="Network" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="260" y="98" width="55" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k4" value="" style="ellipse;fillColor=#4A148C;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="325" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k4l" value="Server logic" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="345" y="98" width="80" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k5" value="" style="ellipse;fillColor=#0D47A1;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="435" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k5l" value="Database" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="455" y="98" width="60" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k6" value="" style="ellipse;fillColor=#C62828;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="525" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k6l" value="Error" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="545" y="98" width="40" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="k7" value="" style="ellipse;fillColor=#F9A825;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="595" y="100" width="14" height="14" as="geometry"/>
-                </mxCell>
-                <mxCell id="k7l" value="Decision" style="text;html=1;fontSize=10;fontFamily=Helvetica;fontColor=#FFFFFF;" parent="1" vertex="1">
-                    <mxGeometry x="615" y="98" width="55" height="18" as="geometry"/>
-                </mxCell>
-                <mxCell id="s1" value="STEP 1 — User fills the receipt form and clicks &quot;Create receipt&quot;" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="136" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n1" value="The form fields are stored in React state (useState):&#10;  supplierId, reference, note — header fields (all optional)&#10;  parts[] — array of { item_id, location_id, quantity, price, currency_code }&#10;Each dropdown is populated by a React Query hook that fetches from the backend:&#10;  Supplier &lt;Select&gt; ← useSuppliers() → GET /api/suppliers (📄 queries.ts:121)&#10;  Part Number picker ← useItems() → GET /api/items (📄 queries.ts:67)&#10;  Location picker ← useLocations() → GET /api/locations (📄 queries.ts:128)&#10;Receipt form also has &quot;New Part&quot; and &quot;New Location&quot; buttons that open modals&#10;  to create items/locations inline (📄 AddReceiptForm.tsx : lines 210-219).&#10;Location is NOT auto-populated (unlike Sale form) — user must select manually.&#10;Unit Cost supports comma decimals: &quot;1,50&quot; → 1.50 (line 37, 50).&#10;📄 AddReceiptForm.tsx : lines 78-90, 109-121, 159" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="270" y="176" width="480" height="175" as="geometry"/>
-                </mxCell>
-                <mxCell id="n1b" value="User clicks &quot;Create receipt&quot; → form onSubmit fires handleSubmit(e)&#10;📄 AddReceiptForm.tsx : lines 159, 225" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;align=left;spacingLeft=6;shadow=1;dashed=1;" parent="1" vertex="1">
-                    <mxGeometry x="310" y="371" width="400" height="42" as="geometry"/>
-                </mxCell>
-                <mxCell id="s2" value="STEP 2 — handleSubmit validates the form (AddReceiptForm.tsx lines 123-126)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="433" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n2" value="e.preventDefault() — stops the browser from reloading the page.&#10;setShowErrors(true) — enables red borders on invalid fields.&#10;📄 AddReceiptForm.tsx : lines 124-125" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="310" y="479" width="400" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="n3" value="if (!validation.isValid) return; — checks useMemo validation (lines 92-99).&#10;For each part, getPartLineFieldErrors() (lines 23-43) checks:&#10;  item_id must be non-empty, location_id must be non-empty,&#10;  quantity: parseInt must be finite and ≥ 1,&#10;  price (unit_cost): parseFloat(price.replace(&quot;,&quot;,&quot;.&quot;)) must be finite and ≥ 0.&#10;If any fail → function returns early, user sees red borders + error text.&#10;📄 AddReceiptForm.tsx : lines 23-43, 92-99, 126" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="549" width="460" height="100" as="geometry"/>
-                </mxCell>
-                <mxCell id="d1" value="validation&#10;.isValid?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="420" y="669" width="180" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="e1" value="Validation fails — returns early. Red borders + &quot;Missing: [fields]&quot; text.&#10;User stays on form, must fix and retry.&#10;📄 AddReceiptForm.tsx : line 126 | PartLineCard.tsx : lines 56, 66-68" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="674" width="280" height="55" as="geometry"/>
-                </mxCell>
-                <mxCell id="s3" value="STEP 3 — Build the payload and call the API (AddReceiptForm.tsx lines 128-137)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="769" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n4" value="Line 128: Maps each part via partLineToInput() (lines 45-53):&#10;  { item_id, location_id, quantity: parseInt(...,10), unit_cost: parseFloat(price.replace(&quot;,&quot;,&quot;.&quot;)), currency_code }&#10;📄 AddReceiptForm.tsx : lines 45-53, 128" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="815" width="440" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="n5" value="Lines 130-137: await addReceipt.mutateAsync({&#10;  receipt: { supplier_id || undefined, reference.trim() || undefined, note.trim() || undefined },&#10;  lines&#10;})&#10;  addReceipt is useAddReceipt() — a useMutation wrapping api.post(&quot;/receipts&quot;, ...).&#10;📄 AddReceiptForm.tsx : lines 130-137&#10;→ useAddReceipt at mutations.ts : lines 26-42&#10;→ api.post at api.ts : line 33" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="885" width="460" height="118" as="geometry"/>
-                </mxCell>
-                <mxCell id="s4" value="STEP 4 — apiFetch sends the HTTP request (api.ts lines 5-23)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="1023" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n6" value="Line 6: Gets Bearer token from supabase.auth.getSession() (localStorage).&#10;Lines 8-15: Sends the HTTP request:&#10;  POST ${VITE_API_URL}/receipts&#10;  Headers: Content-Type: application/json, Authorization: Bearer &lt;token&gt;&#10;  Body: { receipt: { supplier_id?, reference?, note? }, lines: [{item_id, location_id, quantity, unit_cost, currency_code}...] }&#10;Lines 17-19: If !res.ok → throws new Error(body.error || &quot;Request failed&quot;)&#10;Line 22: If res.ok → returns parsed JSON.&#10;📄 api.ts : lines 5-23" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="1069" width="460" height="118" as="geometry"/>
-                </mxCell>
-                <mxCell id="en" value="NETWORK ERROR — fetch() throws.&#10;Caught by useMutation onError:&#10;  toast.error(&quot;Failed to add receipt: ...&quot;)&#10;📄 mutations.ts : lines 38-40" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="-110" y="1096" width="200" height="64" as="geometry"/>
-                </mxCell>
-                <mxCell id="s5" value="STEP 5 — Backend authenticates, then validates (receipts.py line 34, schemas.py lines 86-102)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="1207" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n7" value="FastAPI matches POST /api/receipts/ → create_receipt(body, user).&#10;Depends(get_current_user) runs first — extracts Bearer token,&#10;calls supabase.auth.get_user(token) to verify, loads user profile.&#10;📄 receipts.py : lines 33-34 | auth.py : lines 23-57" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="300" y="1253" width="420" height="64" as="geometry"/>
-                </mxCell>
-                <mxCell id="d2" value="Token&#10;valid?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="420" y="1337" width="180" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="e2" value="Missing/invalid/expired token → HTTPException(401)&#10;📄 auth.py : lines 28, 33, 37, 60-63" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="1347" width="270" height="42" as="geometry"/>
-                </mxCell>
-                <mxCell id="n8" value="Pydantic auto-validates JSON body against CreateReceiptRequest:&#10;  receipt: ReceiptInput (supplier_id: str|None, reference: str|None max 255, note: str|None max 1000)&#10;  lines: list[ReceiptLineInput] (item_id: str, location_id: str, quantity: int gt 0,&#10;         unit_cost: float ge 0, currency_code: str 1-10 chars)&#10;📄 schemas.py : lines 86-102" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="1437" width="440" height="78" as="geometry"/>
-                </mxCell>
-                <mxCell id="d3" value="Pydantic&#10;valid?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="420" y="1535" width="180" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="e3" value="ValidationError → HTTP 400: { error: &quot;Validation failed&quot;, details: [...] }&#10;📄 errors.py : lines 39-41" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="1545" width="270" height="42" as="geometry"/>
-                </mxCell>
-                <mxCell id="s6" value="STEP 6 — Service → Repository → Database RPC (receipts.py:35, receipt.py:21, receipt.py:83, SQL:1-38)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="1635" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n9" value="Router calls service.create_receipt(body.receipt.model_dump(), [line.model_dump() ...])&#10;  model_dump() converts Pydantic models to plain dicts.&#10;📄 receipts.py : lines 35-38" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="310" y="1681" width="400" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="n10" value="ReceiptService.create_receipt delegates to self.repo.create(receipt_data, lines_data)&#10;📄 services/receipt.py : lines 21-22" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="310" y="1751" width="400" height="42" as="geometry"/>
-                </mxCell>
-                <mxCell id="n11" value="ReceiptRepository.create calls the PostgreSQL RPC:&#10;  supabase.rpc(&quot;create_receipt&quot;, { p_receipt: receipt, p_lines: lines }).execute()&#10;📄 repositories/receipt.py : lines 83-87" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="300" y="1813" width="420" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="s7" value="STEP 7 — create_receipt RPC runs in the database (SQL lines 1-38)" style="rounded=0;fillColor=#0D47A1;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="1883" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n12" value="PL/pgSQL function — runs as one atomic transaction:&#10;  Line 13: INSERT INTO receipts (supplier_id, reference, note)&#10;    → RETURNING receipt_id INTO v_receipt_id&#10;  Lines 21-32: FOR EACH line in p_lines:&#10;    INSERT INTO receipt_lines (receipt_line_id, receipt_id, item_id, location_id, quantity, unit_cost, currency_code)&#10;  Line 35: SELECT to_jsonb(r.*) → returns the created receipt row&#10;📄 20260402_create_receipt_sale_rpcs.sql : lines 1-38" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#0D47A1;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="280" y="1929" width="460" height="100" as="geometry"/>
-                </mxCell>
-                <mxCell id="d4" value="DB insert&#10;succeeds?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="420" y="2049" width="180" height="80" as="geometry"/>
-                </mxCell>
-                <mxCell id="e4" value="FK violation (invalid item_id/location_id/supplier_id) or constraint error.&#10;general_error_handler maps PG codes → 409 &quot;Referenced record does not exist&quot;&#10;📄 errors.py : lines 28-32, 44-53" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="2049" width="280" height="55" as="geometry"/>
-                </mxCell>
-                <mxCell id="n13" value="DB triggers fire after each receipt_lines INSERT:&#10;  create_movement_from_receipt_line → INSERT INTO inventory_movements (type=RECEIPT)&#10;  apply_inventory_movement_to_balances → INCREMENT inventory_balances.quantity_on_hand&#10;All runs inside the same atomic transaction." style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#0D47A1;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="2149" width="440" height="64" as="geometry"/>
-                </mxCell>
-                <mxCell id="n14" value="RPC returns created receipt row as jsonb → HTTP 201 Created back to browser.&#10;📄 receipts.py : line 33 (status_code=201)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="310" y="2233" width="400" height="42" as="geometry"/>
-                </mxCell>
-                <mxCell id="err" value="All backend errors (400/401/409) return as HTTP error JSON" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="2149" width="220" height="35" as="geometry"/>
-                </mxCell>
-                <mxCell id="s8" value="STEP 8 — Response arrives back in the browser" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="2295" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n15" value="apiFetch receives the HTTP response.&#10;📄 api.ts : line 8" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="340" y="2341" width="340" height="30" as="geometry"/>
-                </mxCell>
-                <mxCell id="d5" value="res.ok?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="440" y="2391" width="140" height="70" as="geometry"/>
-                </mxCell>
-                <mxCell id="e5" value="Not OK → apiFetch throws Error(body.error || &quot;Request failed&quot;).&#10;useMutation onError fires: toast.error(&quot;Failed to add receipt: ...&quot;)&#10;User sees red toast. Form data preserved — can retry.&#10;📄 api.ts : lines 17-19 | mutations.ts : lines 38-40" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="50" y="2384" width="290" height="64" as="geometry"/>
-                </mxCell>
-                <mxCell id="s9" value="STEP 9 — Success: cache invalidation, analytics, form reset (mutations.ts:33-37, AddReceiptForm.tsx:139-146)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="2481" width="1040" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="n16" value="useMutation onSuccess fires (mutations.ts lines 33-37):&#10;  queryClient.invalidateQueries({ queryKey: [&quot;receipts&quot;] }) — re-fetches receipts list&#10;  queryClient.invalidateQueries({ queryKey: [&quot;inventory_balances&quot;] }) — re-fetches stock data&#10;  toast.success(&quot;Receipt added successfully&quot;) — green notification" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="2527" width="440" height="64" as="geometry"/>
-                </mxCell>
-                <mxCell id="n17" value="Back in handleSubmit:&#10;  analytics.track(&quot;receipt_created&quot;, { line_count, has_supplier, has_reference }) — PostHog event&#10;  resetForm() — clears supplierId, reference, note, parts back to initial state&#10;  onSuccessfulCreate?.() — closes the dialog if modal variant&#10;📄 AddReceiptForm.tsx : lines 139-146 | analytics.ts : line 9" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="290" y="2611" width="440" height="78" as="geometry"/>
-                </mxCell>
-                <mxCell id="n18" value="Receipt created — form reset, receipts list refreshed, inventory incremented." style="ellipse;whiteSpace=wrap;fontSize=9;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;shadow=1;" parent="1" vertex="1">
-                    <mxGeometry x="320" y="2709" width="380" height="50" as="geometry"/>
-                </mxCell>
-                <mxCell id="tbl" value="" style="rounded=0;fillColor=#ECEFF1;strokeColor=#B0BEC5;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2789" width="740" height="180" as="geometry"/>
-                </mxCell>
-                <mxCell id="th" value="THE DATA AT EACH BOUNDARY" style="rounded=0;fillColor=#37474F;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=center;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2789" width="740" height="26" as="geometry"/>
-                </mxCell>
-                <mxCell id="r1" value="User → Browser          Dropdowns + text inputs → stored in React state (supplierId, reference, note, parts[])" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2820" width="740" height="22" as="geometry"/>
-                </mxCell>
-                <mxCell id="r2" value="Browser → Server        fetch() POST with { receipt: { supplier_id?, reference?, note? }, lines: [{item_id, location_id, ...}] }" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2846" width="740" height="22" as="geometry"/>
-                </mxCell>
-                <mxCell id="r3" value="Server → Database       supabase.rpc(&quot;create_receipt&quot;, { p_receipt: {...}, p_lines: [...] })" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2872" width="740" height="22" as="geometry"/>
-                </mxCell>
-                <mxCell id="r4" value="Database → Server       Created receipt row as jsonb + triggers increment inventory_balances" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2898" width="740" height="22" as="geometry"/>
-                </mxCell>
-                <mxCell id="r5" value="Server → Browser        HTTP 201 JSON: created receipt object { receipt_id, supplier_id, received_at, ... }" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;align=left;spacingLeft=10;" parent="1" vertex="1">
-                    <mxGeometry x="140" y="2924" width="740" height="22" as="geometry"/>
-                </mxCell>
-                <mxCell id="ftr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="2989" width="1040" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="ftrt" value="AddReceiptForm:159 → handleSubmit:123 → validation:92 → api.post:33 → POST /api/receipts → get_current_user → CreateReceiptRequest:100 → ReceiptService:21 → ReceiptRepository:83 → create_receipt RPC → DB triggers → onSuccess:33" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" parent="1" vertex="1">
-                    <mxGeometry x="40" y="2989" width="1040" height="40" as="geometry"/>
-                </mxCell>
-                <mxCell id="a1" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n1" target="n1b" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a2" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n1b" target="n2" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a3" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n2" target="n3" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a4" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n3" target="d1" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a5" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d1" target="n4" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a6" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d1" target="e1" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a7" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n4" target="n5" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a8" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n5" target="n6" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="anet" value="Network failure" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" parent="1" source="n6" target="en" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a9" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n6" target="n7" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a10" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n7" target="d2" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a11" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d2" target="n8" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a12" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d2" target="e2" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a13" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n8" target="d3" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a14" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d3" target="n9" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a15" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d3" target="e3" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a16" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n9" target="n10" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a17" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n10" target="n11" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a18" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n11" target="n12" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a19" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n12" target="d4" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a20" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d4" target="n13" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a21" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d4" target="e4" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a22" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n13" target="n14" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a23" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n14" target="n15" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a24" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n15" target="d5" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a25" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d5" target="n16" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a26" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" parent="1" source="d5" target="e5" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a27" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n16" target="n17" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="a28" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="n17" target="n18" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ae2" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e2" target="err" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ae3" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e3" target="err" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ae4" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" parent="1" source="e4" target="err" edge="1">
-                    <mxGeometry relative="1" as="geometry"/>
-                </mxCell>
-                <mxCell id="ae5" value="HTTP error → browser" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;" parent="1" source="err" target="n15" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="160" y="2356"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="aen" value="fetch() throws" style="strokeColor=#C62828;strokeWidth=2;dashed=1;exitX=0.5;exitY=1;entryX=0;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontFamily=Helvetica;fontSize=8;exitDx=0;exitDy=0;" parent="1" source="en" target="e5" edge="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <Array as="points">
-                            <mxPoint x="10" y="2416"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
+
+                <mxCell id="hdr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="40" y="0" width="1040" height="80" as="geometry"/></mxCell>
+                <mxCell id="hdr-t" value="NIKKOE PLATFORM" style="text;html=1;fontSize=26;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=20;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="4" width="600" height="36" as="geometry"/></mxCell>
+                <mxCell id="hdr-s" value="Create Receipt Flow — Step-by-Step with Exact Code References" style="text;html=1;fontSize=12;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=20;" vertex="1" parent="1"><mxGeometry x="40" y="42" width="800" height="20" as="geometry"/></mxCell>
+
+                <!-- STEP 1 -->
+                <mxCell id="s1" value="STEP 1 — User fills the receipt form and clicks &quot;Create receipt&quot;" style="rounded=0;fillColor=#1565C0;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="100" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n1" value="Form state: supplierId, reference, note, parts[] (item_id, location_id, qty, price, currency_id)&#10;Dropdowns populated by: useSuppliers, useCurrencies, useItems, useLocations, useCurrentUser&#10;&quot;New Part&quot; and &quot;New Location&quot; buttons open inline-create modals.&#10;📄 AddReceiptForm.tsx : lines 78-91, 93-100 (validation)" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#1565C0;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="270" y="140" width="480" height="64" as="geometry"/></mxCell>
+
+                <!-- STEP 2 -->
+                <mxCell id="s2" value="STEP 2 — handleSubmit validates and builds payload (AddReceiptForm.tsx lines 124-148)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="224" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n2" value="Line 125: e.preventDefault(), setShowErrors(true)&#10;Line 127: if (!validation.isValid) return — checks per-line fields (item, location, qty, price)&#10;Line 129: Build ReceiptLineInput[] via partLineToInput() — { item_id, location_id, quantity, unit_price, currency_id }&#10;Lines 131-138: addReceipt.mutateAsync({ receipt: { supplier_id, reference, note }, lines })&#10;→ useAddReceipt at mutations.ts : lines 26-42 → api.post(&quot;/receipts&quot;, ...) at api.ts : line 45&#10;📄 AddReceiptForm.tsx : lines 124-148" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="270" y="270" width="480" height="88" as="geometry"/></mxCell>
+                <mxCell id="d1" value="Valid?" style="rhombus;whiteSpace=wrap;fontSize=10;fontStyle=1;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFFDE7;strokeColor=#F9A825;strokeWidth=2;shadow=1;" vertex="1" parent="1"><mxGeometry x="440" y="378" width="140" height="60" as="geometry"/></mxCell>
+                <mxCell id="e1" value="Red borders + &quot;Missing: [fields]&quot; on invalid part lines" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFEBEE;strokeColor=#C62828;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="50" y="383" width="280" height="35" as="geometry"/></mxCell>
+
+                <!-- STEP 3 -->
+                <mxCell id="s3" value="STEP 3 — apiFetch sends HTTP POST (api.ts lines 17-35, 45-46)" style="rounded=0;fillColor=#E65100;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="458" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n3" value="Line 18: Gets Bearer token from localStorage (getStoredToken)&#10;Lines 20-27: fetch(${BASE_URL}/receipts, { method: POST, headers, body })&#10;Lines 29-31: if !res.ok → throw Error&#10;📄 api.ts : lines 17-35" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#FFF3E0;strokeColor=#E65100;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="300" y="504" width="420" height="64" as="geometry"/></mxCell>
+
+                <!-- STEP 4 -->
+                <mxCell id="s4" value="STEP 4 — Backend auth + Pydantic validation (receipts.py:34, schemas.py:97-112)" style="rounded=0;fillColor=#4A148C;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="588" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n4" value="Depends(get_current_user) verifies Bearer token → auth.py : lines 23-57&#10;Pydantic validates CreateReceiptRequest:&#10;  receipt: ReceiptInput (supplier_id: int|None, reference, note)&#10;  lines: list[ReceiptLineInput] (quantity: int gt 0, unit_price: float ge 0, currency_id: int)&#10;📄 receipts.py : lines 33-38 | schemas.py : lines 97-112" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#EDE7F6;strokeColor=#4A148C;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="280" y="634" width="460" height="78" as="geometry"/></mxCell>
+
+                <!-- STEP 5 -->
+                <mxCell id="s5" value="STEP 5 — Service → Repository → Database (receipt.py:104, Receipt + Receipt_Stock + Stock)" style="rounded=0;fillColor=#0D47A1;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="732" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n5" value="ReceiptRepository.create() at repositories/receipt.py line 104:&#10;  1. Auto-sets dateTime to current UTC timestamp&#10;  2. INSERT INTO Receipt → gets receipt_id&#10;  3. For each line: look up Stock row by (item_id, location_id), create if missing&#10;  4. INSERT INTO Receipt_Stock with stock_id, receipt_id, quantity, unit_price, currency_id&#10;  5. UPDATE Stock SET quantity = quantity + line.quantity (increment)&#10;📄 repositories/receipt.py : lines 104-155" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E3F2FD;strokeColor=#0D47A1;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="270" y="778" width="480" height="100" as="geometry"/></mxCell>
+
+                <!-- STEP 6 -->
+                <mxCell id="s6" value="STEP 6 — Success: cache invalidation + analytics (mutations.ts:33-37, AddReceiptForm.tsx:140-148)" style="rounded=0;fillColor=#2E7D32;strokeColor=none;fontSize=11;fontStyle=1;fontFamily=Helvetica;fontColor=#FFFFFF;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="898" width="1040" height="26" as="geometry"/></mxCell>
+                <mxCell id="n6" value="useMutation onSuccess: invalidateQueries([&quot;receipts&quot;], [&quot;inventory_balances&quot;]), toast.success&#10;analytics.track(&quot;receipt_created&quot;, { line_count, has_supplier, has_reference })&#10;resetForm() clears all state. Receipt complete.&#10;📄 mutations.ts : lines 33-37 | AddReceiptForm.tsx : lines 140-148" style="rounded=1;whiteSpace=wrap;fontSize=9;fontFamily=Helvetica;fontColor=#1a1a1a;fillColor=#E8F5E9;strokeColor=#2E7D32;strokeWidth=2;align=left;spacingLeft=6;shadow=1;" vertex="1" parent="1"><mxGeometry x="290" y="944" width="440" height="64" as="geometry"/></mxCell>
+
+                <mxCell id="ftr" value="" style="rounded=0;fillColor=#263238;strokeColor=none;" vertex="1" parent="1"><mxGeometry x="40" y="1028" width="1040" height="40" as="geometry"/></mxCell>
+                <mxCell id="ftrt" value="AddReceiptForm:124 → validation:93 → api.post:45 → POST /api/receipts → CreateReceiptRequest:110 → ReceiptService:22 → ReceiptRepository:104 → Receipt + Receipt_Stock + Stock → onSuccess:33" style="text;html=1;fontSize=9;fontFamily=Helvetica;fontColor=#90A4AE;align=left;spacingLeft=14;verticalAlign=middle;" vertex="1" parent="1"><mxGeometry x="40" y="1028" width="1040" height="40" as="geometry"/></mxCell>
+
+                <!-- EDGES -->
+                <mxCell id="a1" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n1" target="n2" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a2" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n2" target="d1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a3" value="Yes" style="strokeColor=#2E7D32;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;fontColor=#2E7D32;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d1" target="n3" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a4" value="No" style="strokeColor=#C62828;strokeWidth=2;exitX=0;exitY=0.5;entryX=1;entryY=0.5;endArrow=blockThin;endFill=1;fontColor=#C62828;fontStyle=1;fontFamily=Helvetica;fontSize=10;" edge="1" source="d1" target="e1" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a5" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n3" target="n4" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a6" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n4" target="n5" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
+                <mxCell id="a7" style="strokeColor=#455A64;strokeWidth=2;exitX=0.5;exitY=1;entryX=0.5;entryY=0;endArrow=blockThin;endFill=1;" edge="1" source="n5" target="n6" parent="1"><mxGeometry relative="1" as="geometry"/></mxCell>
             </root>
         </mxGraphModel>
     </diagram>
