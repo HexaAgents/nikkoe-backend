@@ -58,12 +58,12 @@ class ItemRepository:
         return response.data
 
     def create(self, data: dict) -> dict:
-        response = supabase.table("Item").insert(data).select().single().execute()
-        return response.data
+        response = supabase.table("Item").insert(data).execute()
+        return response.data[0]
 
     def update(self, id: int, data: dict) -> dict:
-        response = supabase.table("Item").update(data).eq("id", id).select().single().execute()
-        return response.data
+        response = supabase.table("Item").update(data).eq("id", id).execute()
+        return response.data[0]
 
     def remove(self, id: int) -> None:
         supabase.table("Item").delete().eq("id", id).execute()

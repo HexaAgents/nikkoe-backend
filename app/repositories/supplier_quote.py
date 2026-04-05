@@ -13,8 +13,8 @@ class SupplierQuoteRepository:
         return response.data or []
 
     def create(self, data: dict) -> dict:
-        response = supabase.table("Item_supplier").insert(data).select().single().execute()
-        return response.data
+        response = supabase.table("Item_supplier").insert(data).execute()
+        return response.data[0]
 
     def remove(self, id: int) -> None:
         supabase.table("Item_supplier").delete().eq("id", id).execute()

@@ -13,8 +13,8 @@ class SupplierRepository:
         return {"data": response.data or [], "total": response.count or 0}
 
     def create(self, data: dict) -> dict:
-        response = supabase.table("Supplier").insert(data).select().single().execute()
-        return response.data
+        response = supabase.table("Supplier").insert(data).execute()
+        return response.data[0]
 
     def remove(self, id: int) -> None:
         supabase.table("Supplier").delete().eq("id", id).execute()

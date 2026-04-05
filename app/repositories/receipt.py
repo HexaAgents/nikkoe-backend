@@ -102,8 +102,8 @@ class ReceiptRepository:
         return response.data or []
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
-        receipt_resp = supabase.table("Receipt").insert(receipt).select().single().execute()
-        receipt_row = receipt_resp.data
+        receipt_resp = supabase.table("Receipt").insert(receipt).execute()
+        receipt_row = receipt_resp.data[0]
         receipt_id = receipt_row["id"]
 
         for line in lines:
@@ -123,8 +123,8 @@ class ReceiptRepository:
                 if existing.data:
                     stock_id = existing.data["id"]
                 else:
-                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).select().single().execute()
-                    stock_id = new_stock.data["id"]
+                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).execute()
+                    stock_id = new_stock.data[0]["id"]
 
             line["receipt_id"] = receipt_id
             line["stock_id"] = stock_id

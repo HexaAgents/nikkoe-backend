@@ -94,8 +94,8 @@ class SaleRepository:
         return response.data or []
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
-        sale_resp = supabase.table("Sale").insert(sale).select().single().execute()
-        sale_row = sale_resp.data
+        sale_resp = supabase.table("Sale").insert(sale).execute()
+        sale_row = sale_resp.data[0]
         sale_id = sale_row["id"]
 
         for line in lines:
@@ -115,8 +115,8 @@ class SaleRepository:
                 if existing.data:
                     stock_id = existing.data["id"]
                 else:
-                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).select().single().execute()
-                    stock_id = new_stock.data["id"]
+                    new_stock = supabase.table("Stock").insert({"item_id": item_id, "location_id": location_id, "quantity": 0}).execute()
+                    stock_id = new_stock.data[0]["id"]
 
             line["sale_id"] = sale_id
             line["stock_id"] = stock_id
