@@ -20,5 +20,9 @@ class InventoryService:
         notes: str | None = None,
     ):
         return self.repo.create_transfer(
-            from_stock_id, to_location_id, quantity, user_id, notes,
+            from_stock_id,
+            to_location_id,
+            quantity,
+            user_id,
+            notes,
         )
