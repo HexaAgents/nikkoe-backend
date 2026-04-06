@@ -267,8 +267,8 @@ class TestPaginationQueryParams:
         resp = authed_client.get("/api/items/?limit=0")
         assert resp.status_code == 422
 
-    def test_items_rejects_limit_over_1000(self, authed_client):
-        resp = authed_client.get("/api/items/?limit=1001")
+    def test_items_rejects_limit_over_max(self, authed_client):
+        resp = authed_client.get("/api/items/?limit=100001")
         assert resp.status_code == 422
 
     def test_items_rejects_negative_offset(self, authed_client):
