@@ -24,8 +24,8 @@ class ItemService:
     def list_items(self, limit: int = 50, offset: int = 0):
         return self.repo.find_all(limit, offset)
 
-    def search_items(self, query: str, limit: int = 50, offset: int = 0):
-        return self.repo.search(query, limit, offset)
+    def search_items(self, query: str, limit: int = 50, offset: int = 0, *, in_stock: bool = False):
+        return self.repo.search(query, limit, offset, in_stock=in_stock)
 
     def get_item(self, id: int):
         item = self.repo.find_by_id(id)

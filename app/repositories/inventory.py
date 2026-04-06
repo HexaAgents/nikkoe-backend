@@ -43,7 +43,7 @@ class InventoryRepository:
         return response.data or []
 
     def find_on_hand(self) -> list:
-        response = supabase.table("stock").select("*").gt("quantity", 0).execute()
+        response = supabase.table("stock").select("*").execute()
         return response.data or []
 
     def create_transfer(

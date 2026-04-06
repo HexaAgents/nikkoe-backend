@@ -1,6 +1,17 @@
+import re
+
 from app.dependencies import supabase
 
 PAGE_SIZE = 1000
+
+
+def _dash_insensitive_pattern(query: str) -> str:
+    """Regex that matches ``query`` with optional dashes between any characters."""
+    stripped = query.replace("-", "")
+    if not stripped:
+        return ".*"
+    chars = [re.escape(c) for c in stripped]
+    return ".*" + "-?".join(chars) + ".*"
 
 
 class ItemRepository:
@@ -36,11 +47,11 @@ class ItemRepository:
 
         return {"data": all_items, "total": len(all_items)}
 
-    def search(self, query: str, limit: int = 1000, offset: int = 0) -> dict:
+    def search(self, query: str, limit: int = 1000, offset: int = 0, *, in_stock: bool = False) -> dict:
         response = (
             supabase.table("item")
             .select("*, category(name), stock(quantity, location(code))", count="planned")
-            .ilike("item_id", f"*{query}*")
+            .filter("item_id", "imatch", _dash_insensitive_pattern(query))
             .order("item_id")
             .range(offset, offset + min(limit, PAGE_SIZE) - 1)
             .execute()
@@ -54,6 +65,9 @@ class ItemRepository:
             item["locations"] = sorted(
                 {s["location"]["code"] for s in stock_rows if s.get("location") and s["location"].get("code")}
             )
+
+        if in_stock:
+            items = [item for item in items if item["total_quantity"] > 0]
 
         return {"data": items, "total": len(items)}
 

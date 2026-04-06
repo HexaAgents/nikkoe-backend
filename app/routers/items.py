@@ -32,9 +32,10 @@ def search_items(
     q: str = Query(min_length=1, max_length=255),
     limit: int = Query(default=1000, ge=1, le=1000),
     offset: int = Query(default=0, ge=0),
+    in_stock: bool = Query(default=False),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.search_items(q, limit, offset)
+    return service.search_items(q, limit, offset, in_stock=in_stock)
 
 
 @router.get("/{item_id}")
