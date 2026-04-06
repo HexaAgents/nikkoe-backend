@@ -5,7 +5,7 @@ class SupplierQuoteRepository:
     def find_by_item_id(self, item_id: int) -> list:
         response = (
             supabase.table("item_supplier")
-            .select("*, supplier(name)")
+            .select("*, supplier(name), currency(name)")
             .eq("item_id", item_id)
             .order("date_time", desc=True)
             .execute()

@@ -1,64 +1,32 @@
 from app.dependencies import supabase
 from app.repositories.base import batch_load
 
+PAGE_SIZE = 1000
+
 
 class ItemRepository:
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
+    def find_all(self, limit: int = 1000, offset: int = 0) -> dict:
         response = (
             supabase.table("item")
-            .select("*", count="exact")
+            .select("*, category(name), stock(quantity)", count="exact")
             .order("item_id")
-            .range(offset, offset + limit - 1)
+            .range(offset, offset + min(limit, PAGE_SIZE) - 1)
             .execute()
         )
         items = response.data or []
         total = response.count or 0
 
-        item_ids = [i["id"] for i in items]
-        if not item_ids:
-            return {"data": [], "total": total}
-
-        categories_map = batch_load("category", "id", list({i["category_id"] for i in items if i.get("category_id")}))
-
-        stock_resp = supabase.table("stock").select("*").in_("item_id", item_ids).execute()
-        stocks = stock_resp.data or []
-
-        receipt_stock_resp = supabase.table("receipt_stock").select("*").execute()
-        receipt_stocks = receipt_stock_resp.data or []
-
-        stock_by_item: dict[int, list] = {}
-        for s in stocks:
-            loc_resp = (
-                supabase.table("location").select("id, code").eq("id", s.get("location_id")).maybe_single().execute()
-            )
-            stock_by_item.setdefault(s["item_id"], []).append(
-                {
-                    "quantity": s.get("quantity"),
-                    "locations": loc_resp.data,
-                }
-            )
-
-        stock_id_to_item: dict[int, int] = {s["id"]: s["item_id"] for s in stocks}
-        rs_by_item: dict[int, list] = {}
-        for rs in receipt_stocks:
-            iid = stock_id_to_item.get(rs.get("stock_id"))
-            if iid:
-                rs_by_item.setdefault(iid, []).append(
-                    {
-                        "unit_price": rs.get("unit_price"),
-                    }
-                )
-
         for item in items:
-            iid = item["id"]
-            item["categories"] = categories_map.get(item.get("category_id"))
-            item["inventory_balances"] = stock_by_item.get(iid, [])
-            item["receipt_lines"] = rs_by_item.get(iid, [])
+            item["categories"] = item.pop("category", None)
+            stock_rows = item.pop("stock", [])
+            item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
 
         return {"data": items, "total": total}
 
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("item").select("*, category(name)").eq("id", id).maybe_single().execute()
+        if response.data:
+            response.data["categories"] = response.data.pop("category", None)
         return response.data
 
     def create(self, data: dict) -> dict:
