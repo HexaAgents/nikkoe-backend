@@ -26,7 +26,7 @@ from app.routers import (  # noqa: E402
     users,
 )
 
-app = FastAPI(title="nikkoe-backend")
+app = FastAPI(title="nikkoe-backend", redirect_slashes=False)
 
 allow_origin_regex = r"https://.*\.vercel\.app"
 app.add_middleware(

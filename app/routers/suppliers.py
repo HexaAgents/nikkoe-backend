@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/suppliers", tags=["suppliers"])
 
 @router.get("/")
 def list_suppliers(
-    limit: int = Query(default=50, ge=1, le=100),
+    limit: int = Query(default=5000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
     user: CurrentUser = Depends(get_current_user),
 ):
