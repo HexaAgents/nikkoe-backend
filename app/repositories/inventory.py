@@ -43,8 +43,23 @@ class InventoryRepository:
         return response.data or []
 
     def find_on_hand(self) -> list:
-        response = supabase.table("stock").select("*").execute()
-        return response.data or []
+        all_rows: list = []
+        page_size = 1000
+        offset = 0
+        while True:
+            response = (
+                supabase.table("stock")
+                .select("*")
+                .order("id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+            batch = response.data or []
+            all_rows.extend(batch)
+            if len(batch) < page_size:
+                break
+            offset += page_size
+        return all_rows
 
     def create_transfer(
         self,
