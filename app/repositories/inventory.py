@@ -47,13 +47,7 @@ class InventoryRepository:
         page_size = 1000
         offset = 0
         while True:
-            response = (
-                supabase.table("stock")
-                .select("*")
-                .order("id")
-                .range(offset, offset + page_size - 1)
-                .execute()
-            )
+            response = supabase.table("stock").select("*").order("id").range(offset, offset + page_size - 1).execute()
             batch = response.data or []
             all_rows.extend(batch)
             if len(batch) < page_size:
