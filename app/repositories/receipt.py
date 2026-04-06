@@ -121,13 +121,66 @@ class ReceiptRepository:
         return lines
 
     def find_by_item_id(self, item_id: int) -> list:
-        stock_resp = supabase.table("stock").select("id").eq("item_id", item_id).execute()
-        stock_ids = [s["id"] for s in (stock_resp.data or [])]
-        if not stock_ids:
+        stock_resp = supabase.table("stock").select("id, location_id").eq("item_id", item_id).execute()
+        stocks = stock_resp.data or []
+        if not stocks:
             return []
 
+        stock_ids = [s["id"] for s in stocks]
+        stocks_map = {s["id"]: s for s in stocks}
+
         response = supabase.table("receipt_stock").select("*").in_("stock_id", stock_ids).execute()
-        return response.data or []
+        lines = response.data or []
+        if not lines:
+            return []
+
+        receipt_ids = list({ln["receipt_id"] for ln in lines if ln.get("receipt_id")})
+        currency_ids = list({ln["currency_id"] for ln in lines if ln.get("currency_id")})
+        supplier_ids = list({ln["supplier_id"] for ln in lines if ln.get("supplier_id")})
+        location_ids = list(
+            {
+                stocks_map[ln["stock_id"]]["location_id"]
+                for ln in lines
+                if ln.get("stock_id") and stocks_map.get(ln["stock_id"], {}).get("location_id")
+            }
+        )
+
+        receipts_map = batch_load("receipt", "id", receipt_ids)
+        currencies_map = batch_load("currency", "id", currency_ids)
+        suppliers_map = batch_load("supplier", "id", supplier_ids, "id, name")
+        locations_map = batch_load("location", "id", location_ids)
+
+        receipt_supplier_ids = list({r.get("supplier_id") for r in receipts_map.values() if r.get("supplier_id")})
+        receipt_user_ids = list({r.get("user_id") for r in receipts_map.values() if r.get("user_id")})
+        receipt_suppliers_map = batch_load("supplier", "id", receipt_supplier_ids, "id, name")
+        users_map = batch_load("user", "id", receipt_user_ids, "id, first_name, last_name")
+
+        result = []
+        for ln in lines:
+            receipt = receipts_map.get(ln.get("receipt_id"), {})
+            stock = stocks_map.get(ln.get("stock_id"), {})
+            line_supplier = suppliers_map.get(ln.get("supplier_id"))
+            receipt_supplier = receipt_suppliers_map.get(receipt.get("supplier_id"))
+
+            result.append(
+                {
+                    "id": ln["id"],
+                    "receipt_id": ln.get("receipt_id"),
+                    "quantity": ln.get("quantity"),
+                    "unit_price": ln.get("unit_price"),
+                    "date": receipt.get("dateTime"),
+                    "status": receipt.get("status"),
+                    "reference": receipt.get("reference"),
+                    "note": receipt.get("note"),
+                    "suppliers": line_supplier or receipt_supplier,
+                    "users": users_map.get(receipt.get("user_id")),
+                    "currencies": currencies_map.get(ln.get("currency_id")),
+                    "locations": locations_map.get(stock.get("location_id")),
+                }
+            )
+
+        result.sort(key=lambda r: r.get("date") or "", reverse=True)
+        return result
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
         from datetime import datetime, timezone
