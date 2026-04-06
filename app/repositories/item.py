@@ -13,7 +13,7 @@ class ItemRepository:
             batch = min(remaining, PAGE_SIZE)
             response = (
                 supabase.table("item")
-                .select("*, category(name), stock(quantity)", count="planned")
+                .select("*, category(name), stock(quantity, location(code))", count="planned")
                 .order("item_id")
                 .range(current_offset, current_offset + batch - 1)
                 .execute()
@@ -24,6 +24,9 @@ class ItemRepository:
                 item["categories"] = item.pop("category", None)
                 stock_rows = item.pop("stock", [])
                 item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
+                item["locations"] = sorted(
+                    {s["location"]["code"] for s in stock_rows if s.get("location") and s["location"].get("code")}
+                )
 
             all_items.extend(rows)
             if len(rows) < batch:
@@ -36,7 +39,7 @@ class ItemRepository:
     def search(self, query: str, limit: int = 1000, offset: int = 0) -> dict:
         response = (
             supabase.table("item")
-            .select("*, category(name), stock(quantity)", count="planned")
+            .select("*, category(name), stock(quantity, location(code))", count="planned")
             .ilike("item_id", f"*{query}*")
             .order("item_id")
             .range(offset, offset + min(limit, PAGE_SIZE) - 1)
@@ -48,6 +51,9 @@ class ItemRepository:
             item["categories"] = item.pop("category", None)
             stock_rows = item.pop("stock", [])
             item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
+            item["locations"] = sorted(
+                {s["location"]["code"] for s in stock_rows if s.get("location") and s["location"].get("code")}
+            )
 
         return {"data": items, "total": len(items)}
 

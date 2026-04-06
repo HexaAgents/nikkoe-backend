@@ -15,9 +15,10 @@ router = APIRouter(prefix="/api/sales", tags=["sales"])
 def list_sales(
     limit: int = Query(default=50, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=100),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_sales(limit, offset)
+    return service.list_sales(limit, offset, search)
 
 
 @router.get("/{sale_id}")
