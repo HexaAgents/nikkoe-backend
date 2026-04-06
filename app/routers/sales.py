@@ -33,8 +33,11 @@ def get_sale_lines(sale_id: int, user: CurrentUser = Depends(get_current_user)):
 
 @router.post("/", status_code=201)
 def create_sale(body: CreateSaleRequest, user: CurrentUser = Depends(get_current_user)):
+    sale_data = body.sale.model_dump()
+    if user.profile:
+        sale_data["user_id"] = user.profile.user_id
     return service.create_sale(
-        body.sale.model_dump(),
+        sale_data,
         [line.model_dump() for line in body.lines],
     )
 

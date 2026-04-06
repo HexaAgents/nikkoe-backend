@@ -33,8 +33,11 @@ def get_receipt_lines(receipt_id: int, user: CurrentUser = Depends(get_current_u
 
 @router.post("/", status_code=201)
 def create_receipt(body: CreateReceiptRequest, user: CurrentUser = Depends(get_current_user)):
+    receipt_data = body.receipt.model_dump()
+    if user.profile:
+        receipt_data["user_id"] = user.profile.user_id
     return service.create_receipt(
-        body.receipt.model_dump(),
+        receipt_data,
         [line.model_dump() for line in body.lines],
     )
 
