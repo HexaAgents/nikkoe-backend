@@ -6,7 +6,9 @@ class ReceiptService:
     def __init__(self, repo: ReceiptRepository):
         self.repo = repo
 
-    def list_receipts(self, limit: int = 50, offset: int = 0):
+    def list_receipts(self, limit: int = 50, offset: int = 0, search: str | None = None):
+        if search:
+            return self.repo.search_by_part_number(search)
         return self.repo.find_all(limit, offset)
 
     def get_receipt(self, id: int):

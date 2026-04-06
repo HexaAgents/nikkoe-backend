@@ -3,17 +3,7 @@ from app.repositories.base import batch_load
 
 
 class ReceiptRepository:
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
-        response = (
-            supabase.table("receipt")
-            .select("*", count="exact")
-            .order("dateTime", desc=True)
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-        receipts = response.data or []
-        total = response.count or 0
-
+    def _enrich(self, receipts: list[dict]) -> list[dict]:
         user_ids = list({r["user_id"] for r in receipts if r.get("user_id")})
         users_map = batch_load("user", "id", user_ids, "id, first_name, last_name")
 
@@ -40,7 +30,41 @@ class ReceiptRepository:
             r["suppliers"] = suppliers_map.get(sup_id) if sup_id else None
             r["users"] = users_map.get(r.get("user_id"))
 
-        return {"data": receipts, "total": total}
+        return receipts
+
+    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
+        response = (
+            supabase.table("receipt")
+            .select("*", count="exact")
+            .order("dateTime", desc=True)
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        receipts = response.data or []
+        total = response.count or 0
+
+        return {"data": self._enrich(receipts), "total": total}
+
+    def search_by_part_number(self, search_term: str, limit: int = 500) -> dict:
+        rpc_resp = supabase.rpc(
+            "search_receipts_by_part_number",
+            {"search_term": search_term, "lim": limit},
+        ).execute()
+        receipt_ids = rpc_resp.data or []
+        if not receipt_ids:
+            return {"data": [], "total": 0}
+
+        response = (
+            supabase.table("receipt")
+            .select("*", count="exact")
+            .in_("id", receipt_ids)
+            .order("dateTime", desc=True)
+            .execute()
+        )
+        receipts = response.data or []
+        total = response.count or 0
+
+        return {"data": self._enrich(receipts), "total": total}
 
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("receipt").select("*").eq("id", id).maybe_single().execute()
