@@ -162,5 +162,12 @@ class ChangePasswordInput(BaseModel):
     new_password: str = Field(min_length=6)
 
 
+class TransferInput(BaseModel):
+    from_stock_id: int
+    to_location_id: int
+    quantity: int = Field(gt=0)
+    notes: str | None = Field(default=None, max_length=500)
+
+
 class VoidRequest(BaseModel):
     reason: str | None = None

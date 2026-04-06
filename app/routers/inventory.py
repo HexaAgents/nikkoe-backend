@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.middleware.auth import CurrentUser, get_current_user
 from app.repositories.inventory import InventoryRepository
+from app.schemas import TransferInput
 from app.services.inventory import InventoryService
 
 repo = InventoryRepository()
@@ -21,3 +22,15 @@ def list_movements(
 @router.get("/on-hand")
 def list_on_hand(user: CurrentUser = Depends(get_current_user)):
     return service.list_on_hand()
+
+
+@router.post("/transfer", status_code=201)
+def transfer_stock(body: TransferInput, user: CurrentUser = Depends(get_current_user)):
+    user_id = user.profile.user_id if user.profile else None
+    return service.transfer_stock(
+        from_stock_id=body.from_stock_id,
+        to_location_id=body.to_location_id,
+        quantity=body.quantity,
+        user_id=user_id,
+        notes=body.notes,
+    )

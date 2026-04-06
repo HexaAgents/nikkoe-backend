@@ -1,0 +1,1 @@
+ALTER TABLE item_supplier ADD COLUMN IF NOT EXISTS note TEXT;
