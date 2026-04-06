@@ -4,23 +4,52 @@ PAGE_SIZE = 1000
 
 
 class ItemRepository:
-    def find_all(self, limit: int = 1000, offset: int = 0) -> dict:
+    def find_all(self, limit: int = 100000, offset: int = 0) -> dict:
+        all_items: list = []
+        current_offset = offset
+        remaining = limit
+
+        while remaining > 0:
+            batch = min(remaining, PAGE_SIZE)
+            response = (
+                supabase.table("item")
+                .select("*, category(name), stock(quantity)", count="planned")
+                .order("item_id")
+                .range(current_offset, current_offset + batch - 1)
+                .execute()
+            )
+            rows = response.data or []
+
+            for item in rows:
+                item["categories"] = item.pop("category", None)
+                stock_rows = item.pop("stock", [])
+                item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
+
+            all_items.extend(rows)
+            if len(rows) < batch:
+                break
+            current_offset += batch
+            remaining -= batch
+
+        return {"data": all_items, "total": len(all_items)}
+
+    def search(self, query: str, limit: int = 1000, offset: int = 0) -> dict:
         response = (
             supabase.table("item")
-            .select("*, category(name), stock(quantity)", count="exact")
+            .select("*, category(name), stock(quantity)", count="planned")
+            .ilike("item_id", f"*{query}*")
             .order("item_id")
             .range(offset, offset + min(limit, PAGE_SIZE) - 1)
             .execute()
         )
         items = response.data or []
-        total = response.count or 0
 
         for item in items:
             item["categories"] = item.pop("category", None)
             stock_rows = item.pop("stock", [])
             item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
 
-        return {"data": items, "total": total}
+        return {"data": items, "total": len(items)}
 
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("item").select("*, category(name)").eq("id", id).maybe_single().execute()

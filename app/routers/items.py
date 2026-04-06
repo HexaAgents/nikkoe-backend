@@ -20,11 +20,21 @@ router = APIRouter(prefix="/api/items", tags=["items"])
 
 @router.get("/")
 def list_items(
-    limit: int = Query(default=1000, ge=1, le=1000),
+    limit: int = Query(default=1000, ge=1, le=100000),
     offset: int = Query(default=0, ge=0),
     user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_items(limit, offset)
+
+
+@router.get("/search")
+def search_items(
+    q: str = Query(min_length=1, max_length=255),
+    limit: int = Query(default=1000, ge=1, le=1000),
+    offset: int = Query(default=0, ge=0),
+    user: CurrentUser = Depends(get_current_user),
+):
+    return service.search_items(q, limit, offset)
 
 
 @router.get("/{item_id}")
