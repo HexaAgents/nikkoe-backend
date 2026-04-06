@@ -392,16 +392,16 @@ class TestCreateUserInput:
 
 class TestLoginInput:
     def test_valid(self):
-        l = LoginInput(email="user@example.com", password="any")
-        assert l.password == "any"
+        login = LoginInput(email="user@example.com", password="any")
+        assert login.password == "any"
 
     def test_rejects_invalid_email(self):
         with pytest.raises(ValidationError):
             LoginInput(email="bad", password="any")
 
     def test_accepts_any_length_password(self):
-        l = LoginInput(email="user@example.com", password="x")
-        assert l.password == "x"
+        login = LoginInput(email="user@example.com", password="x")
+        assert login.password == "x"
 
 
 class TestSignupInput:

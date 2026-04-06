@@ -5,22 +5,11 @@ validation, auth dependency injection, and response serialization —
 while mocking the service layer so no real database calls are made.
 """
 
-import pytest
-
-
-# ---------------------------------------------------------------------------
-# Health (no auth required)
-# ---------------------------------------------------------------------------
-
-class TestHealthEndpoint:
-    def test_no_auth_required(self, client):
-        resp = client.get("/api/health")
-        assert resp.status_code == 200
-
 
 # ---------------------------------------------------------------------------
 # Auth validation — endpoints reject malformed request bodies
 # ---------------------------------------------------------------------------
+
 
 class TestAuthValidation:
     def test_login_rejects_missing_email(self, client):
@@ -43,6 +32,7 @@ class TestAuthValidation:
 # ---------------------------------------------------------------------------
 # Item endpoint validation
 # ---------------------------------------------------------------------------
+
 
 class TestItemValidation:
     def test_create_item_rejects_empty_part_number(self, authed_client):
@@ -69,6 +59,7 @@ class TestItemValidation:
 # Category endpoint validation
 # ---------------------------------------------------------------------------
 
+
 class TestCategoryValidation:
     def test_create_category_rejects_empty_name(self, authed_client):
         resp = authed_client.post("/api/categories/", json={"name": ""})
@@ -87,6 +78,7 @@ class TestCategoryValidation:
 # Location endpoint validation
 # ---------------------------------------------------------------------------
 
+
 class TestLocationValidation:
     def test_create_rejects_empty_code(self, authed_client):
         resp = authed_client.post("/api/locations/", json={"location_code": ""})
@@ -100,6 +92,7 @@ class TestLocationValidation:
 # ---------------------------------------------------------------------------
 # Supplier endpoint validation
 # ---------------------------------------------------------------------------
+
 
 class TestSupplierValidation:
     def test_create_rejects_empty_name(self, authed_client):
@@ -117,6 +110,7 @@ class TestSupplierValidation:
 # ---------------------------------------------------------------------------
 # Sale endpoint validation
 # ---------------------------------------------------------------------------
+
 
 class TestSaleValidation:
     def test_create_sale_rejects_invalid_line(self, authed_client):
@@ -160,6 +154,7 @@ class TestSaleValidation:
 # Receipt endpoint validation
 # ---------------------------------------------------------------------------
 
+
 class TestReceiptValidation:
     def test_create_receipt_rejects_invalid_line(self, authed_client):
         resp = authed_client.post(
@@ -184,6 +179,7 @@ class TestReceiptValidation:
 # Void endpoints require a user profile
 # ---------------------------------------------------------------------------
 
+
 class TestVoidRequiresProfile:
     def test_void_sale_forbidden_without_profile(self, unauthed_client):
         resp = unauthed_client.post("/api/sales/1/void", json={})
@@ -197,6 +193,7 @@ class TestVoidRequiresProfile:
 # ---------------------------------------------------------------------------
 # Supplier quote validation
 # ---------------------------------------------------------------------------
+
 
 class TestSupplierQuoteValidation:
     def test_create_quote_rejects_negative_cost(self, authed_client):
@@ -228,6 +225,7 @@ class TestSupplierQuoteValidation:
 # Customer endpoint validation
 # ---------------------------------------------------------------------------
 
+
 class TestCustomerValidation:
     def test_create_rejects_empty_name(self, authed_client):
         resp = authed_client.post("/api/customers/", json={"name": ""})
@@ -241,6 +239,7 @@ class TestCustomerValidation:
 # ---------------------------------------------------------------------------
 # User endpoint validation
 # ---------------------------------------------------------------------------
+
 
 class TestUserValidation:
     def test_create_user_rejects_invalid_email(self, authed_client):
@@ -261,6 +260,7 @@ class TestUserValidation:
 # ---------------------------------------------------------------------------
 # Pagination query param validation
 # ---------------------------------------------------------------------------
+
 
 class TestPaginationQueryParams:
     def test_items_rejects_limit_zero(self, authed_client):

@@ -4,3 +4,5 @@ supabase>=2.13.0
 python-dotenv>=1.1.0
 pydantic[email]>=2.11.0
 pydantic-settings>=2.9.0
+httpx>=0.28.0
+apscheduler>=3.11.0

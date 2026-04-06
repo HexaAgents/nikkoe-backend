@@ -5,25 +5,26 @@ repositories, we test that logic in isolation — no database, no network,
 just pure Python. This makes tests fast and deterministic.
 """
 
-import pytest
 from unittest.mock import MagicMock
 
-from app.errors import NotFoundError
-from app.services.item import ItemService
-from app.services.sale import SaleService
-from app.services.receipt import ReceiptService
-from app.services.category import CategoryService
-from app.services.location import LocationService
-from app.services.supplier import SupplierService
-from app.services.customer import CustomerService
-from app.services.channel import ChannelService
-from app.services.inventory import InventoryService
-from app.services.supplier_quote import SupplierQuoteService
+import pytest
 
+from app.errors import NotFoundError
+from app.services.category import CategoryService
+from app.services.channel import ChannelService
+from app.services.customer import CustomerService
+from app.services.inventory import InventoryService
+from app.services.item import ItemService
+from app.services.location import LocationService
+from app.services.receipt import ReceiptService
+from app.services.sale import SaleService
+from app.services.supplier import SupplierService
+from app.services.supplier_quote import SupplierQuoteService
 
 # ---------------------------------------------------------------------------
 # ItemService
 # ---------------------------------------------------------------------------
+
 
 class TestItemService:
     @pytest.fixture
@@ -72,7 +73,7 @@ class TestItemService:
 
     def test_update_item_delegates_to_repo(self, service, repos):
         repos["repo"].update.return_value = {"item_id": "1", "description": "Updated"}
-        result = service.update_item("1", {"description": "Updated"})
+        service.update_item("1", {"description": "Updated"})
         repos["repo"].update.assert_called_once_with("1", {"description": "Updated"})
 
     def test_delete_item_delegates_to_repo(self, service, repos):
@@ -87,7 +88,7 @@ class TestItemService:
 
     def test_get_item_inventory_delegates(self, service, repos):
         repos["inventory_repo"].find_by_item_id.return_value = []
-        result = service.get_item_inventory("1")
+        service.get_item_inventory("1")
         repos["inventory_repo"].find_by_item_id.assert_called_once_with("1")
 
     def test_get_item_receipts_delegates(self, service, repos):
@@ -105,6 +106,7 @@ class TestItemService:
 # SaleService
 # ---------------------------------------------------------------------------
 
+
 class TestSaleService:
     @pytest.fixture
     def repo(self):
@@ -116,7 +118,7 @@ class TestSaleService:
 
     def test_list_sales(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
-        result = service.list_sales(25, 10)
+        service.list_sales(25, 10)
         repo.find_all.assert_called_once_with(25, 10)
 
     def test_get_sale_returns_sale(self, service, repo):
@@ -131,14 +133,14 @@ class TestSaleService:
 
     def test_get_sale_lines(self, service, repo):
         repo.find_lines.return_value = [{"sale_line_id": "sl1"}]
-        result = service.get_sale_lines("s1")
+        service.get_sale_lines("s1")
         repo.find_lines.assert_called_once_with("s1")
 
     def test_create_sale(self, service, repo):
         sale_data = {"customer_name": "Test"}
         lines = [{"item_id": "i1", "quantity": 2}]
         repo.create.return_value = {"sale_id": "s1"}
-        result = service.create_sale(sale_data, lines)
+        service.create_sale(sale_data, lines)
         repo.create.assert_called_once_with(sale_data, lines)
 
     def test_void_sale(self, service, repo):
@@ -149,6 +151,7 @@ class TestSaleService:
 # ---------------------------------------------------------------------------
 # ReceiptService
 # ---------------------------------------------------------------------------
+
 
 class TestReceiptService:
     @pytest.fixture
@@ -194,6 +197,7 @@ class TestReceiptService:
 # CategoryService
 # ---------------------------------------------------------------------------
 
+
 class TestCategoryService:
     @pytest.fixture
     def service(self):
@@ -206,7 +210,7 @@ class TestCategoryService:
 
     def test_create_category(self, service):
         service.repo.create.return_value = {"category_id": "c1", "name": "Tools"}
-        result = service.create_category({"name": "Tools"})
+        service.create_category({"name": "Tools"})
         service.repo.create.assert_called_once_with({"name": "Tools"})
 
     def test_delete_category(self, service):
@@ -217,6 +221,7 @@ class TestCategoryService:
 # ---------------------------------------------------------------------------
 # LocationService
 # ---------------------------------------------------------------------------
+
 
 class TestLocationService:
     @pytest.fixture
@@ -241,6 +246,7 @@ class TestLocationService:
 # SupplierService
 # ---------------------------------------------------------------------------
 
+
 class TestSupplierService:
     @pytest.fixture
     def service(self):
@@ -264,6 +270,7 @@ class TestSupplierService:
 # CustomerService
 # ---------------------------------------------------------------------------
 
+
 class TestCustomerService:
     @pytest.fixture
     def service(self):
@@ -283,6 +290,7 @@ class TestCustomerService:
 # ChannelService
 # ---------------------------------------------------------------------------
 
+
 class TestChannelService:
     @pytest.fixture
     def service(self):
@@ -297,6 +305,7 @@ class TestChannelService:
 # ---------------------------------------------------------------------------
 # InventoryService
 # ---------------------------------------------------------------------------
+
 
 class TestInventoryService:
     @pytest.fixture
@@ -317,6 +326,7 @@ class TestInventoryService:
 # ---------------------------------------------------------------------------
 # SupplierQuoteService
 # ---------------------------------------------------------------------------
+
 
 class TestSupplierQuoteService:
     @pytest.fixture

@@ -11,7 +11,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  check:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install ruff
+
+      - name: Lint
+        run: ruff check app/ tests/
+
+      - name: Format check
+        run: ruff format --check app/ tests/
+
+  test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,22 +41,66 @@ jobs:
 
       - run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Lint
-        run: ruff check app/
-
-      - name: Format check
-        run: ruff format --check app/
-
-      - name: Test
+      - name: Unit tests
         run: pytest --tb=short -q
 
-      - name: Security audit
+  security:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - run: pip install pip-audit
+
+      - name: Dependency audit
         run: pip-audit -r requirements.txt
 
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Docker image
+        run: docker build -t nikkoe-backend:ci .
+
+  migrations:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate migration files
+        run: |
+          shopt -s nullglob
+          files=(supabase/migrations/*.sql)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No migration files found — skipping"
+            exit 0
+          fi
+          errors=0
+          for f in "${files[@]}"; do
+            name=$(basename "$f")
+            if [[ ! "$name" =~ ^[0-9]{8} ]]; then
+              echo "ERROR: $name does not start with a date (YYYYMMDD)"
+              errors=1
+            fi
+            if [ ! -s "$f" ]; then
+              echo "ERROR: $name is empty"
+              errors=1
+            else
+              echo "OK: $name ($(wc -c < "$f") bytes)"
+            fi
+          done
+          exit $errors
+
   deploy:
-    needs: check
+    needs: [lint, test, security, build, migrations]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
+    environment: production
     permissions:
       contents: read
       id-token: write
@@ -60,3 +122,21 @@ jobs:
             --region us-central1 \
             --clear-base-image \
             --quiet
+
+      - name: Post-deploy health check
+        run: |
+          SERVICE_URL=$(gcloud run services describe nikkoe-backend \
+            --region us-central1 \
+            --format 'value(status.url)')
+          echo "Checking $SERVICE_URL/api/health ..."
+          for attempt in 1 2 3 4 5; do
+            status=$(curl -s -o /dev/null -w "%{http_code}" "$SERVICE_URL/api/health" || true)
+            if [ "$status" = "200" ]; then
+              echo "Health check passed on attempt $attempt"
+              exit 0
+            fi
+            echo "Attempt $attempt: HTTP $status — retrying in 10s"
+            sleep 10
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1

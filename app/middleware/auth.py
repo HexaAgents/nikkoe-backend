@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 from fastapi import Request
 
-from app.dependencies import supabase
+from app.dependencies import supabase, supabase_auth
 
 
 @dataclass
@@ -28,7 +28,7 @@ async def get_current_user(request: Request) -> CurrentUser:
         return _unauthorized("Missing authorization token")
 
     try:
-        user_response = supabase.auth.get_user(token)
+        user_response = supabase_auth.auth.get_user(token)
     except Exception:
         return _unauthorized("Invalid or expired token")
 

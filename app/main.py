@@ -54,6 +54,27 @@ app.include_router(users.router)
 app.include_router(supplier_quotes.router)
 app.include_router(currencies.router)
 
+if settings.EBAY_CLIENT_ID:
+    from app.routers import ebay  # noqa: E402
+
+    app.include_router(ebay.router)
+
+
+@app.on_event("startup")
+def startup_event():
+    if settings.EBAY_CLIENT_ID:
+        from app.ebay.scheduler import start_scheduler
+
+        start_scheduler()
+
+
+@app.on_event("shutdown")
+def shutdown_event():
+    if settings.EBAY_CLIENT_ID:
+        from app.ebay.scheduler import stop_scheduler
+
+        stop_scheduler()
+
 
 @app.get("/api/health")
 def health():

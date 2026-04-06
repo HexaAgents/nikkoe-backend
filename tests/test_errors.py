@@ -1,25 +1,25 @@
 """Tests for error classes and exception handler functions."""
 
 import json
-
-import pytest
 from unittest.mock import MagicMock
 
+import pytest
+
 from app.errors import (
+    PG_ERROR_MAP,
     AppError,
     ConflictError,
     ForbiddenError,
     NotFoundError,
-    PG_ERROR_MAP,
     app_error_handler,
     general_error_handler,
     validation_error_handler,
 )
 
-
 # ---------------------------------------------------------------------------
 # Error classes
 # ---------------------------------------------------------------------------
+
 
 class TestAppError:
     def test_stores_status_and_message(self):
@@ -68,6 +68,7 @@ class TestForbiddenError:
 # PG_ERROR_MAP
 # ---------------------------------------------------------------------------
 
+
 class TestPgErrorMap:
     def test_duplicate_key(self):
         assert PG_ERROR_MAP["23505"]["status"] == 409
@@ -82,6 +83,7 @@ class TestPgErrorMap:
 # ---------------------------------------------------------------------------
 # Exception handler functions
 # ---------------------------------------------------------------------------
+
 
 class TestAppErrorHandler:
     @pytest.mark.asyncio
@@ -102,6 +104,7 @@ class TestValidationErrorHandler:
     @pytest.mark.asyncio
     async def test_returns_400_with_details(self):
         from pydantic import ValidationError
+
         from app.schemas import ItemInput
 
         try:

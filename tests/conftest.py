@@ -3,9 +3,13 @@ import os
 os.environ.setdefault("SUPABASE_URL", "https://test.supabase.co")
 os.environ.setdefault("SUPABASE_SERVICE_ROLE_KEY", "test-service-role-key")
 os.environ.setdefault("SUPABASE_ANON_KEY", "test-anon-key")
+os.environ.setdefault("EBAY_CLIENT_ID", "test-ebay-client-id")
+os.environ.setdefault("EBAY_CLIENT_SECRET", "test-ebay-client-secret")
+os.environ.setdefault("EBAY_RU_NAME", "test-ebay-ru-name")
+os.environ.setdefault("EBAY_ENVIRONMENT", "SANDBOX")
+
 
 import pytest
-from unittest.mock import MagicMock
 from fastapi.testclient import TestClient
 
 from app.main import app
