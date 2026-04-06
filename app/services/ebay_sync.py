@@ -73,7 +73,7 @@ class EbaySyncService:
         order_id = order.get("orderId", "")
         if not order_id:
             return True
-        resp = supabase.table("Sale").select("id").eq("channel_ref", order_id).limit(1).execute()
+        resp = supabase.table("sale").select("id").eq("channel_ref", order_id).limit(1).execute()
         return bool(resp.data)
 
     def _import_order(self, order: dict) -> dict:
@@ -99,7 +99,7 @@ class EbaySyncService:
             lines_data.append(line)
 
         sale_data_clean = {k: v for k, v in sale_data.items() if v is not None}
-        sale_resp = supabase.table("Sale").insert(sale_data_clean).execute()
+        sale_resp = supabase.table("sale").insert(sale_data_clean).execute()
         sale_row = sale_resp.data[0]
         sale_id = sale_row["id"]
 
@@ -109,12 +109,12 @@ class EbaySyncService:
             line["sale_id"] = sale_id
             line["stock_id"] = stock_id
             line["source"] = SOURCE_TAG
-            supabase.table("Sale_Stock").insert(line).execute()
+            supabase.table("sale_stock").insert(line).execute()
 
             if stock_id:
-                stock_row = supabase.table("Stock").select("quantity").eq("id", stock_id).single().execute()
+                stock_row = supabase.table("stock").select("quantity").eq("id", stock_id).single().execute()
                 new_qty = (stock_row.data.get("quantity") or 0) - line.get("quantity", 0)
-                supabase.table("Stock").update({"quantity": new_qty}).eq("id", stock_id).execute()
+                supabase.table("stock").update({"quantity": new_qty}).eq("id", stock_id).execute()
 
         return sale_row
 
@@ -146,12 +146,12 @@ class EbaySyncService:
         if not sku:
             return None
 
-        resp = supabase.table("Item").select("id").eq("item_id", sku).limit(1).execute()
+        resp = supabase.table("item").select("id").eq("item_id", sku).limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
 
         new_item = (
-            supabase.table("Item")
+            supabase.table("item")
             .insert(
                 {
                     "item_id": sku,
@@ -168,7 +168,7 @@ class EbaySyncService:
             return None
 
         resp = (
-            supabase.table("Stock")
+            supabase.table("stock")
             .select("id")
             .eq("item_id", item_id)
             .eq("location_id", location_id)
@@ -179,7 +179,7 @@ class EbaySyncService:
             return resp.data[0]["id"]
 
         new_stock = (
-            supabase.table("Stock")
+            supabase.table("stock")
             .insert(
                 {
                     "item_id": item_id,
@@ -198,7 +198,7 @@ class EbaySyncService:
         if not username:
             return None
 
-        resp = supabase.table("Customer").select("id").eq("name", username).limit(1).execute()
+        resp = supabase.table("customer").select("id").eq("name", username).limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
 
@@ -220,26 +220,26 @@ class EbaySyncService:
             "source": SOURCE_TAG,
             **{k: v for k, v in address.items() if v},
         }
-        new_customer = supabase.table("Customer").insert(customer_data).execute()
+        new_customer = supabase.table("customer").insert(customer_data).execute()
         return new_customer.data[0]["id"]
 
     def _resolve_currency(self, code: str) -> int | None:
         if not code:
             return None
-        resp = supabase.table("Currency").select("id").eq("code", code).limit(1).execute()
+        resp = supabase.table("currency").select("id").eq("code", code).limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
         return None
 
     def _get_ebay_channel_id(self) -> int | None:
-        resp = supabase.table("Channel").select("id").eq("name", "eBay").limit(1).execute()
+        resp = supabase.table("channel").select("id").eq("name", "eBay").limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
         return None
 
     def _get_ebay_location_id(self) -> int:
-        resp = supabase.table("Location").select("id").eq("code", "EBAY").limit(1).execute()
+        resp = supabase.table("location").select("id").eq("code", "EBAY").limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
-        new_loc = supabase.table("Location").insert({"code": "EBAY"}).execute()
+        new_loc = supabase.table("location").insert({"code": "EBAY"}).execute()
         return new_loc.data[0]["id"]

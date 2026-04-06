@@ -95,7 +95,7 @@ def sync_history(
 @router.get("/purge/preview")
 def purge_preview(user: CurrentUser = Depends(get_current_user)):
     """Preview counts of eBay-imported records that would be deleted."""
-    tables = ["Sale_Stock", "Sale", "Stock", "Item", "Customer"]
+    tables = ["sale_stock", "sale", "stock", "item", "customer"]
     counts = {}
     for table in tables:
         resp = supabase.table(table).select("id", count="exact").eq("source", SOURCE_TAG).limit(0).execute()
@@ -106,7 +106,7 @@ def purge_preview(user: CurrentUser = Depends(get_current_user)):
 @router.delete("/purge")
 def purge_ebay_data(user: CurrentUser = Depends(get_current_user)):
     """Delete ALL eBay-imported data (source = EBAY_IMPORT) in FK-safe order."""
-    tables = ["Sale_Stock", "Sale", "Stock", "Item", "Customer"]
+    tables = ["sale_stock", "sale", "stock", "item", "customer"]
     deleted = {}
     for table in tables:
         resp = supabase.table(table).select("id", count="exact").eq("source", SOURCE_TAG).limit(0).execute()
@@ -116,6 +116,6 @@ def purge_ebay_data(user: CurrentUser = Depends(get_current_user)):
         deleted[table] = count
 
     token_repo.delete_all()
-    deleted["Ebay_Token"] = 1
+    deleted["ebay_token"] = 1
 
     return {"deleted": deleted, "message": "All eBay-imported data has been purged"}

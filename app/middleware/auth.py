@@ -38,7 +38,7 @@ async def get_current_user(request: Request) -> CurrentUser:
 
     try:
         profile_response = (
-            supabase.table("User")
+            supabase.table("user")
             .select("id, first_name, last_name, email")
             .eq("auth_id", user.id)
             .maybe_single()

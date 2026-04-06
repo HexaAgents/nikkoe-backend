@@ -6,7 +6,7 @@ from app.dependencies import supabase
 
 
 class EbayTokenRepository:
-    TABLE = "Ebay_Token"
+    TABLE = "ebay_token"
 
     def get_current(self) -> dict | None:
         resp = supabase.table(self.TABLE).select("*").order("created_at", desc=True).limit(1).execute()
@@ -63,7 +63,7 @@ class EbayTokenRepository:
 
 
 class EbaySyncLogRepository:
-    TABLE = "Ebay_Sync_Log"
+    TABLE = "ebay_sync_log"
 
     def create(self, sync_from: str | None = None) -> dict:
         payload: dict = {"status": "RUNNING"}
