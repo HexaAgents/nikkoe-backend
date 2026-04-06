@@ -159,6 +159,15 @@ class ReceiptRepository:
     def void_receipt(self, receipt_id: int, user_id: int, reason: str) -> None:
         from datetime import datetime, timezone
 
+        lines_resp = supabase.table("receipt_stock").select("stock_id, quantity").eq("receipt_id", receipt_id).execute()
+        for line in lines_resp.data or []:
+            stock_id = line.get("stock_id")
+            qty = line.get("quantity", 0)
+            if stock_id and qty:
+                stock_row = supabase.table("stock").select("quantity").eq("id", stock_id).single().execute()
+                restored_qty = (stock_row.data.get("quantity") or 0) - qty
+                supabase.table("stock").update({"quantity": restored_qty}).eq("id", stock_id).execute()
+
         supabase.table("receipt").update(
             {
                 "status": "VOIDED",
