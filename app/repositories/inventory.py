@@ -46,7 +46,14 @@ class InventoryRepository:
         response = supabase.table("stock").select("*").gt("quantity", 0).execute()
         return response.data or []
 
-    def create_transfer(self, from_stock_id: int, to_location_id: int, quantity: int, user_id: int | None = None, notes: str | None = None) -> dict:
+    def create_transfer(
+        self,
+        from_stock_id: int,
+        to_location_id: int,
+        quantity: int,
+        user_id: int | None = None,
+        notes: str | None = None,
+    ) -> dict:
         response = supabase.rpc("transfer_stock", {
             "p_from_stock_id": from_stock_id,
             "p_to_location_id": to_location_id,
