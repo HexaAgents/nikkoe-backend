@@ -1,5 +1,4 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load
 
 PAGE_SIZE = 1000
 
