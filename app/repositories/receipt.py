@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_in_load, batch_load, paginated_fetch
+from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch
 
 _LIST_SELECT = (
     "id, dateTime, status, reference, note, supplier_id, user_id, "
@@ -50,6 +50,20 @@ class ReceiptRepository:
             matching_ids.update(rpc_resp.data or [])
         except Exception:
             pass
+
+        pattern = dash_insensitive_pattern(search_term)
+        item_resp = (
+            supabase.table("item").select("id")
+            .filter("item_id", "imatch", pattern)
+            .execute()
+        )
+        if item_resp.data:
+            item_ids = [i["id"] for i in item_resp.data]
+            stock_rows = batch_in_load("stock", "id", "item_id", item_ids)
+            if stock_rows:
+                stock_ids = [s["id"] for s in stock_rows]
+                receipt_stock_rows = batch_in_load("receipt_stock", "receipt_id", "stock_id", stock_ids)
+                matching_ids.update(r["receipt_id"] for r in receipt_stock_rows if r.get("receipt_id"))
 
         direct_resp = (
             supabase.table("receipt")

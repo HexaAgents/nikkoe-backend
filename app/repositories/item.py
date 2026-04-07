@@ -1,16 +1,5 @@
-import re
-
 from app.dependencies import supabase
-from app.repositories.base import paginated_fetch
-
-
-def _dash_insensitive_pattern(query: str) -> str:
-    """Regex that matches ``query`` with optional dashes between any characters."""
-    stripped = query.replace("-", "")
-    if not stripped:
-        return ".*"
-    chars = [re.escape(c) for c in stripped]
-    return ".*" + "-?".join(chars) + ".*"
+from app.repositories.base import dash_insensitive_pattern as _dash_insensitive_pattern, paginated_fetch
 
 
 def _enrich_items(rows: list) -> list:

@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load, paginated_fetch
+from app.repositories.base import batch_load, dash_insensitive_pattern, paginated_fetch
 
 
 class InventoryRepository:
@@ -19,7 +19,8 @@ class InventoryRepository:
         notes_resp = supabase.table("transfer").select("id").ilike("notes", f"%{search_term}%").execute()
         matching_ids.update(r["id"] for r in (notes_resp.data or []))
 
-        item_resp = supabase.table("item").select("id").ilike("item_id", f"%{search_term}%").execute()
+        pattern = dash_insensitive_pattern(search_term)
+        item_resp = supabase.table("item").select("id").filter("item_id", "imatch", pattern).execute()
         if item_resp.data:
             item_ids = [i["id"] for i in item_resp.data]
             stock_rows = _batch_in("stock", "id", "item_id", item_ids)

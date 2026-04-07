@@ -1,7 +1,18 @@
+import re
+
 from app.dependencies import supabase
 
 POSTGREST_PAGE = 1000
 IN_CHUNK = 300
+
+
+def dash_insensitive_pattern(query: str) -> str:
+    """Regex that matches ``query`` with optional dashes between any characters."""
+    stripped = query.replace("-", "")
+    if not stripped:
+        return ".*"
+    chars = [re.escape(c) for c in stripped]
+    return ".*" + "-?".join(chars) + ".*"
 
 
 def batch_load(
