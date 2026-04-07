@@ -6,7 +6,9 @@ _load_dotenv()
 
 from fastapi import FastAPI  # noqa: E402
 from fastapi.middleware.cors import CORSMiddleware  # noqa: E402
+from fastapi.responses import JSONResponse  # noqa: E402
 from pydantic import ValidationError  # noqa: E402
+from starlette.types import ASGIApp, Receive, Scope, Send  # noqa: E402
 
 from app.config import settings  # noqa: E402
 from app.errors import AppError, app_error_handler, general_error_handler, validation_error_handler  # noqa: E402
@@ -26,11 +28,50 @@ from app.routers import (  # noqa: E402
     users,
 )
 
+
+class ExceptionToResponseMiddleware:
+    """Catches unhandled exceptions and converts them to JSON responses so that
+    the outer CORSMiddleware can still attach CORS headers to error responses."""
+
+    def __init__(self, app: ASGIApp):
+        self.app = app
+
+    async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
+        if scope["type"] != "http":
+            await self.app(scope, receive, send)
+            return
+
+        response_started = False
+        original_send = send
+
+        async def _send(message):
+            nonlocal response_started
+            if message["type"] == "http.response.start":
+                response_started = True
+            await original_send(message)
+
+        try:
+            await self.app(scope, receive, _send)
+        except Exception as exc:
+            if response_started:
+                raise
+            msg = str(exc) if str(exc) else "Internal server error"
+            print(f"[API Error] {exc}")
+            response = JSONResponse(status_code=500, content={"error": msg})
+            await response(scope, receive, original_send)
+
+
 app = FastAPI(title="nikkoe-backend", redirect_slashes=False)
 
 allow_origin_regex = r"https://.*\.vercel\.app"
 _env_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
 _extra_origins = ["https://platform.hexaagents.com"]
+
+# ExceptionToResponseMiddleware is added BEFORE CORSMiddleware so that in the
+# middleware stack it sits INSIDE CORS.  Exception → JSON response → CORS headers.
+app.add_middleware(
+    ExceptionToResponseMiddleware,
+)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=_env_origins + _extra_origins,
