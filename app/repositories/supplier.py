@@ -12,6 +12,10 @@ class SupplierRepository:
         )
         return {"data": response.data or [], "total": response.count or 0}
 
+    def find_by_id(self, id: int) -> dict | None:
+        response = supabase.table("supplier").select("*").eq("id", id).maybe_single().execute()
+        return response.data
+
     def create(self, data: dict) -> dict:
         response = supabase.table("supplier").insert(data).execute()
         return response.data[0]

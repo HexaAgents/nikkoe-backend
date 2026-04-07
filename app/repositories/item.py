@@ -51,6 +51,18 @@ class ItemRepository:
 
         return {"data": items, "total": response.count or 0}
 
+    def find_by_category(self, category_id: int, limit: int = 5000, offset: int = 0) -> dict:
+        response = (
+            supabase.table("item")
+            .select("*, category(name), stock(quantity, location(code))", count="exact")
+            .eq("category_id", category_id)
+            .order("item_id")
+            .range(offset, offset + limit - 1)
+            .execute()
+        )
+        items = _enrich_items(response.data or [])
+        return {"data": items, "total": response.count or 0}
+
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("item").select("*, category(name)").eq("id", id).maybe_single().execute()
         if response.data:

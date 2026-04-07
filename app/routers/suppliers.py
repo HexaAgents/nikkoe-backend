@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.middleware.auth import CurrentUser, get_current_user
 from app.repositories.supplier import SupplierRepository
@@ -17,6 +17,19 @@ def list_suppliers(
     user: CurrentUser = Depends(get_current_user),
 ):
     return service.list_suppliers(limit, offset)
+
+
+@router.get("/{supplier_id}")
+def get_supplier(supplier_id: int, user: CurrentUser = Depends(get_current_user)):
+    supplier = service.get_supplier(supplier_id)
+    if not supplier:
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    return supplier
+
+
+@router.get("/{supplier_id}/receipts")
+def get_supplier_receipts(supplier_id: int, user: CurrentUser = Depends(get_current_user)):
+    return service.get_supplier_receipts(supplier_id)
 
 
 @router.post("/", status_code=201)

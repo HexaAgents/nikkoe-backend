@@ -19,6 +19,11 @@ def list_locations(
     return service.list_locations(limit, offset)
 
 
+@router.get("/{location_id}/items")
+def get_location_items(location_id: int, user: CurrentUser = Depends(get_current_user)):
+    return service.get_location_items(location_id)
+
+
 @router.post("/", status_code=201)
 def create_location(body: LocationInput, user: CurrentUser = Depends(get_current_user)):
     return service.create_location(body.model_dump())

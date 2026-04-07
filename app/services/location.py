@@ -1,3 +1,4 @@
+from app.errors import NotFoundError
 from app.repositories.location import LocationRepository
 
 
@@ -7,6 +8,12 @@ class LocationService:
 
     def list_locations(self, limit: int = 50, offset: int = 0):
         return self.repo.find_all(limit, offset)
+
+    def get_location_items(self, location_id: int):
+        location = self.repo.find_by_id(location_id)
+        if location is None:
+            raise NotFoundError("Location", str(location_id))
+        return self.repo.find_items_by_location(location_id)
 
     def create_location(self, data: dict):
         return self.repo.create(data)
