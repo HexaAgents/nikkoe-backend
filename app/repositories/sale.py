@@ -19,26 +19,31 @@ class SaleRepository:
 
         return sales
 
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
+    def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         query = supabase.table("sale").select("*", count="exact").order("date", desc=True)
+        if status:
+            query = query.eq("status", status)
         sales, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._enrich(sales), "total": total}
 
-    def search_by_part_number(self, search_term: str, limit: int = 500) -> dict:
+    def search_by_part_number(self, search_term: str, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         rpc_resp = supabase.rpc(
             "search_sales_by_part_number",
-            {"search_term": search_term, "lim": limit},
+            {"search_term": search_term},
         ).execute()
         sale_ids = rpc_resp.data or []
         if not sale_ids:
             return {"data": [], "total": 0}
 
-        response = (
-            supabase.table("sale").select("*", count="exact").in_("id", sale_ids).order("date", desc=True).execute()
+        query = (
+            supabase.table("sale")
+            .select("*", count="exact")
+            .in_("id", sale_ids)
+            .order("date", desc=True)
         )
-        sales = response.data or []
-        total = response.count or 0
-
+        if status:
+            query = query.eq("status", status)
+        sales, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._enrich(sales), "total": total}
 
     def find_by_id(self, id: int) -> dict | None:

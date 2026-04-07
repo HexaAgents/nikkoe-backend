@@ -121,7 +121,7 @@ class TestSaleService:
     def test_list_sales(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
         service.list_sales(25, 10)
-        repo.find_all.assert_called_once_with(25, 10)
+        repo.find_all.assert_called_once_with(25, 10, status=None)
 
     def test_get_sale_returns_sale(self, service, repo):
         repo.find_by_id.return_value = {"sale_id": "s1", "status": "active"}
@@ -167,7 +167,7 @@ class TestReceiptService:
     def test_list_receipts(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
         service.list_receipts(50, 0)
-        repo.find_all.assert_called_once_with(50, 0)
+        repo.find_all.assert_called_once_with(50, 0, status=None)
 
     def test_get_receipt_returns_receipt(self, service, repo):
         repo.find_by_id.return_value = {"receipt_id": "r1"}
@@ -362,19 +362,19 @@ class TestSaleServiceSearch:
     def test_list_sales_with_search_delegates_to_search(self, service, repo):
         repo.search_by_part_number.return_value = {"data": [], "total": 0}
         service.list_sales(50, 0, search="PART-1")
-        repo.search_by_part_number.assert_called_once_with("PART-1")
+        repo.search_by_part_number.assert_called_once_with("PART-1", limit=50, offset=0, status=None)
         repo.find_all.assert_not_called()
 
     def test_list_sales_without_search_delegates_to_find_all(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
         service.list_sales(25, 10)
-        repo.find_all.assert_called_once_with(25, 10)
+        repo.find_all.assert_called_once_with(25, 10, status=None)
         repo.search_by_part_number.assert_not_called()
 
     def test_list_sales_none_search_delegates_to_find_all(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
         service.list_sales(50, 0, search=None)
-        repo.find_all.assert_called_once_with(50, 0)
+        repo.find_all.assert_called_once_with(50, 0, status=None)
 
 
 # ---------------------------------------------------------------------------
@@ -394,13 +394,13 @@ class TestReceiptServiceSearch:
     def test_list_receipts_with_search_delegates_to_search(self, service, repo):
         repo.search_by_part_number.return_value = {"data": [], "total": 0}
         service.list_receipts(50, 0, search="PART-2")
-        repo.search_by_part_number.assert_called_once_with("PART-2")
+        repo.search_by_part_number.assert_called_once_with("PART-2", limit=50, offset=0, status=None)
         repo.find_all.assert_not_called()
 
     def test_list_receipts_without_search_delegates_to_find_all(self, service, repo):
         repo.find_all.return_value = {"data": [], "total": 0}
         service.list_receipts(25, 10)
-        repo.find_all.assert_called_once_with(25, 10)
+        repo.find_all.assert_called_once_with(25, 10, status=None)
 
 
 # ---------------------------------------------------------------------------

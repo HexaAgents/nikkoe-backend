@@ -32,30 +32,34 @@ class ReceiptRepository:
 
         return receipts
 
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
+    def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         query = supabase.table("receipt").select(_LIST_SELECT, count="exact").order("dateTime", desc=True)
+        if status:
+            query = query.eq("status", status)
         receipts, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._resolve_suppliers(receipts), "total": total}
 
-    def search_by_part_number(self, search_term: str, limit: int = 500) -> dict:
+    def search_by_part_number(self, search_term: str, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         rpc_resp = supabase.rpc(
             "search_receipts_by_part_number",
-            {"search_term": search_term, "lim": limit},
+            {"search_term": search_term},
         ).execute()
         receipt_ids = rpc_resp.data or []
         if not receipt_ids:
             return {"data": [], "total": 0}
 
-        response = (
+        query = (
             supabase.table("receipt")
             .select(_LIST_SELECT, count="exact")
             .in_("id", receipt_ids)
             .order("dateTime", desc=True)
-            .execute()
         )
+        if status:
+            query = query.eq("status", status)
+        receipts, total = paginated_fetch(query, offset=offset, limit=limit)
         return {
-            "data": self._resolve_suppliers(response.data or []),
-            "total": response.count or 0,
+            "data": self._resolve_suppliers(receipts),
+            "total": total,
         }
 
     def find_by_id(self, id: int) -> dict | None:

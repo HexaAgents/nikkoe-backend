@@ -203,19 +203,19 @@ class TestSaleEndpoints:
         with patch("app.routers.sales.service") as svc:
             svc.list_sales.return_value = PAGINATED_EMPTY
             authed_client.get("/api/sales/")
-        svc.list_sales.assert_called_once_with(50, 0, None)
+        svc.list_sales.assert_called_once_with(50, 0, None, None)
 
     def test_list_sales_passes_custom_pagination(self, authed_client):
         with patch("app.routers.sales.service") as svc:
             svc.list_sales.return_value = PAGINATED_EMPTY
             authed_client.get("/api/sales/?limit=10&offset=5")
-        svc.list_sales.assert_called_once_with(10, 5, None)
+        svc.list_sales.assert_called_once_with(10, 5, None, None)
 
     def test_list_sales_with_search(self, authed_client):
         with patch("app.routers.sales.service") as svc:
             svc.list_sales.return_value = _paginated([self.SALE_ROW])
             resp = authed_client.get("/api/sales/?search=PART-1")
-        svc.list_sales.assert_called_once_with(50, 0, "PART-1")
+        svc.list_sales.assert_called_once_with(50, 0, "PART-1", None)
         assert resp.status_code == 200
 
     def test_get_sale_returns_200(self, authed_client):
@@ -306,19 +306,19 @@ class TestReceiptEndpoints:
         with patch("app.routers.receipts.service") as svc:
             svc.list_receipts.return_value = PAGINATED_EMPTY
             authed_client.get("/api/receipts/")
-        svc.list_receipts.assert_called_once_with(50, 0, None)
+        svc.list_receipts.assert_called_once_with(50, 0, None, None)
 
     def test_list_receipts_passes_custom_pagination(self, authed_client):
         with patch("app.routers.receipts.service") as svc:
             svc.list_receipts.return_value = PAGINATED_EMPTY
             authed_client.get("/api/receipts/?limit=25&offset=10")
-        svc.list_receipts.assert_called_once_with(25, 10, None)
+        svc.list_receipts.assert_called_once_with(25, 10, None, None)
 
     def test_list_receipts_with_search(self, authed_client):
         with patch("app.routers.receipts.service") as svc:
             svc.list_receipts.return_value = _paginated([self.RECEIPT_ROW])
             resp = authed_client.get("/api/receipts/?search=PART-2")
-        svc.list_receipts.assert_called_once_with(50, 0, "PART-2")
+        svc.list_receipts.assert_called_once_with(50, 0, "PART-2", None)
         assert resp.status_code == 200
 
     def test_get_receipt_returns_200(self, authed_client):

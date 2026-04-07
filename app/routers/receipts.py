@@ -16,9 +16,10 @@ def list_receipts(
     limit: int = Query(default=50, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
     search: str | None = Query(default=None, min_length=1, max_length=100),
+    status: str | None = Query(default=None, max_length=20),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_receipts(limit, offset, search)
+    return service.list_receipts(limit, offset, search, status)
 
 
 @router.get("/{receipt_id}")

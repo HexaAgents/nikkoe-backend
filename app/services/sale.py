@@ -6,10 +6,10 @@ class SaleService:
     def __init__(self, repo: SaleRepository):
         self.repo = repo
 
-    def list_sales(self, limit: int = 50, offset: int = 0, search: str | None = None):
+    def list_sales(self, limit: int = 50, offset: int = 0, search: str | None = None, status: str | None = None):
         if search:
-            return self.repo.search_by_part_number(search)
-        return self.repo.find_all(limit, offset)
+            return self.repo.search_by_part_number(search, limit=limit, offset=offset, status=status)
+        return self.repo.find_all(limit, offset, status=status)
 
     def get_sale(self, id: int):
         sale = self.repo.find_by_id(id)
