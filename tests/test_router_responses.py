@@ -77,7 +77,8 @@ class TestAuthSignup:
             token_type="bearer",
         )
         with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.sign_up.return_value = MagicMock(user=mock_user, session=mock_session)
+            mock_auth.auth.admin.create_user.return_value = MagicMock(user=mock_user)
+            mock_auth.auth.sign_in_with_password.return_value = MagicMock(session=mock_session)
             resp = client.post(
                 "/api/auth/signup",
                 json={"email": "new@b.com", "password": "pass123"},
@@ -87,10 +88,11 @@ class TestAuthSignup:
         assert body["user"]["id"] == "uid-2"
         assert body["session"]["access_token"] == "tok2"
 
-    def test_signup_returns_null_session_when_confirmation_required(self, client):
+    def test_signup_returns_null_session_when_sign_in_fails(self, client):
         mock_user = MagicMock(id="uid-3", email="x@b.com")
         with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.sign_up.return_value = MagicMock(user=mock_user, session=None)
+            mock_auth.auth.admin.create_user.return_value = MagicMock(user=mock_user)
+            mock_auth.auth.sign_in_with_password.side_effect = Exception("fail")
             resp = client.post(
                 "/api/auth/signup",
                 json={"email": "x@b.com", "password": "pass123"},
@@ -100,7 +102,7 @@ class TestAuthSignup:
 
     def test_signup_returns_400_on_failure(self, client):
         with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.sign_up.side_effect = Exception("Duplicate")
+            mock_auth.auth.admin.create_user.side_effect = Exception("Duplicate")
             resp = client.post(
                 "/api/auth/signup",
                 json={"email": "dup@b.com", "password": "pass123"},
@@ -109,7 +111,7 @@ class TestAuthSignup:
 
     def test_signup_returns_400_when_user_none(self, client):
         with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.sign_up.return_value = MagicMock(user=None)
+            mock_auth.auth.admin.create_user.return_value = MagicMock(user=None)
             resp = client.post(
                 "/api/auth/signup",
                 json={"email": "x@b.com", "password": "pass123"},
@@ -138,7 +140,11 @@ class TestAuthMe:
 
 class TestAuthChangePassword:
     def test_change_password_success(self, authed_client):
-        with patch("app.routers.auth.supabase_auth"):
+        mock_verify = MagicMock(status_code=200)
+        mock_update = MagicMock(status_code=200)
+        with patch("app.routers.auth.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_verify
+            mock_httpx.put.return_value = mock_update
             resp = authed_client.post(
                 "/api/auth/change-password",
                 json={"current_password": "old123", "new_password": "new123"},
@@ -147,8 +153,9 @@ class TestAuthChangePassword:
         assert resp.json()["success"] is True
 
     def test_change_password_wrong_current(self, authed_client):
-        with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.sign_in_with_password.side_effect = Exception("Bad creds")
+        mock_verify = MagicMock(status_code=400)
+        with patch("app.routers.auth.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_verify
             resp = authed_client.post(
                 "/api/auth/change-password",
                 json={"current_password": "wrong", "new_password": "new123"},
@@ -156,8 +163,12 @@ class TestAuthChangePassword:
         assert resp.status_code == 400
 
     def test_change_password_update_failure(self, authed_client):
-        with patch("app.routers.auth.supabase_auth") as mock_auth:
-            mock_auth.auth.admin.update_user_by_id.side_effect = Exception("Weak")
+        mock_verify = MagicMock(status_code=200)
+        mock_update = MagicMock(status_code=422)
+        mock_update.json.return_value = {"msg": "Password too weak"}
+        with patch("app.routers.auth.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_verify
+            mock_httpx.put.return_value = mock_update
             resp = authed_client.post(
                 "/api/auth/change-password",
                 json={"current_password": "old123", "new_password": "new123"},

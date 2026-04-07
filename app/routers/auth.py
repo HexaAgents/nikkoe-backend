@@ -48,9 +48,7 @@ def signup(body: SignupInput):
         raise AppError(400, "Signup failed")
 
     try:
-        login_resp = supabase_auth.auth.sign_in_with_password(
-            {"email": body.email, "password": body.password}
-        )
+        login_resp = supabase_auth.auth.sign_in_with_password({"email": body.email, "password": body.password})
     except Exception:
         return {"user": {"id": user.id, "email": user.email}, "session": None}
 
