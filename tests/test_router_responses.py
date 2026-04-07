@@ -398,7 +398,7 @@ class TestItemEndpoints:
         with patch("app.routers.items.service") as svc:
             svc.list_items.return_value = PAGINATED_EMPTY
             authed_client.get("/api/items/")
-        svc.list_items.assert_called_once_with(1000, 0)
+        svc.list_items.assert_called_once_with(20, 0)
 
     def test_list_items_passes_custom_pagination(self, authed_client):
         with patch("app.routers.items.service") as svc:
@@ -416,13 +416,13 @@ class TestItemEndpoints:
         with patch("app.routers.items.service") as svc:
             svc.search_items.return_value = PAGINATED_EMPTY
             authed_client.get("/api/items/search?q=PART")
-        svc.search_items.assert_called_once_with("PART", 1000, 0, in_stock=False)
+        svc.search_items.assert_called_once_with("PART", 20, 0, in_stock=False)
 
     def test_search_items_with_in_stock(self, authed_client):
         with patch("app.routers.items.service") as svc:
             svc.search_items.return_value = PAGINATED_EMPTY
             authed_client.get("/api/items/search?q=PART&in_stock=true")
-        svc.search_items.assert_called_once_with("PART", 1000, 0, in_stock=True)
+        svc.search_items.assert_called_once_with("PART", 20, 0, in_stock=True)
 
     def test_search_items_custom_pagination(self, authed_client):
         with patch("app.routers.items.service") as svc:
