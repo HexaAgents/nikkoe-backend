@@ -63,6 +63,11 @@ def get_item_sales(item_id: int, user: CurrentUser = Depends(get_current_user)):
     return service.get_item_sales(item_id)
 
 
+@router.get("/{item_id}/transfers")
+def get_item_transfers(item_id: int, user: CurrentUser = Depends(get_current_user)):
+    return service.get_item_transfers(item_id)
+
+
 @router.post("/", status_code=201)
 def create_item(body: ItemInput, user: CurrentUser = Depends(get_current_user)):
     return service.create_item(body.model_dump())

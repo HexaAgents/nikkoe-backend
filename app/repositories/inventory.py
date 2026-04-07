@@ -42,6 +42,60 @@ class InventoryRepository:
         response = supabase.table("stock").select("*, location(code)").eq("item_id", item_id).execute()
         return response.data or []
 
+    def find_transfers_by_item_id(self, item_id: int) -> list:
+        stock_resp = supabase.table("stock").select("id, location_id").eq("item_id", item_id).execute()
+        stocks = stock_resp.data or []
+        if not stocks:
+            return []
+
+        stock_ids = [s["id"] for s in stocks]
+        stocks_map = {s["id"]: s for s in stocks}
+
+        from_resp = supabase.table("transfer").select("*").in_("stock_id_from_id", stock_ids).execute()
+        to_resp = supabase.table("transfer").select("*").in_("stock_id_to_id", stock_ids).execute()
+
+        seen = set()
+        transfers = []
+        for t in (from_resp.data or []) + (to_resp.data or []):
+            if t["id"] not in seen:
+                seen.add(t["id"])
+                transfers.append(t)
+
+        if not transfers:
+            return []
+
+        all_stock_ids = list(
+            {t["stock_id_from_id"] for t in transfers if t.get("stock_id_from_id")}
+            | {t["stock_id_to_id"] for t in transfers if t.get("stock_id_to_id")}
+        )
+        missing_ids = [sid for sid in all_stock_ids if sid not in stocks_map]
+        if missing_ids:
+            extra = batch_load("stock", "id", missing_ids, "id, location_id")
+            stocks_map.update(extra)
+
+        location_ids = list({s.get("location_id") for s in stocks_map.values() if s.get("location_id")})
+        locations_map = batch_load("location", "id", location_ids, "id, code")
+
+        user_ids = list({t["user_id"] for t in transfers if t.get("user_id")})
+        users_map = batch_load("user", "id", user_ids, "id, first_name, last_name")
+
+        result = []
+        for t in transfers:
+            from_stock = stocks_map.get(t.get("stock_id_from_id"), {})
+            to_stock = stocks_map.get(t.get("stock_id_to_id"), {})
+            result.append({
+                "id": t["id"],
+                "quantity": t.get("quantity"),
+                "date": t.get("date"),
+                "notes": t.get("notes"),
+                "from_location": locations_map.get(from_stock.get("location_id")),
+                "to_location": locations_map.get(to_stock.get("location_id")),
+                "users": users_map.get(t.get("user_id")),
+            })
+
+        result.sort(key=lambda r: r.get("date") or "", reverse=True)
+        return result
+
     def find_on_hand(self) -> list:
         all_rows: list = []
         page_size = 1000

@@ -45,6 +45,9 @@ class ItemService:
     def get_item_sales(self, item_id: int):
         return self.sale_repo.find_by_item_id(item_id)
 
+    def get_item_transfers(self, item_id: int):
+        return self.inventory_repo.find_transfers_by_item_id(item_id)
+
     def create_item(self, data: dict):
         return self.repo.create(data)
 
