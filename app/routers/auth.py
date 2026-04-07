@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends
 
-from app.dependencies import supabase_auth
+from app.dependencies import supabase_anon, supabase_auth
 from app.errors import AppError
 from app.middleware.auth import CurrentUser, get_current_user
 from app.schemas import ChangePasswordInput, LoginInput, SignupInput
@@ -77,7 +77,7 @@ def get_me(user: CurrentUser = Depends(get_current_user)):
 @router.post("/change-password")
 def change_password(body: ChangePasswordInput, user: CurrentUser = Depends(get_current_user)):
     try:
-        supabase_auth.auth.sign_in_with_password({"email": user.email or "", "password": body.current_password})
+        supabase_anon.auth.sign_in_with_password({"email": user.email or "", "password": body.current_password})
     except Exception:
         raise AppError(400, "Current password is incorrect")
 
