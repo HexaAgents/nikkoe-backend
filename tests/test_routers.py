@@ -284,7 +284,7 @@ class TestPaginationQueryParams:
         assert resp.status_code == 422
 
     def test_sales_rejects_limit_over_max(self, authed_client):
-        resp = authed_client.get("/api/sales/?limit=101")
+        resp = authed_client.get("/api/sales/?limit=5001")
         assert resp.status_code == 422
 
     def test_receipts_rejects_limit_zero(self, authed_client):
