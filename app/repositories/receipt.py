@@ -1,36 +1,41 @@
 from app.dependencies import supabase
 from app.repositories.base import batch_in_load, batch_load, paginated_fetch
 
+_LIST_SELECT = (
+    "id, dateTime, status, reference, note, supplier_id, user_id, "
+    "suppliers:supplier(id, name), "
+    "users:user!user_id(id, first_name, last_name)"
+)
+
 
 class ReceiptRepository:
-    def _enrich(self, receipts: list[dict]) -> list[dict]:
-        user_ids = list({r["user_id"] for r in receipts if r.get("user_id")})
-        users_map = batch_load("user", "id", user_ids, "id, first_name, last_name")
+    @staticmethod
+    def _resolve_suppliers(receipts: list[dict]) -> list[dict]:
+        """Use header supplier; fall back to first line-level supplier."""
+        needs_supplier = [r["id"] for r in receipts if not r.get("suppliers")]
+        if not needs_supplier:
+            return receipts
 
-        receipt_ids = [r["id"] for r in receipts]
+        lines_data = batch_in_load("receipt_stock", "receipt_id, supplier_id", "receipt_id", needs_supplier)
         line_supplier_map: dict[int, int] = {}
-        if receipt_ids:
-            lines_data = batch_in_load("receipt_stock", "receipt_id, supplier_id", "receipt_id", receipt_ids)
-            for ln in lines_data:
-                if ln.get("supplier_id") and ln["receipt_id"] not in line_supplier_map:
-                    line_supplier_map[ln["receipt_id"]] = ln["supplier_id"]
+        for ln in lines_data:
+            if ln.get("supplier_id") and ln["receipt_id"] not in line_supplier_map:
+                line_supplier_map[ln["receipt_id"]] = ln["supplier_id"]
 
-        header_supplier_ids = list({r["supplier_id"] for r in receipts if r.get("supplier_id")})
-        line_supplier_ids = list(set(line_supplier_map.values()))
-        all_supplier_ids = list(set(header_supplier_ids + line_supplier_ids))
-        suppliers_map = batch_load("supplier", "id", all_supplier_ids)
+        supplier_ids = list(set(line_supplier_map.values()))
+        suppliers_map = batch_load("supplier", "id", supplier_ids, "id, name") if supplier_ids else {}
 
         for r in receipts:
-            sup_id = r.get("supplier_id") or line_supplier_map.get(r["id"])
-            r["suppliers"] = suppliers_map.get(sup_id) if sup_id else None
-            r["users"] = users_map.get(r.get("user_id"))
+            if not r.get("suppliers"):
+                sid = line_supplier_map.get(r["id"])
+                r["suppliers"] = suppliers_map.get(sid) if sid else None
 
         return receipts
 
     def find_all(self, limit: int = 50, offset: int = 0) -> dict:
-        query = supabase.table("receipt").select("*", count="exact").order("dateTime", desc=True)
+        query = supabase.table("receipt").select(_LIST_SELECT, count="exact").order("dateTime", desc=True)
         receipts, total = paginated_fetch(query, offset=offset, limit=limit)
-        return {"data": self._enrich(receipts), "total": total}
+        return {"data": self._resolve_suppliers(receipts), "total": total}
 
     def search_by_part_number(self, search_term: str, limit: int = 500) -> dict:
         rpc_resp = supabase.rpc(
@@ -43,15 +48,15 @@ class ReceiptRepository:
 
         response = (
             supabase.table("receipt")
-            .select("*", count="exact")
+            .select(_LIST_SELECT, count="exact")
             .in_("id", receipt_ids)
             .order("dateTime", desc=True)
             .execute()
         )
-        receipts = response.data or []
-        total = response.count or 0
-
-        return {"data": self._enrich(receipts), "total": total}
+        return {
+            "data": self._resolve_suppliers(response.data or []),
+            "total": response.count or 0,
+        }
 
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("receipt").select("*").eq("id", id).maybe_single().execute()
