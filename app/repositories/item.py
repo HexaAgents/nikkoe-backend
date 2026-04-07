@@ -2,6 +2,7 @@ import re
 
 from app.dependencies import supabase
 
+
 def _dash_insensitive_pattern(query: str) -> str:
     """Regex that matches ``query`` with optional dashes between any characters."""
     stripped = query.replace("-", "")
