@@ -83,15 +83,17 @@ class InventoryRepository:
         for t in transfers:
             from_stock = stocks_map.get(t.get("stock_id_from_id"), {})
             to_stock = stocks_map.get(t.get("stock_id_to_id"), {})
-            result.append({
-                "id": t["id"],
-                "quantity": t.get("quantity"),
-                "date": t.get("date"),
-                "notes": t.get("notes"),
-                "from_location": locations_map.get(from_stock.get("location_id")),
-                "to_location": locations_map.get(to_stock.get("location_id")),
-                "users": users_map.get(t.get("user_id")),
-            })
+            result.append(
+                {
+                    "id": t["id"],
+                    "quantity": t.get("quantity"),
+                    "date": t.get("date"),
+                    "notes": t.get("notes"),
+                    "from_location": locations_map.get(from_stock.get("location_id")),
+                    "to_location": locations_map.get(to_stock.get("location_id")),
+                    "users": users_map.get(t.get("user_id")),
+                }
+            )
 
         result.sort(key=lambda r: r.get("date") or "", reverse=True)
         return result
