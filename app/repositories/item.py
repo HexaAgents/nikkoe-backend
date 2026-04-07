@@ -18,7 +18,11 @@ def _enrich_items(rows: list) -> list:
         stock_rows = item.pop("stock", [])
         item["total_quantity"] = sum(s.get("quantity", 0) for s in stock_rows)
         item["locations"] = sorted(
-            {s["location"]["code"] for s in stock_rows if s.get("location") and s["location"].get("code")}
+            {
+                s["location"]["code"]
+                for s in stock_rows
+                if s.get("quantity", 0) > 0 and s.get("location") and s["location"].get("code")
+            }
         )
     return rows
 
