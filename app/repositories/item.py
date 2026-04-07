@@ -47,7 +47,7 @@ class ItemRepository:
         items = _enrich_items(response.data or [])
 
         if in_stock:
-            items = [item for item in items if item["total_quantity"] > 0]
+            items.sort(key=lambda x: (x["total_quantity"] <= 0, x.get("item_id", "")))
 
         return {"data": items, "total": response.count or 0}
 
