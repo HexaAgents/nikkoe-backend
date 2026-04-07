@@ -1,13 +1,33 @@
 from app.dependencies import supabase
 
 POSTGREST_PAGE = 1000
+IN_CHUNK = 300
 
 
-def batch_load(table: str, id_column: str, ids: list[int], select: str = "*") -> dict[int, dict]:
+def batch_load(
+    table: str, id_column: str, ids: list[int], select: str = "*", page_size: int = IN_CHUNK
+) -> dict[int, dict]:
     if not ids:
         return {}
-    response = supabase.table(table).select(select).in_(id_column, ids).execute()
-    return {row[id_column]: row for row in (response.data or [])}
+    result: dict[int, dict] = {}
+    for i in range(0, len(ids), page_size):
+        chunk = ids[i : i + page_size]
+        resp = supabase.table(table).select(select).in_(id_column, chunk).execute()
+        result.update({row[id_column]: row for row in (resp.data or [])})
+    return result
+
+
+def batch_in_load(table: str, select: str, column: str, ids: list, page_size: int = IN_CHUNK) -> list:
+    """Like ``supabase.table(t).select(s).in_(col, ids).execute()`` but chunks
+    the *ids* list so the URL never exceeds PostgREST limits."""
+    if not ids:
+        return []
+    all_rows: list = []
+    for i in range(0, len(ids), page_size):
+        chunk = ids[i : i + page_size]
+        resp = supabase.table(table).select(select).in_(column, chunk).execute()
+        all_rows.extend(resp.data or [])
+    return all_rows
 
 
 def paginated_fetch(query_builder, *, offset: int = 0, limit: int = 5000) -> tuple[list, int | None]:

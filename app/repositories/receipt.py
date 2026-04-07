@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load, paginated_fetch
+from app.repositories.base import batch_in_load, batch_load, paginated_fetch
 
 
 class ReceiptRepository:
@@ -10,13 +10,8 @@ class ReceiptRepository:
         receipt_ids = [r["id"] for r in receipts]
         line_supplier_map: dict[int, int] = {}
         if receipt_ids:
-            lines_resp = (
-                supabase.table("receipt_stock")
-                .select("receipt_id, supplier_id")
-                .in_("receipt_id", receipt_ids)
-                .execute()
-            )
-            for ln in lines_resp.data or []:
+            lines_data = batch_in_load("receipt_stock", "receipt_id, supplier_id", "receipt_id", receipt_ids)
+            for ln in lines_data:
                 if ln.get("supplier_id") and ln["receipt_id"] not in line_supplier_map:
                     line_supplier_map[ln["receipt_id"]] = ln["supplier_id"]
 
@@ -181,10 +176,7 @@ class ReceiptRepository:
         header_resp = supabase.table("receipt").select("id").eq("supplier_id", supplier_id).execute()
         header_receipt_ids = [r["id"] for r in (header_resp.data or [])]
 
-        extra_lines: list[dict] = []
-        if header_receipt_ids:
-            extra_resp = supabase.table("receipt_stock").select("*").in_("receipt_id", header_receipt_ids).execute()
-            extra_lines = extra_resp.data or []
+        extra_lines: list[dict] = batch_in_load("receipt_stock", "*", "receipt_id", header_receipt_ids)
 
         seen_ids: set[int] = set()
         lines: list[dict] = []
