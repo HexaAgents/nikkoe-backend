@@ -6,8 +6,8 @@ class LocationService:
     def __init__(self, repo: LocationRepository):
         self.repo = repo
 
-    def list_locations(self, limit: int = 50, offset: int = 0):
-        return self.repo.find_all(limit, offset)
+    def list_locations(self, limit: int = 50, offset: int = 0, search: str | None = None):
+        return self.repo.find_all(limit, offset, search=search)
 
     def get_location_items(self, location_id: int):
         location = self.repo.find_by_id(location_id)

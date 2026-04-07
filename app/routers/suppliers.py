@@ -14,9 +14,10 @@ router = APIRouter(prefix="/api/suppliers", tags=["suppliers"])
 def list_suppliers(
     limit: int = Query(default=5000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=100),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_suppliers(limit, offset)
+    return service.list_suppliers(limit, offset, search=search)
 
 
 @router.get("/{supplier_id}")

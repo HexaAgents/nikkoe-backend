@@ -40,18 +40,38 @@ class ReceiptRepository:
         return {"data": self._resolve_suppliers(receipts), "total": total}
 
     def search_by_part_number(self, search_term: str, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
-        rpc_resp = supabase.rpc(
-            "search_receipts_by_part_number",
-            {"search_term": search_term},
-        ).execute()
-        receipt_ids = rpc_resp.data or []
-        if not receipt_ids:
+        matching_ids: set[int] = set()
+
+        try:
+            rpc_resp = supabase.rpc(
+                "search_receipts_by_part_number",
+                {"search_term": search_term},
+            ).execute()
+            matching_ids.update(rpc_resp.data or [])
+        except Exception:
+            pass
+
+        direct_resp = (
+            supabase.table("receipt")
+            .select("id")
+            .or_(f"note.ilike.%{search_term}%,reference.ilike.%{search_term}%")
+            .execute()
+        )
+        matching_ids.update(r["id"] for r in (direct_resp.data or []))
+
+        sup_resp = supabase.table("supplier").select("id").ilike("name", f"%{search_term}%").execute()
+        if sup_resp.data:
+            sup_ids = [s["id"] for s in sup_resp.data]
+            receipt_resp = supabase.table("receipt").select("id").in_("supplier_id", sup_ids).execute()
+            matching_ids.update(r["id"] for r in (receipt_resp.data or []))
+
+        if not matching_ids:
             return {"data": [], "total": 0}
 
         query = (
             supabase.table("receipt")
             .select(_LIST_SELECT, count="exact")
-            .in_("id", receipt_ids)
+            .in_("id", list(matching_ids))
             .order("dateTime", desc=True)
         )
         if status:

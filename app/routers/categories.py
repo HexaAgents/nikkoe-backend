@@ -16,9 +16,10 @@ router = APIRouter(prefix="/api/categories", tags=["categories"])
 def list_categories(
     limit: int = Query(default=5000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=100),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_categories(limit, offset)
+    return service.list_categories(limit, offset, search=search)
 
 
 @router.get("/{category_id}")

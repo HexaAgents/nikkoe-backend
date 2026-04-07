@@ -7,8 +7,8 @@ class SupplierService:
         self.repo = repo
         self.receipt_repo = receipt_repo or ReceiptRepository()
 
-    def list_suppliers(self, limit: int = 50, offset: int = 0):
-        return self.repo.find_all(limit, offset)
+    def list_suppliers(self, limit: int = 50, offset: int = 0, search: str | None = None):
+        return self.repo.find_all(limit, offset, search=search)
 
     def get_supplier(self, id: int):
         return self.repo.find_by_id(id)

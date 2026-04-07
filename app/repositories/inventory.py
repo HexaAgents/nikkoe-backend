@@ -3,10 +3,48 @@ from app.repositories.base import batch_load, paginated_fetch
 
 
 class InventoryRepository:
-    def find_movements(self, limit: int = 50, offset: int = 0) -> dict:
+    def find_movements(self, limit: int = 50, offset: int = 0, search: str | None = None) -> dict:
+        if search:
+            return self._search_movements(search, limit, offset)
         query = supabase.table("transfer").select("*", count="exact").order("date", desc=True)
         movements, total = paginated_fetch(query, offset=offset, limit=limit)
+        self._enrich_movements(movements)
+        return {"data": movements, "total": total}
 
+    def _search_movements(self, search_term: str, limit: int, offset: int) -> dict:
+        from app.repositories.base import batch_in_load as _batch_in
+
+        matching_ids: set[int] = set()
+
+        notes_resp = supabase.table("transfer").select("id").ilike("notes", f"%{search_term}%").execute()
+        matching_ids.update(r["id"] for r in (notes_resp.data or []))
+
+        item_resp = supabase.table("item").select("id").ilike("item_id", f"%{search_term}%").execute()
+        if item_resp.data:
+            item_ids = [i["id"] for i in item_resp.data]
+            stock_rows = _batch_in("stock", "id", "item_id", item_ids)
+            if stock_rows:
+                stock_ids = [s["id"] for s in stock_rows]
+                from_rows = _batch_in("transfer", "id", "stock_id_from_id", stock_ids)
+                to_rows = _batch_in("transfer", "id", "stock_id_to_id", stock_ids)
+                matching_ids.update(r["id"] for r in from_rows)
+                matching_ids.update(r["id"] for r in to_rows)
+
+        if not matching_ids:
+            return {"data": [], "total": 0}
+
+        query = (
+            supabase.table("transfer")
+            .select("*", count="exact")
+            .in_("id", list(matching_ids))
+            .order("date", desc=True)
+        )
+        movements, total = paginated_fetch(query, offset=offset, limit=limit)
+        self._enrich_movements(movements)
+        return {"data": movements, "total": total}
+
+    @staticmethod
+    def _enrich_movements(movements: list) -> None:
         stock_from_ids = list({m["stock_id_from_id"] for m in movements if m.get("stock_id_from_id")})
         stock_to_ids = list({m["stock_id_to_id"] for m in movements if m.get("stock_id_to_id")})
         user_ids = list({m["user_id"] for m in movements if m.get("user_id")})
@@ -28,8 +66,6 @@ class InventoryRepository:
                 m["items"] = items_map.get(from_stock.get("item_id"))
             elif to_stock:
                 m["items"] = items_map.get(to_stock.get("item_id"))
-
-        return {"data": movements, "total": total}
 
     def find_by_item_id(self, item_id: int) -> list:
         response = supabase.table("stock").select("*, location(code)").eq("item_id", item_id).execute()

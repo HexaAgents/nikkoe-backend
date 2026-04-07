@@ -14,9 +14,10 @@ router = APIRouter(prefix="/api/locations", tags=["locations"])
 def list_locations(
     limit: int = Query(default=5000, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
+    search: str | None = Query(default=None, min_length=1, max_length=100),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_locations(limit, offset)
+    return service.list_locations(limit, offset, search=search)
 
 
 @router.get("/{location_id}/items")

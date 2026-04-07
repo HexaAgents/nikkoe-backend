@@ -2,14 +2,16 @@ from app.dependencies import supabase
 
 
 class SupplierRepository:
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
-        response = (
-            supabase.table("supplier")
-            .select("*", count="exact")
-            .order("name")
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
+    def find_all(self, limit: int = 50, offset: int = 0, search: str | None = None) -> dict:
+        query = supabase.table("supplier").select("*", count="exact").order("name")
+        if search:
+            query = query.or_(
+                f"name.ilike.%{search}%,"
+                f"email.ilike.%{search}%,"
+                f"address.ilike.%{search}%,"
+                f"phone.ilike.%{search}%"
+            )
+        response = query.range(offset, offset + limit - 1).execute()
         return {"data": response.data or [], "total": response.count or 0}
 
     def find_by_id(self, id: int) -> dict | None:

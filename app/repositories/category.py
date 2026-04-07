@@ -2,14 +2,11 @@ from app.dependencies import supabase
 
 
 class CategoryRepository:
-    def find_all(self, limit: int = 50, offset: int = 0) -> dict:
-        response = (
-            supabase.table("category")
-            .select("*", count="exact")
-            .order("name")
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
+    def find_all(self, limit: int = 50, offset: int = 0, search: str | None = None) -> dict:
+        query = supabase.table("category").select("*", count="exact").order("name")
+        if search:
+            query = query.ilike("name", f"%{search}%")
+        response = query.range(offset, offset + limit - 1).execute()
         categories = response.data or []
 
         item_response = (

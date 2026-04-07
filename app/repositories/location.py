@@ -4,7 +4,7 @@ PAGE_SIZE = 1000
 
 
 class LocationRepository:
-    def find_all(self, limit: int = 5000, offset: int = 0) -> dict:
+    def find_all(self, limit: int = 5000, offset: int = 0, search: str | None = None) -> dict:
         all_data: list = []
         total = 0
         current_offset = offset
@@ -12,13 +12,10 @@ class LocationRepository:
 
         while remaining > 0:
             batch = min(remaining, PAGE_SIZE)
-            response = (
-                supabase.table("location")
-                .select("*", count="exact")
-                .order("code")
-                .range(current_offset, current_offset + batch - 1)
-                .execute()
-            )
+            query = supabase.table("location").select("*", count="exact").order("code")
+            if search:
+                query = query.ilike("code", f"%{search}%")
+            response = query.range(current_offset, current_offset + batch - 1).execute()
             rows = response.data or []
             if total == 0:
                 total = response.count or 0

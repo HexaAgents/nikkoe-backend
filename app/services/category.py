@@ -8,8 +8,8 @@ class CategoryService:
         self.repo = repo
         self.item_repo = item_repo
 
-    def list_categories(self, limit: int = 50, offset: int = 0):
-        return self.repo.find_all(limit, offset)
+    def list_categories(self, limit: int = 50, offset: int = 0, search: str | None = None):
+        return self.repo.find_all(limit, offset, search=search)
 
     def get_category(self, id: int):
         category = self.repo.find_by_id(id)

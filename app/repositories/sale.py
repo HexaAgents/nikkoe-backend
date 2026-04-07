@@ -1,50 +1,67 @@
 from app.dependencies import supabase
 from app.repositories.base import batch_load, paginated_fetch
 
+_LIST_SELECT = (
+    "*, "
+    "channels:channel!channel_id_id(id, name), "
+    "users:user!user_id(id, first_name, last_name), "
+    "customers:customer!customer_id_id(id, name)"
+)
+
 
 class SaleRepository:
-    def _enrich(self, sales: list[dict]) -> list[dict]:
-        channel_ids = list({s["channel_id_id"] for s in sales if s.get("channel_id_id")})
-        user_ids = list({s["user_id"] for s in sales if s.get("user_id")})
-        customer_ids = list({s["customer_id_id"] for s in sales if s.get("customer_id_id")})
-
-        channels_map = batch_load("channel", "id", channel_ids)
-        users_map = batch_load("user", "id", user_ids, "id, first_name, last_name")
-        customers_map = batch_load("customer", "id", customer_ids, "id, name")
-
-        for s in sales:
-            s["channels"] = channels_map.get(s.get("channel_id_id"))
-            s["users"] = users_map.get(s.get("user_id"))
-            s["customers"] = customers_map.get(s.get("customer_id_id"))
-
-        return sales
-
     def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
-        query = supabase.table("sale").select("*", count="exact").order("date", desc=True)
+        query = supabase.table("sale").select(_LIST_SELECT, count="exact").order("date", desc=True)
         if status:
             query = query.eq("status", status)
         sales, total = paginated_fetch(query, offset=offset, limit=limit)
-        return {"data": self._enrich(sales), "total": total}
+        return {"data": sales, "total": total}
 
     def search_by_part_number(self, search_term: str, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
-        rpc_resp = supabase.rpc(
-            "search_sales_by_part_number",
-            {"search_term": search_term},
-        ).execute()
-        sale_ids = rpc_resp.data or []
-        if not sale_ids:
+        matching_ids: set[int] = set()
+
+        try:
+            rpc_resp = supabase.rpc(
+                "search_sales_by_part_number",
+                {"search_term": search_term},
+            ).execute()
+            matching_ids.update(rpc_resp.data or [])
+        except Exception:
+            pass
+
+        direct_resp = (
+            supabase.table("sale")
+            .select("id")
+            .or_(f"note.ilike.%{search_term}%,channel_ref.ilike.%{search_term}%")
+            .execute()
+        )
+        matching_ids.update(r["id"] for r in (direct_resp.data or []))
+
+        cust_resp = supabase.table("customer").select("id").ilike("name", f"%{search_term}%").execute()
+        if cust_resp.data:
+            cust_ids = [c["id"] for c in cust_resp.data]
+            sale_resp = supabase.table("sale").select("id").in_("customer_id_id", cust_ids).execute()
+            matching_ids.update(r["id"] for r in (sale_resp.data or []))
+
+        chan_resp = supabase.table("channel").select("id").ilike("name", f"%{search_term}%").execute()
+        if chan_resp.data:
+            chan_ids = [c["id"] for c in chan_resp.data]
+            sale_resp = supabase.table("sale").select("id").in_("channel_id_id", chan_ids).execute()
+            matching_ids.update(r["id"] for r in (sale_resp.data or []))
+
+        if not matching_ids:
             return {"data": [], "total": 0}
 
         query = (
             supabase.table("sale")
-            .select("*", count="exact")
-            .in_("id", sale_ids)
+            .select(_LIST_SELECT, count="exact")
+            .in_("id", list(matching_ids))
             .order("date", desc=True)
         )
         if status:
             query = query.eq("status", status)
         sales, total = paginated_fetch(query, offset=offset, limit=limit)
-        return {"data": self._enrich(sales), "total": total}
+        return {"data": sales, "total": total}
 
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("sale").select("*").eq("id", id).maybe_single().execute()
