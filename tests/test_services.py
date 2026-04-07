@@ -12,6 +12,7 @@ import pytest
 from app.errors import NotFoundError
 from app.services.category import CategoryService
 from app.services.channel import ChannelService
+from app.services.currency import CurrencyService
 from app.services.customer import CustomerService
 from app.services.inventory import InventoryService
 from app.services.item import ItemService
@@ -20,6 +21,7 @@ from app.services.receipt import ReceiptService
 from app.services.sale import SaleService
 from app.services.supplier import SupplierService
 from app.services.supplier_quote import SupplierQuoteService
+from app.services.user import UserService
 
 # ---------------------------------------------------------------------------
 # ItemService
@@ -341,3 +343,165 @@ class TestSupplierQuoteService:
     def test_delete_quote(self, service):
         service.delete_quote("q1")
         service.repo.remove.assert_called_once_with("q1")
+
+
+# ---------------------------------------------------------------------------
+# SaleService — search branch
+# ---------------------------------------------------------------------------
+
+
+class TestSaleServiceSearch:
+    @pytest.fixture
+    def repo(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def service(self, repo):
+        return SaleService(repo)
+
+    def test_list_sales_with_search_delegates_to_search(self, service, repo):
+        repo.search_by_part_number.return_value = {"data": [], "total": 0}
+        service.list_sales(50, 0, search="PART-1")
+        repo.search_by_part_number.assert_called_once_with("PART-1")
+        repo.find_all.assert_not_called()
+
+    def test_list_sales_without_search_delegates_to_find_all(self, service, repo):
+        repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_sales(25, 10)
+        repo.find_all.assert_called_once_with(25, 10)
+        repo.search_by_part_number.assert_not_called()
+
+    def test_list_sales_none_search_delegates_to_find_all(self, service, repo):
+        repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_sales(50, 0, search=None)
+        repo.find_all.assert_called_once_with(50, 0)
+
+
+# ---------------------------------------------------------------------------
+# ReceiptService — search branch
+# ---------------------------------------------------------------------------
+
+
+class TestReceiptServiceSearch:
+    @pytest.fixture
+    def repo(self):
+        return MagicMock()
+
+    @pytest.fixture
+    def service(self, repo):
+        return ReceiptService(repo)
+
+    def test_list_receipts_with_search_delegates_to_search(self, service, repo):
+        repo.search_by_part_number.return_value = {"data": [], "total": 0}
+        service.list_receipts(50, 0, search="PART-2")
+        repo.search_by_part_number.assert_called_once_with("PART-2")
+        repo.find_all.assert_not_called()
+
+    def test_list_receipts_without_search_delegates_to_find_all(self, service, repo):
+        repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_receipts(25, 10)
+        repo.find_all.assert_called_once_with(25, 10)
+
+
+# ---------------------------------------------------------------------------
+# ItemService — search
+# ---------------------------------------------------------------------------
+
+
+class TestItemServiceSearch:
+    @pytest.fixture
+    def repos(self):
+        return {
+            "repo": MagicMock(),
+            "quote_repo": MagicMock(),
+            "inventory_repo": MagicMock(),
+            "receipt_repo": MagicMock(),
+            "sale_repo": MagicMock(),
+        }
+
+    @pytest.fixture
+    def service(self, repos):
+        return ItemService(**repos)
+
+    def test_search_items_delegates_to_repo(self, service, repos):
+        repos["repo"].search.return_value = {"data": [], "total": 0}
+        service.search_items("PART", 100, 0, in_stock=False)
+        repos["repo"].search.assert_called_once_with("PART", 100, 0, in_stock=False)
+
+    def test_search_items_with_in_stock(self, service, repos):
+        repos["repo"].search.return_value = {"data": [], "total": 0}
+        service.search_items("X", 50, 0, in_stock=True)
+        repos["repo"].search.assert_called_once_with("X", 50, 0, in_stock=True)
+
+
+# ---------------------------------------------------------------------------
+# InventoryService — transfer
+# ---------------------------------------------------------------------------
+
+
+class TestInventoryServiceTransfer:
+    @pytest.fixture
+    def service(self):
+        return InventoryService(MagicMock())
+
+    def test_transfer_stock_delegates_to_repo(self, service):
+        service.repo.create_transfer.return_value = {"transfer_id": 1}
+        result = service.transfer_stock(from_stock_id=10, to_location_id=20, quantity=5, user_id=1, notes="test")
+        service.repo.create_transfer.assert_called_once_with(10, 20, 5, 1, "test")
+        assert result["transfer_id"] == 1
+
+    def test_transfer_stock_without_user_or_notes(self, service):
+        service.repo.create_transfer.return_value = {"transfer_id": 2}
+        service.transfer_stock(from_stock_id=1, to_location_id=2, quantity=1)
+        service.repo.create_transfer.assert_called_once_with(1, 2, 1, None, None)
+
+
+# ---------------------------------------------------------------------------
+# CurrencyService
+# ---------------------------------------------------------------------------
+
+
+class TestCurrencyService:
+    @pytest.fixture
+    def service(self):
+        return CurrencyService(MagicMock())
+
+    def test_list_currencies(self, service):
+        service.repo.find_all.return_value = {"data": [{"id": 1, "code": "GBP"}], "total": 1}
+        result = service.list_currencies(50, 0)
+        service.repo.find_all.assert_called_once_with(50, 0)
+        assert result["total"] == 1
+
+    def test_list_currencies_uses_defaults(self, service):
+        service.repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_currencies()
+        service.repo.find_all.assert_called_once_with(50, 0)
+
+
+# ---------------------------------------------------------------------------
+# UserService
+# ---------------------------------------------------------------------------
+
+
+class TestUserService:
+    @pytest.fixture
+    def service(self):
+        return UserService(MagicMock())
+
+    def test_get_profile_returns_profile_when_present(self, service):
+        from app.middleware.auth import UserProfile
+
+        profile = UserProfile(user_id=1, first_name="A", last_name="B", email="a@b.com")
+        result = service.get_profile(profile)
+        assert result.user_id == 1
+
+    def test_get_profile_raises_not_found_when_none(self, service):
+        with pytest.raises(NotFoundError) as exc_info:
+            service.get_profile(None)
+        assert exc_info.value.status_code == 404
+
+    def test_create_user_delegates_to_repo(self, service):
+        service.repo.create_auth_user.return_value = {"id": "uid", "email": "new@b.com"}
+        result = service.create_user("new@b.com", "pass123")
+        service.repo.create_auth_user.assert_called_once_with("new@b.com", "pass123")
+        assert result["email"] == "new@b.com"

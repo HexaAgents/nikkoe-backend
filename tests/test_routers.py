@@ -282,3 +282,137 @@ class TestPaginationQueryParams:
     def test_receipts_rejects_negative_offset(self, authed_client):
         resp = authed_client.get("/api/receipts/?offset=-1")
         assert resp.status_code == 422
+
+    def test_sales_rejects_limit_over_max(self, authed_client):
+        resp = authed_client.get("/api/sales/?limit=101")
+        assert resp.status_code == 422
+
+    def test_receipts_rejects_limit_zero(self, authed_client):
+        resp = authed_client.get("/api/receipts/?limit=0")
+        assert resp.status_code == 422
+
+    def test_customers_rejects_limit_zero(self, authed_client):
+        resp = authed_client.get("/api/customers/?limit=0")
+        assert resp.status_code == 422
+
+    def test_channels_rejects_negative_offset(self, authed_client):
+        resp = authed_client.get("/api/channels/?offset=-1")
+        assert resp.status_code == 422
+
+    def test_currencies_rejects_limit_zero(self, authed_client):
+        resp = authed_client.get("/api/currencies/?limit=0")
+        assert resp.status_code == 422
+
+    def test_inventory_movements_rejects_negative_offset(self, authed_client):
+        resp = authed_client.get("/api/inventory/movements?offset=-1")
+        assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Receipt — additional validation edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestReceiptValidationExtra:
+    def test_create_receipt_rejects_zero_quantity(self, authed_client):
+        resp = authed_client.post(
+            "/api/receipts/",
+            json={
+                "receipt": {},
+                "lines": [{"quantity": 0, "unit_price": 10, "currency_id": 1}],
+            },
+        )
+        assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Sale — additional validation edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestSaleValidationExtra:
+    def test_create_sale_rejects_zero_price_negative(self, authed_client):
+        resp = authed_client.post(
+            "/api/sales/",
+            json={
+                "sale": {},
+                "lines": [{"quantity": 1, "unit_price": -0.01, "currency_id": 1}],
+            },
+        )
+        assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Inventory transfer validation
+# ---------------------------------------------------------------------------
+
+
+class TestInventoryTransferValidation:
+    def test_transfer_rejects_missing_from_stock_id(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer",
+            json={"to_location_id": 1, "quantity": 5},
+        )
+        assert resp.status_code == 422
+
+    def test_transfer_rejects_zero_quantity(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer",
+            json={"from_stock_id": 1, "to_location_id": 2, "quantity": 0},
+        )
+        assert resp.status_code == 422
+
+    def test_transfer_rejects_negative_quantity(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer",
+            json={"from_stock_id": 1, "to_location_id": 2, "quantity": -1},
+        )
+        assert resp.status_code == 422
+
+    def test_transfer_rejects_notes_too_long(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer",
+            json={
+                "from_stock_id": 1,
+                "to_location_id": 2,
+                "quantity": 1,
+                "notes": "x" * 501,
+            },
+        )
+        assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Item search validation
+# ---------------------------------------------------------------------------
+
+
+class TestItemSearchValidation:
+    def test_search_rejects_missing_query(self, authed_client):
+        resp = authed_client.get("/api/items/search")
+        assert resp.status_code == 422
+
+    def test_search_rejects_query_too_long(self, authed_client):
+        resp = authed_client.get(f"/api/items/search?q={'x' * 256}")
+        assert resp.status_code == 422
+
+
+# ---------------------------------------------------------------------------
+# Change password validation
+# ---------------------------------------------------------------------------
+
+
+class TestChangePasswordValidation:
+    def test_change_password_rejects_short_new_password(self, authed_client):
+        resp = authed_client.post(
+            "/api/auth/change-password",
+            json={"current_password": "anything", "new_password": "12345"},
+        )
+        assert resp.status_code == 422
+
+    def test_change_password_rejects_missing_current(self, authed_client):
+        resp = authed_client.post(
+            "/api/auth/change-password",
+            json={"new_password": "new123"},
+        )
+        assert resp.status_code == 422

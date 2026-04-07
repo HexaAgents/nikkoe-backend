@@ -41,8 +41,8 @@ jobs:
 
       - run: pip install -r requirements.txt -r requirements-dev.txt
 
-      - name: Unit tests
-        run: pytest --tb=short -q
+      - name: Unit tests with coverage
+        run: pytest --tb=short -q --cov=app --cov-report=term-missing --cov-fail-under=60
 
   security:
     runs-on: ubuntu-latest
