@@ -1,18 +1,11 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load
+from app.repositories.base import batch_load, paginated_fetch
 
 
 class InventoryRepository:
     def find_movements(self, limit: int = 50, offset: int = 0) -> dict:
-        response = (
-            supabase.table("transfer")
-            .select("*", count="exact")
-            .order("date", desc=True)
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-        movements = response.data or []
-        total = response.count or 0
+        query = supabase.table("transfer").select("*", count="exact").order("date", desc=True)
+        movements, total = paginated_fetch(query, offset=offset, limit=limit)
 
         stock_from_ids = list({m["stock_id_from_id"] for m in movements if m.get("stock_id_from_id")})
         stock_to_ids = list({m["stock_id_to_id"] for m in movements if m.get("stock_id_to_id")})

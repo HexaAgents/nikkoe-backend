@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load
+from app.repositories.base import batch_load, paginated_fetch
 
 
 class SaleRepository:
@@ -20,16 +20,8 @@ class SaleRepository:
         return sales
 
     def find_all(self, limit: int = 50, offset: int = 0) -> dict:
-        response = (
-            supabase.table("sale")
-            .select("*", count="exact")
-            .order("date", desc=True)
-            .range(offset, offset + limit - 1)
-            .execute()
-        )
-        sales = response.data or []
-        total = response.count or 0
-
+        query = supabase.table("sale").select("*", count="exact").order("date", desc=True)
+        sales, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._enrich(sales), "total": total}
 
     def search_by_part_number(self, search_term: str, limit: int = 500) -> dict:
