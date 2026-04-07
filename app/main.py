@@ -29,9 +29,11 @@ from app.routers import (  # noqa: E402
 app = FastAPI(title="nikkoe-backend", redirect_slashes=False)
 
 allow_origin_regex = r"https://.*\.vercel\.app"
+_env_origins = [o.strip() for o in settings.CORS_ORIGINS.split(",") if o.strip()]
+_extra_origins = ["https://platform.hexaagents.com"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.CORS_ORIGINS.split(",")],
+    allow_origins=_env_origins + _extra_origins,
     allow_origin_regex=allow_origin_regex,
     allow_credentials=True,
     allow_methods=["*"],
