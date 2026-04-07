@@ -889,6 +889,16 @@ class TestUserEndpoints:
             )
         svc.create_user.assert_called_once_with("x@test.com", "secret123")
 
+    def test_create_user_without_trailing_slash_returns_201(self, authed_client):
+        with patch("app.routers.users.service") as svc:
+            svc.create_user.return_value = {"id": "new-uid", "email": "new@test.com"}
+            resp = authed_client.post(
+                "/api/users",
+                json={"email": "new@test.com", "password": "pass123"},
+            )
+        assert resp.status_code == 201
+        assert resp.json()["user"]["email"] == "new@test.com"
+
 
 # =====================================================================
 # Health endpoint (already tested in test_health.py, but included

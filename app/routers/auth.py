@@ -11,7 +11,7 @@ router = APIRouter(prefix="/api/auth", tags=["auth"])
 @router.post("/login")
 def login(body: LoginInput):
     try:
-        response = supabase_auth.auth.sign_in_with_password({"email": body.email, "password": body.password})
+        response = supabase_anon.auth.sign_in_with_password({"email": body.email, "password": body.password})
     except Exception as e:
         raise AppError(401, str(e))
 
@@ -35,7 +35,7 @@ def login(body: LoginInput):
 @router.post("/signup")
 def signup(body: SignupInput):
     try:
-        response = supabase_auth.auth.sign_up({"email": body.email, "password": body.password})
+        response = supabase_anon.auth.sign_up({"email": body.email, "password": body.password})
     except Exception as e:
         raise AppError(400, str(e))
 

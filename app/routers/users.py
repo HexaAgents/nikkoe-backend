@@ -18,6 +18,7 @@ def get_me(user: CurrentUser = Depends(get_current_user)):
     return dataclasses.asdict(profile)
 
 
+@router.post("", status_code=201, include_in_schema=False)
 @router.post("/", status_code=201)
 def create_user(body: CreateUserInput, user: CurrentUser = Depends(get_current_user)):
     result = service.create_user(body.email, body.password)
