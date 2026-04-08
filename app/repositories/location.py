@@ -44,6 +44,7 @@ class LocationRepository:
             response = (
                 supabase.table("stock")
                 .select("location_id, item_id, quantity")
+                .in_("location_id", location_ids)
                 .gt("quantity", 0)
                 .range(offset, offset + PAGE_SIZE - 1)
                 .execute()
