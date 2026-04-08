@@ -35,10 +35,7 @@ class InventoryRepository:
             return {"data": [], "total": 0}
 
         query = (
-            supabase.table("transfer")
-            .select("*", count="exact")
-            .in_("id", list(matching_ids))
-            .order("date", desc=True)
+            supabase.table("transfer").select("*", count="exact").in_("id", list(matching_ids)).order("date", desc=True)
         )
         movements, total = paginated_fetch(query, offset=offset, limit=limit)
         self._enrich_movements(movements)

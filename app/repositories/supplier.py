@@ -6,10 +6,7 @@ class SupplierRepository:
         query = supabase.table("supplier").select("*", count="exact").order("name")
         if search:
             query = query.or_(
-                f"name.ilike.%{search}%,"
-                f"email.ilike.%{search}%,"
-                f"address.ilike.%{search}%,"
-                f"phone.ilike.%{search}%"
+                f"name.ilike.%{search}%,email.ilike.%{search}%,address.ilike.%{search}%,phone.ilike.%{search}%"
             )
         response = query.range(offset, offset + limit - 1).execute()
         return {"data": response.data or [], "total": response.count or 0}

@@ -542,13 +542,19 @@ class TestCategoryEndpoints:
         with patch("app.routers.categories.service") as svc:
             svc.list_categories.return_value = PAGINATED_EMPTY
             authed_client.get("/api/categories/")
-        svc.list_categories.assert_called_once_with(5000, 0)
+        svc.list_categories.assert_called_once_with(5000, 0, search=None)
 
     def test_list_categories_passes_custom_pagination(self, authed_client):
         with patch("app.routers.categories.service") as svc:
             svc.list_categories.return_value = PAGINATED_EMPTY
             authed_client.get("/api/categories/?limit=10&offset=5")
-        svc.list_categories.assert_called_once_with(10, 5)
+        svc.list_categories.assert_called_once_with(10, 5, search=None)
+
+    def test_list_categories_with_search(self, authed_client):
+        with patch("app.routers.categories.service") as svc:
+            svc.list_categories.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/categories/?search=Tools")
+        svc.list_categories.assert_called_once_with(5000, 0, search="Tools")
 
     def test_create_category_returns_201(self, authed_client):
         with patch("app.routers.categories.service") as svc:
@@ -587,13 +593,19 @@ class TestLocationEndpoints:
         with patch("app.routers.locations.service") as svc:
             svc.list_locations.return_value = PAGINATED_EMPTY
             authed_client.get("/api/locations/")
-        svc.list_locations.assert_called_once_with(5000, 0)
+        svc.list_locations.assert_called_once_with(5000, 0, search=None)
 
     def test_list_locations_passes_custom_pagination(self, authed_client):
         with patch("app.routers.locations.service") as svc:
             svc.list_locations.return_value = PAGINATED_EMPTY
             authed_client.get("/api/locations/?limit=10&offset=2")
-        svc.list_locations.assert_called_once_with(10, 2)
+        svc.list_locations.assert_called_once_with(10, 2, search=None)
+
+    def test_list_locations_with_search(self, authed_client):
+        with patch("app.routers.locations.service") as svc:
+            svc.list_locations.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/locations/?search=WH")
+        svc.list_locations.assert_called_once_with(5000, 0, search="WH")
 
     def test_create_location_returns_201(self, authed_client):
         with patch("app.routers.locations.service") as svc:
@@ -632,7 +644,13 @@ class TestSupplierEndpoints:
         with patch("app.routers.suppliers.service") as svc:
             svc.list_suppliers.return_value = PAGINATED_EMPTY
             authed_client.get("/api/suppliers/")
-        svc.list_suppliers.assert_called_once_with(5000, 0)
+        svc.list_suppliers.assert_called_once_with(5000, 0, search=None)
+
+    def test_list_suppliers_with_search(self, authed_client):
+        with patch("app.routers.suppliers.service") as svc:
+            svc.list_suppliers.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/suppliers/?search=Acme")
+        svc.list_suppliers.assert_called_once_with(5000, 0, search="Acme")
 
     def test_create_supplier_returns_201(self, authed_client):
         with patch("app.routers.suppliers.service") as svc:
@@ -753,13 +771,19 @@ class TestInventoryEndpoints:
         with patch("app.routers.inventory.service") as svc:
             svc.list_movements.return_value = PAGINATED_EMPTY
             authed_client.get("/api/inventory/movements")
-        svc.list_movements.assert_called_once_with(50, 0)
+        svc.list_movements.assert_called_once_with(50, 0, search=None)
 
     def test_list_movements_passes_custom_pagination(self, authed_client):
         with patch("app.routers.inventory.service") as svc:
             svc.list_movements.return_value = PAGINATED_EMPTY
             authed_client.get("/api/inventory/movements?limit=10&offset=5")
-        svc.list_movements.assert_called_once_with(10, 5)
+        svc.list_movements.assert_called_once_with(10, 5, search=None)
+
+    def test_list_movements_with_search(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.list_movements.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/inventory/movements?search=note")
+        svc.list_movements.assert_called_once_with(50, 0, search="note")
 
     def test_list_on_hand_returns_200(self, authed_client):
         on_hand = [{"item_id": "P1", "location": "WH-A", "quantity": 10}]

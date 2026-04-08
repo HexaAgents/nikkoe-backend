@@ -1,5 +1,10 @@
 from app.dependencies import supabase
-from app.repositories.base import dash_insensitive_pattern as _dash_insensitive_pattern, paginated_fetch
+from app.repositories.base import (
+    dash_insensitive_pattern as _dash_insensitive_pattern,
+)
+from app.repositories.base import (
+    paginated_fetch,
+)
 
 
 def _enrich_items(rows: list) -> list:

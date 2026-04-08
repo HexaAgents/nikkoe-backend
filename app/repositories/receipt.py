@@ -39,7 +39,13 @@ class ReceiptRepository:
         receipts, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._resolve_suppliers(receipts), "total": total}
 
-    def search_by_part_number(self, search_term: str, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
+    def search_by_part_number(
+        self,
+        search_term: str,
+        limit: int = 50,
+        offset: int = 0,
+        status: str | None = None,
+    ) -> dict:
         matching_ids: set[int] = set()
 
         try:
@@ -52,11 +58,7 @@ class ReceiptRepository:
             pass
 
         pattern = dash_insensitive_pattern(search_term)
-        item_resp = (
-            supabase.table("item").select("id")
-            .filter("item_id", "imatch", pattern)
-            .execute()
-        )
+        item_resp = supabase.table("item").select("id").filter("item_id", "imatch", pattern).execute()
         if item_resp.data:
             item_ids = [i["id"] for i in item_resp.data]
             stock_rows = batch_in_load("stock", "id", "item_id", item_ids)
