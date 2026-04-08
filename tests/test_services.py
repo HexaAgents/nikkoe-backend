@@ -420,6 +420,14 @@ class TestInventoryService:
         service.list_on_hand()
         service.repo.find_on_hand.assert_called_once()
 
+    def test_stock_valuation(self, service):
+        service.repo.stock_valuation.return_value = [
+            {"item_id": "P1", "description": "Part 1", "total_quantity": 10, "unit_price": 5.0, "stock_valuation": 50.0}
+        ]
+        result = service.stock_valuation()
+        service.repo.stock_valuation.assert_called_once()
+        assert len(result) == 1
+
 
 # ---------------------------------------------------------------------------
 # SupplierQuoteService

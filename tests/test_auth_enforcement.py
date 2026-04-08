@@ -160,6 +160,9 @@ class TestInventoryAuthEnforcement:
     def test_list_movements_requires_auth(self, client):
         assert client.get("/api/inventory/movements").status_code == 401
 
+    def test_stock_valuation_requires_auth(self, client):
+        assert client.get("/api/inventory/stock-valuation").status_code == 401
+
     def test_list_on_hand_requires_auth(self, client):
         assert client.get("/api/inventory/on-hand").status_code == 401
 

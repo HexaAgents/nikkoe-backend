@@ -20,6 +20,11 @@ def list_movements(
     return service.list_movements(limit, offset, search=search)
 
 
+@router.get("/stock-valuation")
+def stock_valuation(user: CurrentUser = Depends(get_current_user)):
+    return service.stock_valuation()
+
+
 @router.get("/on-hand")
 def list_on_hand(user: CurrentUser = Depends(get_current_user)):
     return service.list_on_hand()

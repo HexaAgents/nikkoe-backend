@@ -11,6 +11,9 @@ class InventoryService:
     def list_on_hand(self):
         return self.repo.find_on_hand()
 
+    def stock_valuation(self):
+        return self.repo.stock_valuation()
+
     def transfer_stock(
         self,
         from_stock_id: int,

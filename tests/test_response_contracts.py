@@ -283,6 +283,13 @@ class TestInventoryContract:
             resp = authed_client.get("/api/inventory/movements")
         _assert_paginated(resp.json())
 
+    def test_stock_valuation_is_plain_array(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.stock_valuation.return_value = []
+            resp = authed_client.get("/api/inventory/stock-valuation")
+        body = resp.json()
+        assert isinstance(body, list), "stock-valuation must be a plain array"
+
     def test_on_hand_is_plain_array(self, authed_client):
         with patch("app.routers.inventory.service") as svc:
             svc.list_on_hand.return_value = [{"item_id": "P1", "quantity": 10}]

@@ -125,6 +125,85 @@ class InventoryRepository:
         result.sort(key=lambda r: r.get("date") or "", reverse=True)
         return result
 
+    def stock_valuation(self) -> list:
+        PAGE_SIZE = 1000
+
+        all_stock: list = []
+        offset = 0
+        while True:
+            resp = (
+                supabase.table("stock")
+                .select("id, item_id, quantity, item(id, item_id, description)")
+                .order("id")
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
+            )
+            batch = resp.data or []
+            all_stock.extend(batch)
+            if len(batch) < PAGE_SIZE:
+                break
+            offset += PAGE_SIZE
+
+        if not all_stock:
+            return []
+
+        item_agg: dict[int, dict] = {}
+        stock_item_map: dict[int, int] = {}
+        for row in all_stock:
+            stock_item_map[row["id"]] = row["item_id"]
+            item_id = row["item_id"]
+            if item_id not in item_agg:
+                item = row.get("item") or {}
+                item_agg[item_id] = {
+                    "item_id": item.get("item_id", ""),
+                    "description": item.get("description"),
+                    "total_quantity": 0,
+                }
+            item_agg[item_id]["total_quantity"] += row.get("quantity", 0)
+
+        stock_ids = [r["id"] for r in all_stock]
+        receipt_lines: list = []
+        for i in range(0, len(stock_ids), PAGE_SIZE):
+            batch_ids = stock_ids[i : i + PAGE_SIZE]
+            resp = (
+                supabase.table("receipt_stock")
+                .select("stock_id, unit_price, receipt(dateTime, status)")
+                .in_("stock_id", batch_ids)
+                .execute()
+            )
+            receipt_lines.extend(resp.data or [])
+
+        item_price_map: dict[int, dict] = {}
+        for rl in receipt_lines:
+            receipt = rl.get("receipt") or {}
+            if receipt.get("status") == "VOIDED":
+                continue
+            item_id = stock_item_map.get(rl.get("stock_id"))
+            if item_id is None:
+                continue
+            date = receipt.get("dateTime", "")
+            existing = item_price_map.get(item_id)
+            if not existing or date > existing["date"]:
+                item_price_map[item_id] = {"date": date, "unit_price": rl.get("unit_price")}
+
+        result = []
+        for item_id, info in item_agg.items():
+            price_info = item_price_map.get(item_id)
+            unit_price = price_info["unit_price"] if price_info else None
+            total_qty = info["total_quantity"]
+            result.append(
+                {
+                    "item_id": info["item_id"],
+                    "description": info["description"],
+                    "total_quantity": total_qty,
+                    "unit_price": unit_price,
+                    "stock_valuation": round(unit_price * total_qty, 2) if unit_price is not None else None,
+                }
+            )
+
+        result.sort(key=lambda r: r.get("item_id", ""))
+        return result
+
     def find_on_hand(self) -> list:
         all_rows: list = []
         page_size = 1000

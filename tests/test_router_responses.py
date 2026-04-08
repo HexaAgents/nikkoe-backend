@@ -823,6 +823,16 @@ class TestInventoryEndpoints:
             authed_client.get("/api/inventory/movements?search=note")
         svc.list_movements.assert_called_once_with(50, 0, search="note")
 
+    def test_stock_valuation_returns_200(self, authed_client):
+        valuation = [
+            {"item_id": "P1", "description": "Part 1", "total_quantity": 10, "unit_price": 5.0, "stock_valuation": 50.0}
+        ]
+        with patch("app.routers.inventory.service") as svc:
+            svc.stock_valuation.return_value = valuation
+            resp = authed_client.get("/api/inventory/stock-valuation")
+        assert resp.status_code == 200
+        assert resp.json() == valuation
+
     def test_list_on_hand_returns_200(self, authed_client):
         on_hand = [{"item_id": "P1", "location": "WH-A", "quantity": 10}]
         with patch("app.routers.inventory.service") as svc:
