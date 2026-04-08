@@ -556,6 +556,19 @@ class TestCategoryEndpoints:
             authed_client.get("/api/categories/?search=Tools")
         svc.list_categories.assert_called_once_with(5000, 0, search="Tools")
 
+    def test_get_category_returns_200(self, authed_client):
+        with patch("app.routers.categories.service") as svc:
+            svc.get_category.return_value = {"id": 1, "name": "Tools"}
+            resp = authed_client.get("/api/categories/1")
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "Tools"
+
+    def test_get_category_items_returns_200(self, authed_client):
+        with patch("app.routers.categories.service") as svc:
+            svc.get_category_items.return_value = _paginated([])
+            resp = authed_client.get("/api/categories/1/items")
+        assert resp.status_code == 200
+
     def test_create_category_returns_201(self, authed_client):
         with patch("app.routers.categories.service") as svc:
             svc.create_category.return_value = {"id": 2, "name": "Electronics"}
@@ -607,6 +620,12 @@ class TestLocationEndpoints:
             authed_client.get("/api/locations/?search=WH")
         svc.list_locations.assert_called_once_with(5000, 0, search="WH")
 
+    def test_get_location_items_returns_200(self, authed_client):
+        with patch("app.routers.locations.service") as svc:
+            svc.get_location_items.return_value = _paginated([])
+            resp = authed_client.get("/api/locations/1/items")
+        assert resp.status_code == 200
+
     def test_create_location_returns_201(self, authed_client):
         with patch("app.routers.locations.service") as svc:
             svc.create_location.return_value = {"id": 2, "code": "WH-B"}
@@ -651,6 +670,25 @@ class TestSupplierEndpoints:
             svc.list_suppliers.return_value = PAGINATED_EMPTY
             authed_client.get("/api/suppliers/?search=Acme")
         svc.list_suppliers.assert_called_once_with(5000, 0, search="Acme")
+
+    def test_get_supplier_returns_200(self, authed_client):
+        with patch("app.routers.suppliers.service") as svc:
+            svc.get_supplier.return_value = {"id": 1, "name": "Acme"}
+            resp = authed_client.get("/api/suppliers/1")
+        assert resp.status_code == 200
+        assert resp.json()["name"] == "Acme"
+
+    def test_get_supplier_returns_404(self, authed_client):
+        with patch("app.routers.suppliers.service") as svc:
+            svc.get_supplier.return_value = None
+            resp = authed_client.get("/api/suppliers/999")
+        assert resp.status_code == 404
+
+    def test_get_supplier_receipts_returns_200(self, authed_client):
+        with patch("app.routers.suppliers.service") as svc:
+            svc.get_supplier_receipts.return_value = []
+            resp = authed_client.get("/api/suppliers/1/receipts")
+        assert resp.status_code == 200
 
     def test_create_supplier_returns_201(self, authed_client):
         with patch("app.routers.suppliers.service") as svc:

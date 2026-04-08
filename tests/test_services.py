@@ -5,11 +5,13 @@ repositories, we test that logic in isolation — no database, no network,
 just pure Python. This makes tests fast and deterministic.
 """
 
+import re
 from unittest.mock import MagicMock
 
 import pytest
 
 from app.errors import NotFoundError
+from app.repositories.base import dash_insensitive_pattern
 from app.services.category import CategoryService
 from app.services.channel import ChannelService
 from app.services.currency import CurrencyService
@@ -22,6 +24,39 @@ from app.services.sale import SaleService
 from app.services.supplier import SupplierService
 from app.services.supplier_quote import SupplierQuoteService
 from app.services.user import UserService
+
+# ---------------------------------------------------------------------------
+# dash_insensitive_pattern (pure function from base.py)
+# ---------------------------------------------------------------------------
+
+
+class TestDashInsensitivePattern:
+    def test_basic_query_produces_regex(self):
+        pattern = dash_insensitive_pattern("abc")
+        assert re.fullmatch(pattern, "abc")
+        assert re.fullmatch(pattern, "a-b-c")
+        assert re.fullmatch(pattern, "xabc")
+        assert re.fullmatch(pattern, "abcx")
+
+    def test_query_with_dashes_strips_them(self):
+        pattern = dash_insensitive_pattern("2sd-823")
+        assert re.fullmatch(pattern, "2sd823")
+        assert re.fullmatch(pattern, "2sd-823")
+        assert re.fullmatch(pattern, "2-s-d-8-2-3")
+
+    def test_empty_after_strip_returns_wildcard(self):
+        pattern = dash_insensitive_pattern("---")
+        assert pattern == ".*"
+
+    def test_empty_string_returns_wildcard(self):
+        pattern = dash_insensitive_pattern("")
+        assert pattern == ".*"
+
+    def test_special_regex_chars_are_escaped(self):
+        pattern = dash_insensitive_pattern("a.b")
+        assert re.fullmatch(pattern, "a.b")
+        assert not re.fullmatch(pattern, "axb")
+
 
 # ---------------------------------------------------------------------------
 # ItemService
@@ -203,12 +238,35 @@ class TestReceiptService:
 class TestCategoryService:
     @pytest.fixture
     def service(self):
-        return CategoryService(MagicMock())
+        svc = CategoryService(MagicMock(), item_repo=MagicMock())
+        return svc
 
     def test_list_categories(self, service):
         service.repo.find_all.return_value = {"data": [], "total": 0}
         service.list_categories(50, 0)
         service.repo.find_all.assert_called_once()
+
+    def test_list_categories_passes_search(self, service):
+        service.repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_categories(50, 0, search="Tools")
+        service.repo.find_all.assert_called_once_with(50, 0, search="Tools")
+
+    def test_get_category_returns_category(self, service):
+        service.repo.find_by_id.return_value = {"id": 1, "name": "Tools"}
+        result = service.get_category(1)
+        assert result["name"] == "Tools"
+        service.repo.find_by_id.assert_called_once_with(1)
+
+    def test_get_category_raises_not_found(self, service):
+        service.repo.find_by_id.return_value = None
+        with pytest.raises(NotFoundError):
+            service.get_category(999)
+
+    def test_get_category_items(self, service):
+        service.repo.find_by_id.return_value = {"id": 1, "name": "Tools"}
+        service.item_repo.find_by_category.return_value = {"data": [], "total": 0}
+        service.get_category_items(1, 50, 0)
+        service.item_repo.find_by_category.assert_called_once_with(1, 50, 0)
 
     def test_create_category(self, service):
         service.repo.create.return_value = {"category_id": "c1", "name": "Tools"}
@@ -235,6 +293,23 @@ class TestLocationService:
         service.list_locations(50, 0)
         service.repo.find_all.assert_called_once()
 
+    def test_list_locations_passes_search(self, service):
+        service.repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_locations(50, 0, search="WH")
+        service.repo.find_all.assert_called_once_with(50, 0, search="WH")
+
+    def test_get_location_items_returns_items(self, service):
+        service.repo.find_by_id.return_value = {"id": 1, "code": "WH-A"}
+        service.repo.find_items_by_location.return_value = []
+        result = service.get_location_items(1)
+        service.repo.find_items_by_location.assert_called_once_with(1)
+        assert result == []
+
+    def test_get_location_items_raises_not_found(self, service):
+        service.repo.find_by_id.return_value = None
+        with pytest.raises(NotFoundError):
+            service.get_location_items(999)
+
     def test_create_location(self, service):
         service.create_location({"location_code": "WH-A1"})
         service.repo.create.assert_called_once()
@@ -252,12 +327,28 @@ class TestLocationService:
 class TestSupplierService:
     @pytest.fixture
     def service(self):
-        return SupplierService(MagicMock())
+        return SupplierService(MagicMock(), receipt_repo=MagicMock())
 
     def test_list_suppliers(self, service):
         service.repo.find_all.return_value = {"data": [], "total": 0}
         service.list_suppliers(50, 0)
         service.repo.find_all.assert_called_once()
+
+    def test_list_suppliers_passes_search(self, service):
+        service.repo.find_all.return_value = {"data": [], "total": 0}
+        service.list_suppliers(50, 0, search="Acme")
+        service.repo.find_all.assert_called_once_with(50, 0, search="Acme")
+
+    def test_get_supplier(self, service):
+        service.repo.find_by_id.return_value = {"id": 1, "name": "Acme"}
+        result = service.get_supplier(1)
+        assert result["name"] == "Acme"
+
+    def test_get_supplier_receipts(self, service):
+        service.receipt_repo.find_by_supplier_id.return_value = []
+        result = service.get_supplier_receipts(1)
+        service.receipt_repo.find_by_supplier_id.assert_called_once_with(1)
+        assert result == []
 
     def test_create_supplier(self, service):
         service.create_supplier({"supplier_name": "Acme"})
@@ -318,6 +409,11 @@ class TestInventoryService:
         service.repo.find_movements.return_value = {"data": [], "total": 0}
         service.list_movements(50, 0)
         service.repo.find_movements.assert_called_once()
+
+    def test_list_movements_passes_search(self, service):
+        service.repo.find_movements.return_value = {"data": [], "total": 0}
+        service.list_movements(50, 0, search="transfer")
+        service.repo.find_movements.assert_called_once_with(50, 0, search="transfer")
 
     def test_list_on_hand(self, service):
         service.repo.find_on_hand.return_value = []
