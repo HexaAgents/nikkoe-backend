@@ -107,11 +107,7 @@ def _resolve_items(lines: list[dict]) -> list[ResolvedLineItem]:
             try:
                 pattern = dash_insensitive_pattern(part_number)
                 resp = (
-                    supabase.table("item")
-                    .select("id, item_id")
-                    .filter("item_id", "imatch", pattern)
-                    .limit(5)
-                    .execute()
+                    supabase.table("item").select("id, item_id").filter("item_id", "imatch", pattern).limit(5).execute()
                 )
                 if resp.data:
                     exact = next(
@@ -145,13 +141,7 @@ def _resolve_supplier(name: str | None) -> int | None:
     if not name:
         return None
     try:
-        resp = (
-            supabase.table("supplier")
-            .select("id, name")
-            .ilike("name", f"%{name}%")
-            .limit(5)
-            .execute()
-        )
+        resp = supabase.table("supplier").select("id, name").ilike("name", f"%{name}%").limit(5).execute()
         if resp.data:
             exact = next(
                 (r for r in resp.data if r["name"].lower() == name.lower()),
@@ -180,12 +170,15 @@ def parse_invoice_stream(file_bytes: bytes):
         supplier_name = parsed.get("supplier_name")
         matched_supplier_id = _resolve_supplier(supplier_name)
 
-        yield _sse("header", {
-            "supplier_name": supplier_name,
-            "matched_supplier_id": matched_supplier_id,
-            "reference": parsed.get("reference"),
-            "currency_symbol": parsed.get("currency_symbol"),
-        })
+        yield _sse(
+            "header",
+            {
+                "supplier_name": supplier_name,
+                "matched_supplier_id": matched_supplier_id,
+                "reference": parsed.get("reference"),
+                "currency_symbol": parsed.get("currency_symbol"),
+            },
+        )
 
         lines = parsed.get("lines", [])
         for line_data in lines:
@@ -211,16 +204,19 @@ def parse_invoice_stream(file_bytes: bytes):
                 except Exception:
                     pass
 
-            yield _sse("line", {
-                "part_number": pn,
-                "description": line_data.get("description"),
-                "quantity": max(int(line_data.get("quantity", 1)), 1),
-                "unit_price": round(float(line_data.get("unit_price", 0)), 4),
-                "matched_item_id": mid,
-                "matched_item_name": mname,
-                "matched_location_id": loc_id,
-                "matched_location_code": loc_code,
-            })
+            yield _sse(
+                "line",
+                {
+                    "part_number": pn,
+                    "description": line_data.get("description"),
+                    "quantity": max(int(line_data.get("quantity", 1)), 1),
+                    "unit_price": round(float(line_data.get("unit_price", 0)), 4),
+                    "matched_item_id": mid,
+                    "matched_item_name": mname,
+                    "matched_location_id": loc_id,
+                    "matched_location_code": loc_code,
+                },
+            )
 
         yield _sse("done", {"total": len(lines)})
 
