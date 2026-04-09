@@ -128,43 +128,52 @@ class InventoryRepository:
     def stock_valuation(self) -> list:
         PAGE_SIZE = 1000
 
-        all_stock: list = []
+        # 1. Load ALL items so every catalogue entry appears in the report.
+        all_items: list = []
         offset = 0
         while True:
             resp = (
-                supabase.table("stock")
-                .select("id, item_id, quantity, item(id, item_id, description)")
+                supabase.table("item")
+                .select("id, item_id, description")
                 .order("id")
                 .range(offset, offset + PAGE_SIZE - 1)
                 .execute()
             )
             batch = resp.data or []
-            all_stock.extend(batch)
+            all_items.extend(batch)
             if len(batch) < PAGE_SIZE:
                 break
             offset += PAGE_SIZE
 
-        if not all_stock:
+        if not all_items:
             return []
 
-        item_agg: dict[int, dict] = {}
+        # 2. Load all stock rows and aggregate quantity per item PK.
+        item_qty: dict[int, int] = {}
         stock_item_map: dict[int, int] = {}
-        for row in all_stock:
-            stock_item_map[row["id"]] = row["item_id"]
-            item_id = row["item_id"]
-            if item_id not in item_agg:
-                item = row.get("item") or {}
-                item_agg[item_id] = {
-                    "item_id": item.get("item_id", ""),
-                    "description": item.get("description"),
-                    "total_quantity": 0,
-                }
-            item_agg[item_id]["total_quantity"] += row.get("quantity", 0)
+        all_stock_ids: list[int] = []
+        offset = 0
+        while True:
+            resp = (
+                supabase.table("stock")
+                .select("id, item_id, quantity")
+                .order("id")
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
+            )
+            batch = resp.data or []
+            for row in batch:
+                stock_item_map[row["id"]] = row["item_id"]
+                all_stock_ids.append(row["id"])
+                item_qty[row["item_id"]] = item_qty.get(row["item_id"], 0) + row.get("quantity", 0)
+            if len(batch) < PAGE_SIZE:
+                break
+            offset += PAGE_SIZE
 
-        stock_ids = [r["id"] for r in all_stock]
+        # 3. Fetch receipt lines for pricing (only when stock exists).
         receipt_lines: list = []
-        for i in range(0, len(stock_ids), PAGE_SIZE):
-            batch_ids = stock_ids[i : i + PAGE_SIZE]
+        for i in range(0, len(all_stock_ids), PAGE_SIZE):
+            batch_ids = all_stock_ids[i : i + PAGE_SIZE]
             resp = (
                 supabase.table("receipt_stock")
                 .select("stock_id, unit_price, receipt(dateTime, status)")
@@ -186,15 +195,17 @@ class InventoryRepository:
             if not existing or date > existing["date"]:
                 item_price_map[item_id] = {"date": date, "unit_price": rl.get("unit_price")}
 
+        # 4. Build a row for every item (LEFT JOIN semantics).
         result = []
-        for item_id, info in item_agg.items():
-            price_info = item_price_map.get(item_id)
+        for item in all_items:
+            pk = item["id"]
+            price_info = item_price_map.get(pk)
             unit_price = price_info["unit_price"] if price_info else None
-            total_qty = info["total_quantity"]
+            total_qty = item_qty.get(pk, 0)
             result.append(
                 {
-                    "item_id": info["item_id"],
-                    "description": info["description"],
+                    "item_id": item.get("item_id", ""),
+                    "description": item.get("description"),
                     "total_quantity": total_qty,
                     "unit_price": unit_price,
                     "stock_valuation": round(unit_price * total_qty, 2) if unit_price is not None else None,
