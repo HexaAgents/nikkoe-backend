@@ -10,3 +10,4 @@ dist/
 supabase/.temp/
 .coverage
 .venv/
+.vercel

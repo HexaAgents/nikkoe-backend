@@ -171,3 +171,26 @@ class TransferInput(BaseModel):
 
 class VoidRequest(BaseModel):
     reason: str | None = None
+
+
+class ParsedLineItem(BaseModel):
+    part_number: str
+    description: str | None = None
+    quantity: int
+    unit_price: float
+
+
+class ResolvedLineItem(ParsedLineItem):
+    matched_item_id: int | None = None
+    matched_item_name: str | None = None
+    matched_location_id: int | None = None
+    matched_location_code: str | None = None
+
+
+class ParseInvoiceResponse(BaseModel):
+    supplier_name: str | None = None
+    matched_supplier_id: int | None = None
+    reference: str | None = None
+    currency_symbol: str | None = None
+    note: str | None = None
+    lines: list[ResolvedLineItem]

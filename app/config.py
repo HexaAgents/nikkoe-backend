@@ -8,6 +8,8 @@ class Settings(BaseSettings):
     PORT: int = 3000
     CORS_ORIGINS: str = "http://localhost:8080"
 
+    OPENAI_API_KEY: str = ""
+
     EBAY_CLIENT_ID: str = ""
     EBAY_CLIENT_SECRET: str = ""
     EBAY_RU_NAME: str = ""

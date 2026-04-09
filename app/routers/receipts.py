@@ -1,9 +1,11 @@
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+from fastapi.responses import StreamingResponse
 
-from app.errors import ForbiddenError
+from app.errors import AppError, ForbiddenError
 from app.middleware.auth import CurrentUser, get_current_user
 from app.repositories.receipt import ReceiptRepository
-from app.schemas import CreateReceiptRequest, VoidRequest
+from app.schemas import CreateReceiptRequest, ParseInvoiceResponse, VoidRequest
+from app.services import invoice_parser
 from app.services.receipt import ReceiptService
 
 repo = ReceiptRepository()
@@ -40,6 +42,32 @@ def create_receipt(body: CreateReceiptRequest, user: CurrentUser = Depends(get_c
     return service.create_receipt(
         receipt_data,
         [line.model_dump() for line in body.lines],
+    )
+
+
+@router.post("/parse-invoice", response_model=ParseInvoiceResponse)
+async def parse_invoice(
+    file: UploadFile = File(...),
+    user: CurrentUser = Depends(get_current_user),
+):
+    if file.content_type not in ("application/pdf", "application/x-pdf"):
+        raise AppError(400, "Only PDF files are accepted")
+    contents = await file.read()
+    return invoice_parser.parse_invoice(contents)
+
+
+@router.post("/parse-invoice/stream")
+async def parse_invoice_stream(
+    file: UploadFile = File(...),
+    user: CurrentUser = Depends(get_current_user),
+):
+    if file.content_type not in ("application/pdf", "application/x-pdf"):
+        raise AppError(400, "Only PDF files are accepted")
+    contents = await file.read()
+    return StreamingResponse(
+        invoice_parser.parse_invoice_stream(contents),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
 
 
