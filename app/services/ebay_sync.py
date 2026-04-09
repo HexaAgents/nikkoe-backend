@@ -37,6 +37,9 @@ class EbaySyncService:
                 self.sync_log_repo.fail(log_id, "No eBay token linked")
                 return {"error": "No eBay token linked"}
 
+            channel_id = self._get_ebay_channel_id()
+            location_id = self._get_ebay_location_id()
+
             orders = ebay_client.get_all_orders(access_token, date_from=date_from)
 
             fetched = len(orders)
@@ -45,7 +48,7 @@ class EbaySyncService:
 
             for order in orders:
                 if self._is_paid(order) and not self._already_imported(order):
-                    self._import_order(order)
+                    self._import_order(order, channel_id, location_id)
                     imported += 1
                 else:
                     skipped += 1
@@ -76,12 +79,15 @@ class EbaySyncService:
         resp = supabase.table("sale").select("id").eq("channel_ref", order_id).limit(1).execute()
         return bool(resp.data)
 
-    def _import_order(self, order: dict) -> dict:
+    def _import_order(self, order: dict, channel_id: int | None = None,
+                      location_id: int | None = None) -> dict:
         order_id = order["orderId"]
         creation_date = order.get("creationDate", datetime.now(timezone.utc).isoformat())
 
-        channel_id = self._get_ebay_channel_id()
-        location_id = self._get_ebay_location_id()
+        if channel_id is None:
+            channel_id = self._get_ebay_channel_id()
+        if location_id is None:
+            location_id = self._get_ebay_location_id()
         customer_id = self._resolve_customer(order)
 
         sale_data = {
@@ -226,7 +232,7 @@ class EbaySyncService:
     def _resolve_currency(self, code: str) -> int | None:
         if not code:
             return None
-        resp = supabase.table("currency").select("id").eq("code", code).limit(1).execute()
+        resp = supabase.table("currency").select("id").eq("name", code).limit(1).execute()
         if resp.data:
             return resp.data[0]["id"]
         return None
