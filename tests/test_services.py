@@ -81,13 +81,13 @@ class TestItemService:
     def test_list_items_delegates_to_repo(self, service, repos):
         repos["repo"].find_all.return_value = {"data": [], "total": 0}
         result = service.list_items(10, 0)
-        repos["repo"].find_all.assert_called_once_with(10, 0)
+        repos["repo"].find_all.assert_called_once_with(10, 0, sort_by="item_id")
         assert result == {"data": [], "total": 0}
 
     def test_list_items_uses_defaults(self, service, repos):
         repos["repo"].find_all.return_value = {"data": [], "total": 0}
         service.list_items()
-        repos["repo"].find_all.assert_called_once_with(50, 0)
+        repos["repo"].find_all.assert_called_once_with(50, 0, sort_by="item_id")
 
     def test_get_item_returns_item_when_found(self, service, repos):
         repos["repo"].find_by_id.return_value = {"item_id": "1", "part_number": "X"}
@@ -530,12 +530,12 @@ class TestItemServiceSearch:
     def test_search_items_delegates_to_repo(self, service, repos):
         repos["repo"].search.return_value = {"data": [], "total": 0}
         service.search_items("PART", 100, 0, in_stock=False)
-        repos["repo"].search.assert_called_once_with("PART", 100, 0, in_stock=False)
+        repos["repo"].search.assert_called_once_with("PART", 100, 0, in_stock=False, sort_by="item_id")
 
     def test_search_items_with_in_stock(self, service, repos):
         repos["repo"].search.return_value = {"data": [], "total": 0}
         service.search_items("X", 50, 0, in_stock=True)
-        repos["repo"].search.assert_called_once_with("X", 50, 0, in_stock=True)
+        repos["repo"].search.assert_called_once_with("X", 50, 0, in_stock=True, sort_by="item_id")
 
 
 # ---------------------------------------------------------------------------

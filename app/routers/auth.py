@@ -12,6 +12,7 @@ from app.schemas import ChangePasswordInput, LoginInput, SignupInput
 class RefreshInput(BaseModel):
     refresh_token: str
 
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 

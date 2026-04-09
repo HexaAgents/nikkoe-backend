@@ -24,8 +24,9 @@ class ItemService:
     def list_items(self, limit: int = 50, offset: int = 0, sort_by: str = "item_id"):
         return self.repo.find_all(limit, offset, sort_by=sort_by)
 
-    def search_items(self, query: str, limit: int = 50, offset: int = 0, *,
-                     in_stock: bool = False, sort_by: str = "item_id"):
+    def search_items(
+        self, query: str, limit: int = 50, offset: int = 0, *, in_stock: bool = False, sort_by: str = "item_id"
+    ):
         return self.repo.search(query, limit, offset, in_stock=in_stock, sort_by=sort_by)
 
     def get_item(self, id: int):

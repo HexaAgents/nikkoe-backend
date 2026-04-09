@@ -1,8 +1,10 @@
 from app.dependencies import supabase
 from app.repositories.base import (
     batch_in_load,
-    dash_insensitive_pattern as _dash_insensitive_pattern,
     paginated_fetch,
+)
+from app.repositories.base import (
+    dash_insensitive_pattern as _dash_insensitive_pattern,
 )
 
 _SORTED_SORT_OPTIONS = {"latest_receipt", "latest_sale", "total_quantity"}
@@ -39,16 +41,13 @@ class ItemRepository:
     def find_all(self, limit: int = 20, offset: int = 0, sort_by: str = "item_id") -> dict:
         if sort_by in _SORTED_SORT_OPTIONS:
             return self._find_sorted(sort_by, limit, offset)
-        query = (
-            supabase.table("item")
-            .select(_ITEM_SELECT, count="exact")
-            .order("item_id")
-        )
+        query = supabase.table("item").select(_ITEM_SELECT, count="exact").order("item_id")
         rows, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": _enrich_items(rows), "total": total}
 
-    def search(self, query: str, limit: int = 20, offset: int = 0, *,
-               in_stock: bool = False, sort_by: str = "item_id") -> dict:
+    def search(
+        self, query: str, limit: int = 20, offset: int = 0, *, in_stock: bool = False, sort_by: str = "item_id"
+    ) -> dict:
         if sort_by in _SORTED_SORT_OPTIONS:
             return self._find_sorted(sort_by, limit, offset, search=query)
         q = (
@@ -65,8 +64,7 @@ class ItemRepository:
 
         return {"data": items, "total": total}
 
-    def _find_sorted(self, sort_by: str, limit: int, offset: int,
-                     search: str | None = None) -> dict:
+    def _find_sorted(self, sort_by: str, limit: int, offset: int, search: str | None = None) -> dict:
         params: dict = {
             "p_sort_by": sort_by,
             "p_limit": limit,

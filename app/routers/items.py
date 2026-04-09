@@ -18,6 +18,7 @@ class ItemSortBy(str, Enum):
     LATEST_SALE = "latest_sale"
     TOTAL_QUANTITY = "total_quantity"
 
+
 item_repo = ItemRepository()
 quote_repo = SupplierQuoteRepository()
 inventory_repo = InventoryRepository()
