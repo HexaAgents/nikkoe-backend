@@ -1,3 +1,5 @@
+from enum import Enum
+
 from fastapi import APIRouter, Depends, Query
 
 from app.middleware.auth import CurrentUser, get_current_user
@@ -8,6 +10,13 @@ from app.repositories.sale import SaleRepository
 from app.repositories.supplier_quote import SupplierQuoteRepository
 from app.schemas import ItemInput, ItemUpdateInput
 from app.services.item import ItemService
+
+
+class ItemSortBy(str, Enum):
+    ITEM_ID = "item_id"
+    LATEST_RECEIPT = "latest_receipt"
+    LATEST_SALE = "latest_sale"
+    TOTAL_QUANTITY = "total_quantity"
 
 item_repo = ItemRepository()
 quote_repo = SupplierQuoteRepository()
@@ -22,9 +31,10 @@ router = APIRouter(prefix="/api/items", tags=["items"])
 def list_items(
     limit: int = Query(default=20, ge=1, le=5000),
     offset: int = Query(default=0, ge=0),
+    sort_by: ItemSortBy = Query(default=ItemSortBy.ITEM_ID),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.list_items(limit, offset)
+    return service.list_items(limit, offset, sort_by=sort_by.value)
 
 
 @router.get("/search")
@@ -33,9 +43,10 @@ def search_items(
     limit: int = Query(default=20, ge=1, le=100),
     offset: int = Query(default=0, ge=0),
     in_stock: bool = Query(default=False),
+    sort_by: ItemSortBy = Query(default=ItemSortBy.ITEM_ID),
     user: CurrentUser = Depends(get_current_user),
 ):
-    return service.search_items(q, limit, offset, in_stock=in_stock)
+    return service.search_items(q, limit, offset, in_stock=in_stock, sort_by=sort_by.value)
 
 
 @router.get("/{item_id}")

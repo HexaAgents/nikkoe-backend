@@ -1,8 +1,11 @@
 from dataclasses import dataclass
 
+from cachetools import TTLCache
 from fastapi import Request
 
 from app.dependencies import supabase, supabase_auth
+
+_auth_cache: TTLCache = TTLCache(maxsize=128, ttl=60)
 
 
 @dataclass
@@ -26,6 +29,10 @@ async def get_current_user(request: Request) -> CurrentUser:
 
     if not token:
         return _unauthorized("Missing authorization token")
+
+    cached = _auth_cache.get(token)
+    if cached is not None:
+        return cached
 
     try:
         user_response = supabase_auth.auth.get_user(token)
@@ -57,7 +64,9 @@ async def get_current_user(request: Request) -> CurrentUser:
             email=p.get("email"),
         )
 
-    return CurrentUser(id=user.id, email=user.email, profile=profile)
+    current_user = CurrentUser(id=user.id, email=user.email, profile=profile)
+    _auth_cache[token] = current_user
+    return current_user
 
 
 def _unauthorized(message: str):

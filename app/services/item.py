@@ -21,11 +21,12 @@ class ItemService:
         self.receipt_repo = receipt_repo
         self.sale_repo = sale_repo
 
-    def list_items(self, limit: int = 50, offset: int = 0):
-        return self.repo.find_all(limit, offset)
+    def list_items(self, limit: int = 50, offset: int = 0, sort_by: str = "item_id"):
+        return self.repo.find_all(limit, offset, sort_by=sort_by)
 
-    def search_items(self, query: str, limit: int = 50, offset: int = 0, *, in_stock: bool = False):
-        return self.repo.search(query, limit, offset, in_stock=in_stock)
+    def search_items(self, query: str, limit: int = 50, offset: int = 0, *,
+                     in_stock: bool = False, sort_by: str = "item_id"):
+        return self.repo.search(query, limit, offset, in_stock=in_stock, sort_by=sort_by)
 
     def get_item(self, id: int):
         item = self.repo.find_by_id(id)

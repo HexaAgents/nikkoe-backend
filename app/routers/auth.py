@@ -1,11 +1,16 @@
 import httpx
 from fastapi import APIRouter, Depends
+from pydantic import BaseModel
 
 from app.config import settings
 from app.dependencies import supabase_auth
 from app.errors import AppError
 from app.middleware.auth import CurrentUser, get_current_user
 from app.schemas import ChangePasswordInput, LoginInput, SignupInput
+
+
+class RefreshInput(BaseModel):
+    refresh_token: str
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
@@ -64,6 +69,28 @@ def signup(body: SignupInput):
     return {
         "user": {"id": user.id, "email": user.email},
         "session": session_data,
+    }
+
+
+@router.post("/refresh")
+def refresh_token(body: RefreshInput):
+    resp = httpx.post(
+        f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token",
+        json={"refresh_token": body.refresh_token},
+        headers={"apikey": settings.SUPABASE_ANON_KEY},
+    )
+
+    if resp.status_code != 200:
+        raise AppError(401, "Session expired — please log in again")
+
+    data = resp.json()
+    return {
+        "session": {
+            "access_token": data["access_token"],
+            "refresh_token": data["refresh_token"],
+            "expires_in": data["expires_in"],
+            "token_type": data.get("token_type", "bearer"),
+        },
     }
 
 
