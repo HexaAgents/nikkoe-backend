@@ -412,10 +412,12 @@ class TestCrossTransferValidation:
         assert resp.status_code == 422
 
     def test_cross_transfer_rejects_notes_too_long(self, authed_client):
-        resp = authed_client.post(
-            "/api/inventory/transfer-cross",
-            json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 1, "notes": "x" * 501},
-        )
+        payload = {
+            "from_item_id": 1, "from_location_id": 2,
+            "to_item_id": 3, "to_location_id": 4,
+            "quantity": 1, "notes": "x" * 501,
+        }
+        resp = authed_client.post("/api/inventory/transfer-cross", json=payload)
         assert resp.status_code == 422
 
 

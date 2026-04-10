@@ -483,7 +483,11 @@ class TestCrossTransferInput:
 
     def test_rejects_notes_too_long(self):
         with pytest.raises(ValidationError):
-            CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=1, notes="x" * 501)
+            CrossTransferInput(
+                from_item_id=1, from_location_id=2,
+                to_item_id=3, to_location_id=4,
+                quantity=1, notes="x" * 501,
+            )
 
 
 class TestVoidRequest:
