@@ -23,8 +23,11 @@ from app.schemas import (
     LoginInput,
     PaginatedResult,
     PaginationParams,
+    ParsedLineItem,
+    ParseInvoiceResponse,
     ReceiptInput,
     ReceiptLineInput,
+    ResolvedLineItem,
     SaleInput,
     SaleLineInput,
     SignupInput,
@@ -491,6 +494,80 @@ class TestCrossTransferInput:
                 quantity=1,
                 notes="x" * 501,
             )
+
+
+class TestParsedLineItem:
+    def test_valid(self):
+        item = ParsedLineItem(part_number="ABC-123", quantity=5, unit_price=10.50)
+        assert item.part_number == "ABC-123"
+        assert item.description is None
+
+    def test_with_description(self):
+        item = ParsedLineItem(part_number="X", description="Widget", quantity=1, unit_price=0.0)
+        assert item.description == "Widget"
+
+    def test_rejects_missing_part_number(self):
+        with pytest.raises(ValidationError):
+            ParsedLineItem(quantity=1, unit_price=1.0)
+
+    def test_rejects_missing_quantity(self):
+        with pytest.raises(ValidationError):
+            ParsedLineItem(part_number="X", unit_price=1.0)
+
+    def test_rejects_missing_unit_price(self):
+        with pytest.raises(ValidationError):
+            ParsedLineItem(part_number="X", quantity=1)
+
+
+class TestResolvedLineItem:
+    def test_valid_with_matches(self):
+        item = ResolvedLineItem(
+            part_number="ABC",
+            quantity=1,
+            unit_price=5.0,
+            matched_item_id=10,
+            matched_item_name="ABC",
+            matched_location_id=20,
+            matched_location_code="WH-A",
+        )
+        assert item.matched_item_id == 10
+
+    def test_matches_default_to_none(self):
+        item = ResolvedLineItem(part_number="X", quantity=1, unit_price=1.0)
+        assert item.matched_item_id is None
+        assert item.matched_location_id is None
+
+    def test_inherits_parsed_fields(self):
+        item = ResolvedLineItem(part_number="Y", quantity=3, unit_price=2.0, description="Desc")
+        assert item.description == "Desc"
+        assert item.quantity == 3
+
+
+class TestParseInvoiceResponse:
+    def test_valid_with_lines(self):
+        resp = ParseInvoiceResponse(lines=[ResolvedLineItem(part_number="X", quantity=1, unit_price=5.0)])
+        assert len(resp.lines) == 1
+        assert resp.supplier_name is None
+
+    def test_all_optional_fields(self):
+        resp = ParseInvoiceResponse(
+            supplier_name="Acme",
+            matched_supplier_id=1,
+            reference="INV-001",
+            currency_symbol="£",
+            note="Test",
+            lines=[],
+        )
+        assert resp.supplier_name == "Acme"
+        assert resp.reference == "INV-001"
+
+    def test_rejects_missing_lines(self):
+        with pytest.raises(ValidationError):
+            ParseInvoiceResponse(supplier_name="X")
+
+    def test_empty_lines_is_valid(self):
+        resp = ParseInvoiceResponse(lines=[])
+        assert resp.lines == []
 
 
 class TestVoidRequest:

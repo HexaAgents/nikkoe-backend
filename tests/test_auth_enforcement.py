@@ -45,6 +45,12 @@ class TestReceiptsAuthEnforcement:
     def test_create_receipt_requires_auth(self, client):
         assert client.post("/api/receipts/", json={}).status_code == 401
 
+    def test_parse_invoice_requires_auth(self, client):
+        assert client.post("/api/receipts/parse-invoice").status_code == 401
+
+    def test_parse_invoice_stream_requires_auth(self, client):
+        assert client.post("/api/receipts/parse-invoice/stream").status_code == 401
+
     def test_void_receipt_requires_auth(self, client):
         assert client.post("/api/receipts/1/void", json={}).status_code == 401
 
@@ -74,6 +80,9 @@ class TestItemsAuthEnforcement:
     def test_get_item_sales_requires_auth(self, client):
         assert client.get("/api/items/1/sales").status_code == 401
 
+    def test_get_item_transfers_requires_auth(self, client):
+        assert client.get("/api/items/1/transfers").status_code == 401
+
     def test_get_items_by_search_id_requires_auth(self, client):
         assert client.get("/api/items/by-search-id/asd").status_code == 401
 
@@ -100,6 +109,12 @@ class TestCategoriesAuthEnforcement:
     def test_delete_category_requires_auth(self, client):
         assert client.delete("/api/categories/1").status_code == 401
 
+    def test_get_category_requires_auth(self, client):
+        assert client.get("/api/categories/1").status_code == 401
+
+    def test_get_category_items_requires_auth(self, client):
+        assert client.get("/api/categories/1/items").status_code == 401
+
 
 # ── Locations ────────────────────────────────────────────────────────
 
@@ -107,6 +122,9 @@ class TestCategoriesAuthEnforcement:
 class TestLocationsAuthEnforcement:
     def test_list_locations_requires_auth(self, client):
         assert client.get("/api/locations/").status_code == 401
+
+    def test_get_location_items_requires_auth(self, client):
+        assert client.get("/api/locations/1/items").status_code == 401
 
     def test_create_location_requires_auth(self, client):
         assert client.post("/api/locations/", json={}).status_code == 401
@@ -121,6 +139,12 @@ class TestLocationsAuthEnforcement:
 class TestSuppliersAuthEnforcement:
     def test_list_suppliers_requires_auth(self, client):
         assert client.get("/api/suppliers/").status_code == 401
+
+    def test_get_supplier_requires_auth(self, client):
+        assert client.get("/api/suppliers/1").status_code == 401
+
+    def test_get_supplier_receipts_requires_auth(self, client):
+        assert client.get("/api/suppliers/1/receipts").status_code == 401
 
     def test_create_supplier_requires_auth(self, client):
         assert client.post("/api/suppliers/", json={}).status_code == 401

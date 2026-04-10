@@ -317,6 +317,136 @@ class TestInventoryContract:
         body = resp.json()
         assert "id" in body and "quantity" in body
 
+    def test_transfer_returns_object(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.transfer_stock.return_value = {"id": 1, "quantity": 3}
+            resp = authed_client.post(
+                "/api/inventory/transfer",
+                json={"from_stock_id": 1, "to_location_id": 2, "quantity": 3},
+            )
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+
+class TestAuthContract:
+    def test_login_returns_user_and_session(self, client):
+        from unittest.mock import MagicMock
+
+        mock_user = MagicMock()
+        mock_user.id = "uid"
+        mock_user.email = "a@b.com"
+        mock_session = MagicMock()
+        mock_session.access_token = "tok"
+        mock_session.refresh_token = "ref"
+        mock_session.expires_in = 3600
+        mock_session.token_type = "bearer"
+        mock_resp = MagicMock()
+        mock_resp.user = mock_user
+        mock_resp.session = mock_session
+        with patch("app.routers.auth.supabase_auth") as sa:
+            sa.auth.sign_in_with_password.return_value = mock_resp
+            resp = client.post("/api/auth/login", json={"email": "a@b.com", "password": "pass123"})
+        body = resp.json()
+        _assert_keys(body, {"user", "session"})
+        _assert_keys(body["user"], {"id", "email"})
+        _assert_keys(body["session"], {"access_token", "refresh_token", "expires_in", "token_type"})
+
+    def test_refresh_returns_session(self, client):
+        from unittest.mock import MagicMock
+
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {
+            "access_token": "new",
+            "refresh_token": "new-ref",
+            "expires_in": 3600,
+            "token_type": "bearer",
+        }
+        with patch("app.routers.auth.httpx") as mh:
+            mh.post.return_value = mock_resp
+            resp = client.post("/api/auth/refresh", json={"refresh_token": "old"})
+        body = resp.json()
+        _assert_keys(body, {"session"})
+        _assert_keys(body["session"], {"access_token", "refresh_token", "expires_in", "token_type"})
+
+
+class TestItemSubResourceContracts:
+    def test_item_quotes_is_array(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_quotes.return_value = []
+            resp = authed_client.get("/api/items/1/quotes")
+        assert isinstance(resp.json(), list)
+
+    def test_item_inventory_is_array(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_inventory.return_value = []
+            resp = authed_client.get("/api/items/1/inventory")
+        assert isinstance(resp.json(), list)
+
+    def test_item_receipts_is_array(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_receipts.return_value = []
+            resp = authed_client.get("/api/items/1/receipts")
+        assert isinstance(resp.json(), list)
+
+    def test_item_sales_is_array(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_sales.return_value = []
+            resp = authed_client.get("/api/items/1/sales")
+        assert isinstance(resp.json(), list)
+
+    def test_item_transfers_is_array(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_transfers.return_value = []
+            resp = authed_client.get("/api/items/1/transfers")
+        assert isinstance(resp.json(), list)
+
+
+class TestCreateEndpointContracts:
+    def test_create_item_returns_object_with_id(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.create_item.return_value = {"id": 1, "item_id": "NEW"}
+            resp = authed_client.post("/api/items/", json={"item_id": "NEW"})
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+    def test_create_category_returns_object(self, authed_client):
+        with patch("app.routers.categories.service") as svc:
+            svc.create_category.return_value = {"id": 1, "name": "Cat"}
+            resp = authed_client.post("/api/categories/", json={"name": "Cat"})
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+    def test_create_location_returns_object(self, authed_client):
+        with patch("app.routers.locations.service") as svc:
+            svc.create_location.return_value = {"id": 1, "code": "WH-A"}
+            resp = authed_client.post("/api/locations/", json={"code": "WH-A"})
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+    def test_create_supplier_returns_object(self, authed_client):
+        with patch("app.routers.suppliers.service") as svc:
+            svc.create_supplier.return_value = {"id": 1, "name": "Sup"}
+            resp = authed_client.post("/api/suppliers/", json={"name": "Sup"})
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+    def test_create_customer_returns_object(self, authed_client):
+        with patch("app.routers.customers.service") as svc:
+            svc.create_customer.return_value = {"id": 1, "name": "Cust"}
+            resp = authed_client.post("/api/customers/", json={"name": "Cust"})
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
+    def test_create_quote_returns_object(self, authed_client):
+        with patch("app.routers.supplier_quotes.service") as svc:
+            svc.create_quote.return_value = {"id": 1}
+            resp = authed_client.post(
+                "/api/supplier-quotes/",
+                json={"item_id": 1, "supplier_id": 1, "cost": 5.0, "currency_id": 1},
+            )
+        assert resp.status_code == 201
+        assert "id" in resp.json()
+
 
 # =====================================================================
 # Delete / void contracts — all must return { success: true }

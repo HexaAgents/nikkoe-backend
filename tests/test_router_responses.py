@@ -176,6 +176,31 @@ class TestAuthChangePassword:
         assert resp.status_code == 400
 
 
+class TestAuthRefresh:
+    def test_refresh_token_returns_session(self, client):
+        mock_resp = MagicMock(status_code=200)
+        mock_resp.json.return_value = {
+            "access_token": "new-access",
+            "refresh_token": "new-refresh",
+            "expires_in": 3600,
+            "token_type": "bearer",
+        }
+        with patch("app.routers.auth.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_resp
+            resp = client.post("/api/auth/refresh", json={"refresh_token": "old-refresh"})
+        assert resp.status_code == 200
+        body = resp.json()
+        assert "session" in body
+        assert body["session"]["access_token"] == "new-access"
+
+    def test_refresh_token_expired_returns_401(self, client):
+        mock_resp = MagicMock(status_code=401)
+        with patch("app.routers.auth.httpx") as mock_httpx:
+            mock_httpx.post.return_value = mock_resp
+            resp = client.post("/api/auth/refresh", json={"refresh_token": "expired"})
+        assert resp.status_code == 401
+
+
 # =====================================================================
 # Sales endpoints
 # =====================================================================
@@ -537,6 +562,14 @@ class TestItemEndpoints:
         assert resp.status_code == 200
         assert len(resp.json()) == 2
         svc.get_items_by_search_id.assert_called_once_with("asd")
+
+    def test_get_item_transfers_returns_200(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_transfers.return_value = []
+            resp = authed_client.get("/api/items/1/transfers")
+        assert resp.status_code == 200
+        assert resp.json() == []
+        svc.get_item_transfers.assert_called_once_with(1)
 
     def test_delete_item_returns_success(self, authed_client):
         with patch("app.routers.items.service") as svc:

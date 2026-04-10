@@ -138,6 +138,11 @@ class TestItemService:
         service.get_item_sales("1")
         repos["sale_repo"].find_by_item_id.assert_called_once_with("1")
 
+    def test_get_item_transfers_delegates(self, service, repos):
+        repos["inventory_repo"].find_transfers_by_item_id.return_value = []
+        service.get_item_transfers("1")
+        repos["inventory_repo"].find_transfers_by_item_id.assert_called_once_with("1")
+
 
 # ---------------------------------------------------------------------------
 # SaleService

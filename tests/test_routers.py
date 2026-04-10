@@ -28,6 +28,10 @@ class TestAuthValidation:
         resp = client.post("/api/auth/signup", json={})
         assert resp.status_code == 422
 
+    def test_refresh_rejects_missing_refresh_token(self, client):
+        resp = client.post("/api/auth/refresh", json={})
+        assert resp.status_code == 422
+
 
 # ---------------------------------------------------------------------------
 # Item endpoint validation
@@ -436,6 +440,42 @@ class TestItemSearchValidation:
 
     def test_search_rejects_query_too_long(self, authed_client):
         resp = authed_client.get(f"/api/items/search?q={'x' * 256}")
+        assert resp.status_code == 422
+
+
+class TestItemUpdateValidation:
+    def test_update_rejects_empty_item_id(self, authed_client):
+        resp = authed_client.put("/api/items/1", json={"item_id": ""})
+        assert resp.status_code == 422
+
+    def test_update_rejects_item_id_too_long(self, authed_client):
+        resp = authed_client.put("/api/items/1", json={"item_id": "x" * 256})
+        assert resp.status_code == 422
+
+
+class TestListPaginationValidation:
+    def test_categories_rejects_negative_offset(self, authed_client):
+        resp = authed_client.get("/api/categories/?offset=-1")
+        assert resp.status_code == 422
+
+    def test_categories_rejects_zero_limit(self, authed_client):
+        resp = authed_client.get("/api/categories/?limit=0")
+        assert resp.status_code == 422
+
+    def test_locations_rejects_negative_offset(self, authed_client):
+        resp = authed_client.get("/api/locations/?offset=-1")
+        assert resp.status_code == 422
+
+    def test_locations_rejects_zero_limit(self, authed_client):
+        resp = authed_client.get("/api/locations/?limit=0")
+        assert resp.status_code == 422
+
+    def test_suppliers_rejects_negative_offset(self, authed_client):
+        resp = authed_client.get("/api/suppliers/?offset=-1")
+        assert resp.status_code == 422
+
+    def test_suppliers_rejects_zero_limit(self, authed_client):
+        resp = authed_client.get("/api/suppliers/?limit=0")
         assert resp.status_code == 422
 
 
