@@ -1,8 +1,8 @@
 import httpx
-from supabase import Client, create_client
 from supabase.lib.client_options import SyncClientOptions
 
 from app.config import settings
+from supabase import Client, create_client
 
 _http_client = httpx.Client(http2=False, timeout=120, limits=httpx.Limits(max_connections=20))
 _options = SyncClientOptions(httpx_client=_http_client)
