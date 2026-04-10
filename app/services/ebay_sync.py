@@ -79,8 +79,7 @@ class EbaySyncService:
         resp = supabase.table("sale").select("id").eq("channel_ref", order_id).limit(1).execute()
         return bool(resp.data)
 
-    def _import_order(self, order: dict, channel_id: int | None = None,
-                      location_id: int | None = None) -> dict:
+    def _import_order(self, order: dict, channel_id: int | None = None, location_id: int | None = None) -> dict:
         order_id = order["orderId"]
         creation_date = order.get("creationDate", datetime.now(timezone.utc).isoformat())
 

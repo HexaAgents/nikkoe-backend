@@ -590,9 +590,13 @@ class TestInventoryServiceCrossTransfer:
     def test_cross_transfer_delegates_to_repo(self, service):
         service.repo.create_cross_transfer.return_value = {"id": 1}
         result = service.cross_transfer_stock(
-            from_item_id=10, from_location_id=20,
-            to_item_id=30, to_location_id=40,
-            quantity=5, user_id=1, notes="merge",
+            from_item_id=10,
+            from_location_id=20,
+            to_item_id=30,
+            to_location_id=40,
+            quantity=5,
+            user_id=1,
+            notes="merge",
         )
         service.repo.create_cross_transfer.assert_called_once_with(10, 20, 30, 40, 5, 1, "merge")
         assert result["id"] == 1
@@ -600,8 +604,10 @@ class TestInventoryServiceCrossTransfer:
     def test_cross_transfer_without_user_or_notes(self, service):
         service.repo.create_cross_transfer.return_value = {"id": 2}
         service.cross_transfer_stock(
-            from_item_id=1, from_location_id=2,
-            to_item_id=3, to_location_id=4,
+            from_item_id=1,
+            from_location_id=2,
+            to_item_id=3,
+            to_location_id=4,
             quantity=1,
         )
         service.repo.create_cross_transfer.assert_called_once_with(1, 2, 3, 4, 1, None, None)

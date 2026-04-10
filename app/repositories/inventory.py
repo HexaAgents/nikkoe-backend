@@ -361,19 +361,21 @@ class InventoryRepository:
         existing_to = to_stock_resp.data
 
         try:
-            supabase.table("stock").update(
-                {"quantity": from_stock["quantity"] - quantity}
-            ).eq("id", from_stock["id"]).execute()
+            supabase.table("stock").update({"quantity": from_stock["quantity"] - quantity}).eq(
+                "id", from_stock["id"]
+            ).execute()
 
             if existing_to:
                 to_stock_id = existing_to["id"]
-                supabase.table("stock").update(
-                    {"quantity": existing_to["quantity"] + quantity}
-                ).eq("id", to_stock_id).execute()
-            else:
-                new_resp = supabase.table("stock").insert(
-                    {"item_id": to_item_id, "location_id": to_location_id, "quantity": quantity}
+                supabase.table("stock").update({"quantity": existing_to["quantity"] + quantity}).eq(
+                    "id", to_stock_id
                 ).execute()
+            else:
+                new_resp = (
+                    supabase.table("stock")
+                    .insert({"item_id": to_item_id, "location_id": to_location_id, "quantity": quantity})
+                    .execute()
+                )
                 to_stock_id = new_resp.data[0]["id"]
 
             transfer_data: dict = {
