@@ -988,13 +988,13 @@ class TestSupplierQuoteEndpoints:
             resp = authed_client.post("/api/supplier-quotes/", json=self.QUOTE_BODY)
         assert resp.status_code == 201
 
-    def test_create_quote_excludes_note_field(self, authed_client):
+    def test_create_quote_includes_note_field(self, authed_client):
         body_with_note = {**self.QUOTE_BODY, "note": "Best price"}
         with patch("app.routers.supplier_quotes.service") as svc:
             svc.create_quote.return_value = {"id": 1}
             authed_client.post("/api/supplier-quotes/", json=body_with_note)
         data = svc.create_quote.call_args[0][0]
-        assert "note" not in data
+        assert data["note"] == "Best price"
         assert data["item_id"] == 1
 
     def test_create_quote_passes_optional_datetime(self, authed_client):

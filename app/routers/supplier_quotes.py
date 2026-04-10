@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/supplier-quotes", tags=["supplier-quotes"])
 
 @router.post("/", status_code=201)
 def create_quote(body: SupplierQuoteInput, user: CurrentUser = Depends(get_current_user)):
-    return service.create_quote(body.model_dump(exclude={"note"}))
+    return service.create_quote(body.model_dump())
 
 
 @router.delete("/{quote_id}")
