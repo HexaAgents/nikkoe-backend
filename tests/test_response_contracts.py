@@ -185,6 +185,15 @@ class TestItemsContract:
             resp = authed_client.get("/api/items/1")
         _assert_keys(resp.json(), {"id", "item_id"})
 
+    def test_by_search_id_returns_plain_array(self, authed_client):
+        items = [{"id": 1, "item_id": "AS-D", "search_id": "asd"}, {"id": 2, "item_id": "ASD", "search_id": "asd"}]
+        with patch("app.routers.items.service") as svc:
+            svc.get_items_by_search_id.return_value = items
+            resp = authed_client.get("/api/items/by-search-id/asd")
+        body = resp.json()
+        assert isinstance(body, list), "by-search-id must return a plain array"
+        assert len(body) == 2
+
     def test_delete_item_returns_success_flag(self, authed_client):
         with patch("app.routers.items.service"):
             resp = authed_client.delete("/api/items/1")
@@ -296,6 +305,17 @@ class TestInventoryContract:
             resp = authed_client.get("/api/inventory/on-hand")
         body = resp.json()
         assert isinstance(body, list), "on-hand must be a plain array, not paginated"
+
+    def test_cross_transfer_returns_object(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.cross_transfer_stock.return_value = {"id": 1, "quantity": 5}
+            resp = authed_client.post(
+                "/api/inventory/transfer-cross",
+                json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 5},
+            )
+        assert resp.status_code == 201
+        body = resp.json()
+        assert "id" in body and "quantity" in body
 
 
 # =====================================================================

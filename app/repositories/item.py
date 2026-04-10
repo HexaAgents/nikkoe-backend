@@ -1,3 +1,5 @@
+import re
+
 from app.dependencies import supabase
 from app.repositories.base import (
     batch_in_load,
@@ -41,7 +43,8 @@ class ItemRepository:
     def find_all(self, limit: int = 20, offset: int = 0, sort_by: str = "item_id") -> dict:
         if sort_by in _SORTED_SORT_OPTIONS:
             return self._find_sorted(sort_by, limit, offset)
-        query = supabase.table("item").select(_ITEM_SELECT, count="exact").order("item_id")
+        order_col, desc = ("id", True) if sort_by == "recently_added" else ("item_id", False)
+        query = supabase.table("item").select(_ITEM_SELECT, count="exact").order(order_col, desc=desc)
         rows, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": _enrich_items(rows), "total": total}
 
@@ -50,11 +53,12 @@ class ItemRepository:
     ) -> dict:
         if sort_by in _SORTED_SORT_OPTIONS:
             return self._find_sorted(sort_by, limit, offset, search=query)
+        order_col, desc = ("id", True) if sort_by == "recently_added" else ("item_id", False)
         q = (
             supabase.table("item")
             .select(_ITEM_SELECT, count="exact")
             .filter("item_id", "imatch", _dash_insensitive_pattern(query))
-            .order("item_id")
+            .order(order_col, desc=desc)
         )
         rows, total = paginated_fetch(q, offset=offset, limit=limit)
         items = _enrich_items(rows)
@@ -96,11 +100,29 @@ class ItemRepository:
             response.data["categories"] = response.data.pop("category", None)
         return response.data
 
+    def find_by_search_id(self, search_id: str) -> list[dict]:
+        response = (
+            supabase.table("item")
+            .select("id, item_id, description, search_id")
+            .eq("search_id", search_id)
+            .order("item_id")
+            .execute()
+        )
+        return response.data or []
+
+    @staticmethod
+    def _make_search_id(item_id: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", item_id.lower())
+
     def create(self, data: dict) -> dict:
+        if "item_id" in data:
+            data["search_id"] = self._make_search_id(data["item_id"])
         response = supabase.table("item").insert(data).execute()
         return response.data[0]
 
     def update(self, id: int, data: dict) -> dict:
+        if "item_id" in data:
+            data["search_id"] = self._make_search_id(data["item_id"])
         response = supabase.table("item").update(data).eq("id", id).execute()
         return response.data[0]
 

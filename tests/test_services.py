@@ -512,6 +512,28 @@ class TestReceiptServiceSearch:
 # ---------------------------------------------------------------------------
 
 
+class TestItemServiceSearchById:
+    @pytest.fixture
+    def repos(self):
+        return {
+            "repo": MagicMock(),
+            "quote_repo": MagicMock(),
+            "inventory_repo": MagicMock(),
+            "receipt_repo": MagicMock(),
+            "sale_repo": MagicMock(),
+        }
+
+    @pytest.fixture
+    def service(self, repos):
+        return ItemService(**repos)
+
+    def test_get_items_by_search_id_delegates(self, service, repos):
+        repos["repo"].find_by_search_id.return_value = [{"id": 1}, {"id": 2}]
+        result = service.get_items_by_search_id("asd")
+        repos["repo"].find_by_search_id.assert_called_once_with("asd")
+        assert len(result) == 2
+
+
 class TestItemServiceSearch:
     @pytest.fixture
     def repos(self):
@@ -558,6 +580,31 @@ class TestInventoryServiceTransfer:
         service.repo.create_transfer.return_value = {"transfer_id": 2}
         service.transfer_stock(from_stock_id=1, to_location_id=2, quantity=1)
         service.repo.create_transfer.assert_called_once_with(1, 2, 1, None, None)
+
+
+class TestInventoryServiceCrossTransfer:
+    @pytest.fixture
+    def service(self):
+        return InventoryService(MagicMock())
+
+    def test_cross_transfer_delegates_to_repo(self, service):
+        service.repo.create_cross_transfer.return_value = {"id": 1}
+        result = service.cross_transfer_stock(
+            from_item_id=10, from_location_id=20,
+            to_item_id=30, to_location_id=40,
+            quantity=5, user_id=1, notes="merge",
+        )
+        service.repo.create_cross_transfer.assert_called_once_with(10, 20, 30, 40, 5, 1, "merge")
+        assert result["id"] == 1
+
+    def test_cross_transfer_without_user_or_notes(self, service):
+        service.repo.create_cross_transfer.return_value = {"id": 2}
+        service.cross_transfer_stock(
+            from_item_id=1, from_location_id=2,
+            to_item_id=3, to_location_id=4,
+            quantity=1,
+        )
+        service.repo.create_cross_transfer.assert_called_once_with(1, 2, 3, 4, 1, None, None)
 
 
 # ---------------------------------------------------------------------------

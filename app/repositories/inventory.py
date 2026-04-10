@@ -54,12 +54,19 @@ class InventoryRepository:
         item_ids = list({s.get("item_id") for s in stocks_map.values() if s.get("item_id")})
         items_map = batch_load("item", "id", item_ids, "id, item_id")
 
+        location_ids = list({s.get("location_id") for s in stocks_map.values() if s.get("location_id")})
+        locations_map = batch_load("location", "id", location_ids, "id, code")
+
         for m in movements:
             m["users"] = users_map.get(m.get("user_id"))
             from_stock = stocks_map.get(m.get("stock_id_from_id"))
             to_stock = stocks_map.get(m.get("stock_id_to_id"))
             m["from_stock"] = from_stock
             m["to_stock"] = to_stock
+            m["from_item"] = items_map.get(from_stock.get("item_id")) if from_stock else None
+            m["to_item"] = items_map.get(to_stock.get("item_id")) if to_stock else None
+            m["from_location"] = locations_map.get(from_stock.get("location_id")) if from_stock else None
+            m["to_location"] = locations_map.get(to_stock.get("location_id")) if to_stock else None
             if from_stock:
                 m["items"] = items_map.get(from_stock.get("item_id"))
             elif to_stock:
@@ -307,6 +314,87 @@ class InventoryRepository:
                 if current and current.data and current.data["quantity"] != from_stock["quantity"]:
                     supabase.table("stock").update({"quantity": from_stock["quantity"]}).eq(
                         "id", from_stock_id
+                    ).execute()
+            except Exception:
+                pass
+            raise
+
+    def create_cross_transfer(
+        self,
+        from_item_id: int,
+        from_location_id: int,
+        to_item_id: int,
+        to_location_id: int,
+        quantity: int,
+        user_id: int | None = None,
+        notes: str | None = None,
+    ) -> dict:
+        from datetime import datetime, timezone
+
+        from app.errors import AppError
+
+        from_stock_resp = (
+            supabase.table("stock")
+            .select("id, quantity")
+            .eq("item_id", from_item_id)
+            .eq("location_id", from_location_id)
+            .maybe_single()
+            .execute()
+        )
+        from_stock = from_stock_resp.data
+        if not from_stock:
+            raise AppError(404, "No stock found for source item at that location")
+        if from_stock["quantity"] < quantity:
+            raise AppError(
+                400,
+                f"Insufficient quantity: available {from_stock['quantity']}, requested {quantity}",
+            )
+
+        to_stock_resp = (
+            supabase.table("stock")
+            .select("id, quantity")
+            .eq("item_id", to_item_id)
+            .eq("location_id", to_location_id)
+            .maybe_single()
+            .execute()
+        )
+        existing_to = to_stock_resp.data
+
+        try:
+            supabase.table("stock").update(
+                {"quantity": from_stock["quantity"] - quantity}
+            ).eq("id", from_stock["id"]).execute()
+
+            if existing_to:
+                to_stock_id = existing_to["id"]
+                supabase.table("stock").update(
+                    {"quantity": existing_to["quantity"] + quantity}
+                ).eq("id", to_stock_id).execute()
+            else:
+                new_resp = supabase.table("stock").insert(
+                    {"item_id": to_item_id, "location_id": to_location_id, "quantity": quantity}
+                ).execute()
+                to_stock_id = new_resp.data[0]["id"]
+
+            transfer_data: dict = {
+                "stock_id_from_id": from_stock["id"],
+                "stock_id_to_id": to_stock_id,
+                "quantity": quantity,
+                "date": datetime.now(timezone.utc).isoformat(),
+                "notes": notes,
+            }
+            if user_id is not None:
+                transfer_data["user_id"] = user_id
+
+            transfer_resp = supabase.table("transfer").insert(transfer_data).execute()
+            return transfer_resp.data[0]
+
+        except Exception:
+            try:
+                current = supabase.table("stock").select("quantity").eq("id", from_stock["id"]).single().execute()
+                if current and current.data and current.data["quantity"] != from_stock["quantity"]:
+                    supabase.table("stock").update({"quantity": from_stock["quantity"]}).eq(
+                        "id", from_stock["id"]
                     ).execute()
             except Exception:
                 pass

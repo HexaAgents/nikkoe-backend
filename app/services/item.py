@@ -35,6 +35,9 @@ class ItemService:
             raise NotFoundError("Item", str(id))
         return item
 
+    def get_items_by_search_id(self, search_id: str):
+        return self.repo.find_by_search_id(search_id)
+
     def get_item_quotes(self, item_id: int):
         return self.quote_repo.find_by_item_id(item_id)
 

@@ -13,8 +13,8 @@ The database uses PascalCase singular table names with integer primary keys (big
 - **channel.py** -- Read-only queries against the `Channel` table (id, name).
 - **currency.py** -- Read-only queries against the `Currency` table (id, name).
 - **customer.py** -- List/create against the `Customer` table (id, name, email, phone, address fields).
-- **inventory.py** -- `Transfer` table for movements, `Stock` table for on-hand balances.
-- **item.py** -- CRUD against the `Item` table (id, item_id text, description, category_id). Stitches Stock, Receipt_Stock, and Category data in memory.
+- **inventory.py** -- `Transfer` table for movements, `Stock` table for on-hand balances. `create_transfer` handles same-item location transfers; `create_cross_transfer` handles cross-item transfers between different part numbers with stock quantity updates on both items.
+- **item.py** -- CRUD against the `Item` table (id, item_id text, description, category_id, search_id). Stitches Stock, Receipt_Stock, and Category data in memory. `find_by_search_id` returns items sharing a normalized search ID. Auto-generates `search_id` on create/update. Server-side sorting via `get_items_sorted` Postgres RPC for receipt date, sale date, and quantity sorts.
 - **location.py** -- CRUD against the `Location` table (id, code).
 - **receipt.py** -- `Receipt` + `Receipt_Stock` tables. Multi-step inserts with Stock lookup/creation and quantity increment. Void updates status column.
 - **sale.py** -- `Sale` + `Sale_Stock` tables. Multi-step inserts with Stock lookup/creation and quantity decrement. Void updates status column.

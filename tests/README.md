@@ -2,25 +2,27 @@
 
 ## Overview
 
-**434 tests** across 12 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
+**524 tests** across 14 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
 
 ```
 tests/
-  conftest.py                   Shared fixtures (TestClient, mock users, auth overrides)
-  test_health.py            (2) Smoke test — app boots and responds
-  test_schemas.py          (83) Pydantic model validation rules
-  test_errors.py           (19) Error classes and exception handlers
-  test_services.py         (53) Business logic with mocked repositories
-  test_routers.py          (47) HTTP input validation (reject bad data)
-  test_router_responses.py (94) HTTP happy-path tests (every endpoint)
-  test_auth_enforcement.py (45) Auth gate — 401 on every protected route
-  test_response_contracts.py(30) Frontend contract — JSON shape assertions
+  conftest.py                    Shared fixtures (TestClient, mock users, auth overrides)
+  test_health.py             (2) Smoke test — app boots and responds
+  test_schemas.py           (96) Pydantic model validation rules
+  test_errors.py            (19) Error classes and exception handlers
+  test_services.py          (73) Business logic with mocked repositories
+  test_routers.py           (52) HTTP input validation (reject bad data)
+  test_router_responses.py (111) HTTP happy-path tests (every endpoint)
+  test_auth_enforcement.py  (48) Auth gate — 401 on every protected route
+  test_response_contracts.py(33) Frontend contract — JSON shape assertions
+  test_invoice_parser_unit.py(23) Invoice PDF parser logic
+  test_stock_valuation.py    (6) Stock valuation report
   ebay/
-    conftest.py                 eBay-specific fixtures
-    test_ebay_client.py    (18) eBay API client functions
-    test_ebay_routers.py   (16) eBay HTTP endpoints
-    test_ebay_schemas.py    (8) eBay data shape validation
-    test_ebay_sync.py      (19) eBay sync service logic
+    conftest.py                  eBay-specific fixtures
+    test_ebay_client.py     (16) eBay API client functions
+    test_ebay_routers.py    (19) eBay HTTP endpoints
+    test_ebay_schemas.py     (9) eBay data shape validation
+    test_ebay_sync.py       (17) eBay sync service logic
 ```
 
 ### Layer separation

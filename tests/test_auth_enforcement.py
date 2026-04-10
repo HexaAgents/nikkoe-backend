@@ -74,6 +74,9 @@ class TestItemsAuthEnforcement:
     def test_get_item_sales_requires_auth(self, client):
         assert client.get("/api/items/1/sales").status_code == 401
 
+    def test_get_items_by_search_id_requires_auth(self, client):
+        assert client.get("/api/items/by-search-id/asd").status_code == 401
+
     def test_create_item_requires_auth(self, client):
         assert client.post("/api/items/", json={}).status_code == 401
 
@@ -168,6 +171,9 @@ class TestInventoryAuthEnforcement:
 
     def test_transfer_stock_requires_auth(self, client):
         assert client.post("/api/inventory/transfer", json={}).status_code == 401
+
+    def test_cross_transfer_stock_requires_auth(self, client):
+        assert client.post("/api/inventory/transfer-cross", json={}).status_code == 401
 
 
 # ── Supplier quotes ──────────────────────────────────────────────────

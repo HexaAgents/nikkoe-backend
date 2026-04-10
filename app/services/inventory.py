@@ -29,3 +29,23 @@ class InventoryService:
             user_id,
             notes,
         )
+
+    def cross_transfer_stock(
+        self,
+        from_item_id: int,
+        from_location_id: int,
+        to_item_id: int,
+        to_location_id: int,
+        quantity: int,
+        user_id: int | None = None,
+        notes: str | None = None,
+    ):
+        return self.repo.create_cross_transfer(
+            from_item_id,
+            from_location_id,
+            to_item_id,
+            to_location_id,
+            quantity,
+            user_id,
+            notes,
+        )

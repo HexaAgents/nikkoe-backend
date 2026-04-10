@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, Query
 
 from app.middleware.auth import CurrentUser, get_current_user
 from app.repositories.inventory import InventoryRepository
-from app.schemas import TransferInput
+from app.schemas import CrossTransferInput, TransferInput
 from app.services.inventory import InventoryService
 
 repo = InventoryRepository()
@@ -35,6 +35,20 @@ def transfer_stock(body: TransferInput, user: CurrentUser = Depends(get_current_
     user_id = user.profile.user_id if user.profile else None
     return service.transfer_stock(
         from_stock_id=body.from_stock_id,
+        to_location_id=body.to_location_id,
+        quantity=body.quantity,
+        user_id=user_id,
+        notes=body.notes,
+    )
+
+
+@router.post("/transfer-cross", status_code=201)
+def cross_transfer_stock(body: CrossTransferInput, user: CurrentUser = Depends(get_current_user)):
+    user_id = user.profile.user_id if user.profile else None
+    return service.cross_transfer_stock(
+        from_item_id=body.from_item_id,
+        from_location_id=body.from_location_id,
+        to_item_id=body.to_item_id,
         to_location_id=body.to_location_id,
         quantity=body.quantity,
         user_id=user_id,

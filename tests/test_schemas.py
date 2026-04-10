@@ -15,6 +15,7 @@ from app.schemas import (
     CreateReceiptRequest,
     CreateSaleRequest,
     CreateUserInput,
+    CrossTransferInput,
     CustomerInput,
     ItemInput,
     ItemUpdateInput,
@@ -29,6 +30,7 @@ from app.schemas import (
     SignupInput,
     SupplierInput,
     SupplierQuoteInput,
+    TransferInput,
     VoidRequest,
 )
 
@@ -426,6 +428,62 @@ class TestChangePasswordInput:
     def test_current_password_any_length(self):
         c = ChangePasswordInput(current_password="x", new_password="123456")
         assert c.current_password == "x"
+
+
+class TestTransferInput:
+    def test_valid(self):
+        t = TransferInput(from_stock_id=1, to_location_id=2, quantity=5)
+        assert t.quantity == 5
+
+    def test_rejects_zero_quantity(self):
+        with pytest.raises(ValidationError):
+            TransferInput(from_stock_id=1, to_location_id=2, quantity=0)
+
+    def test_rejects_negative_quantity(self):
+        with pytest.raises(ValidationError):
+            TransferInput(from_stock_id=1, to_location_id=2, quantity=-1)
+
+    def test_notes_optional(self):
+        t = TransferInput(from_stock_id=1, to_location_id=2, quantity=1)
+        assert t.notes is None
+
+    def test_notes_at_max(self):
+        t = TransferInput(from_stock_id=1, to_location_id=2, quantity=1, notes="x" * 500)
+        assert len(t.notes) == 500
+
+    def test_rejects_notes_too_long(self):
+        with pytest.raises(ValidationError):
+            TransferInput(from_stock_id=1, to_location_id=2, quantity=1, notes="x" * 501)
+
+
+class TestCrossTransferInput:
+    def test_valid(self):
+        t = CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=10)
+        assert t.quantity == 10
+
+    def test_rejects_missing_from_item_id(self):
+        with pytest.raises(ValidationError):
+            CrossTransferInput(from_location_id=2, to_item_id=3, to_location_id=4, quantity=10)
+
+    def test_rejects_missing_to_item_id(self):
+        with pytest.raises(ValidationError):
+            CrossTransferInput(from_item_id=1, from_location_id=2, to_location_id=4, quantity=10)
+
+    def test_rejects_zero_quantity(self):
+        with pytest.raises(ValidationError):
+            CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=0)
+
+    def test_rejects_negative_quantity(self):
+        with pytest.raises(ValidationError):
+            CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=-1)
+
+    def test_notes_optional(self):
+        t = CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=1)
+        assert t.notes is None
+
+    def test_rejects_notes_too_long(self):
+        with pytest.raises(ValidationError):
+            CrossTransferInput(from_item_id=1, from_location_id=2, to_item_id=3, to_location_id=4, quantity=1, notes="x" * 501)
 
 
 class TestVoidRequest:

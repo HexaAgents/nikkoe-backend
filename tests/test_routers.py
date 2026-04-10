@@ -382,6 +382,43 @@ class TestInventoryTransferValidation:
         assert resp.status_code == 422
 
 
+class TestCrossTransferValidation:
+    def test_cross_transfer_rejects_missing_from_item_id(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer-cross",
+            json={"from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 5},
+        )
+        assert resp.status_code == 422
+
+    def test_cross_transfer_rejects_missing_to_item_id(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer-cross",
+            json={"from_item_id": 1, "from_location_id": 2, "to_location_id": 4, "quantity": 5},
+        )
+        assert resp.status_code == 422
+
+    def test_cross_transfer_rejects_zero_quantity(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer-cross",
+            json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 0},
+        )
+        assert resp.status_code == 422
+
+    def test_cross_transfer_rejects_negative_quantity(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer-cross",
+            json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": -1},
+        )
+        assert resp.status_code == 422
+
+    def test_cross_transfer_rejects_notes_too_long(self, authed_client):
+        resp = authed_client.post(
+            "/api/inventory/transfer-cross",
+            json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 1, "notes": "x" * 501},
+        )
+        assert resp.status_code == 422
+
+
 # ---------------------------------------------------------------------------
 # Item search validation
 # ---------------------------------------------------------------------------

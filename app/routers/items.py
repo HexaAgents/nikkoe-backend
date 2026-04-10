@@ -13,6 +13,7 @@ from app.services.item import ItemService
 
 
 class ItemSortBy(str, Enum):
+    RECENTLY_ADDED = "recently_added"
     ITEM_ID = "item_id"
     LATEST_RECEIPT = "latest_receipt"
     LATEST_SALE = "latest_sale"
@@ -48,6 +49,11 @@ def search_items(
     user: CurrentUser = Depends(get_current_user),
 ):
     return service.search_items(q, limit, offset, in_stock=in_stock, sort_by=sort_by.value)
+
+
+@router.get("/by-search-id/{search_id}")
+def get_items_by_search_id(search_id: str, user: CurrentUser = Depends(get_current_user)):
+    return service.get_items_by_search_id(search_id)
 
 
 @router.get("/{item_id}")

@@ -417,6 +417,18 @@ class TestItemEndpoints:
             authed_client.get("/api/items/?limit=50&offset=10")
         svc.list_items.assert_called_once_with(50, 10, sort_by="item_id")
 
+    def test_list_items_passes_recently_added_sort(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.list_items.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/items/?sort_by=recently_added")
+        svc.list_items.assert_called_once_with(20, 0, sort_by="recently_added")
+
+    def test_search_items_passes_recently_added_sort(self, authed_client):
+        with patch("app.routers.items.service") as svc:
+            svc.search_items.return_value = PAGINATED_EMPTY
+            authed_client.get("/api/items/search?q=PART&sort_by=recently_added")
+        svc.search_items.assert_called_once_with("PART", 20, 0, in_stock=False, sort_by="recently_added")
+
     def test_search_items_returns_200(self, authed_client):
         with patch("app.routers.items.service") as svc:
             svc.search_items.return_value = _paginated([self.ITEM_ROW])
@@ -516,6 +528,15 @@ class TestItemEndpoints:
         assert "description" in data
         assert "item_id" not in data
         assert "category_id" not in data
+
+    def test_get_items_by_search_id_returns_200(self, authed_client):
+        items = [{"id": 1, "item_id": "AS-D", "search_id": "asd"}, {"id": 2, "item_id": "ASD", "search_id": "asd"}]
+        with patch("app.routers.items.service") as svc:
+            svc.get_items_by_search_id.return_value = items
+            resp = authed_client.get("/api/items/by-search-id/asd")
+        assert resp.status_code == 200
+        assert len(resp.json()) == 2
+        svc.get_items_by_search_id.assert_called_once_with("asd")
 
     def test_delete_item_returns_success(self, authed_client):
         with patch("app.routers.items.service") as svc:
@@ -880,6 +901,68 @@ class TestInventoryEndpoints:
         svc.transfer_stock.assert_called_once_with(
             from_stock_id=1,
             to_location_id=2,
+            quantity=1,
+            user_id=456,
+            notes=None,
+        )
+
+    def test_cross_transfer_stock_returns_201(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.cross_transfer_stock.return_value = {"id": 1}
+            resp = authed_client.post(
+                "/api/inventory/transfer-cross",
+                json={
+                    "from_item_id": 1,
+                    "from_location_id": 2,
+                    "to_item_id": 3,
+                    "to_location_id": 4,
+                    "quantity": 10,
+                },
+            )
+        assert resp.status_code == 201
+
+    def test_cross_transfer_stock_passes_data_and_user_id(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.cross_transfer_stock.return_value = {"id": 1}
+            authed_client.post(
+                "/api/inventory/transfer-cross",
+                json={
+                    "from_item_id": 10,
+                    "from_location_id": 20,
+                    "to_item_id": 30,
+                    "to_location_id": 40,
+                    "quantity": 5,
+                    "notes": "Merge duplicates",
+                },
+            )
+        svc.cross_transfer_stock.assert_called_once_with(
+            from_item_id=10,
+            from_location_id=20,
+            to_item_id=30,
+            to_location_id=40,
+            quantity=5,
+            user_id=456,
+            notes="Merge duplicates",
+        )
+
+    def test_cross_transfer_stock_without_notes(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.cross_transfer_stock.return_value = {"id": 2}
+            authed_client.post(
+                "/api/inventory/transfer-cross",
+                json={
+                    "from_item_id": 1,
+                    "from_location_id": 2,
+                    "to_item_id": 3,
+                    "to_location_id": 4,
+                    "quantity": 1,
+                },
+            )
+        svc.cross_transfer_stock.assert_called_once_with(
+            from_item_id=1,
+            from_location_id=2,
+            to_item_id=3,
+            to_location_id=4,
             quantity=1,
             user_id=456,
             notes=None,
