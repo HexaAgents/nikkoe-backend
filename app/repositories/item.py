@@ -4,6 +4,7 @@ from app.dependencies import supabase
 from app.repositories.base import (
     batch_in_load,
     paginated_fetch,
+    retry_transient,
 )
 from app.repositories.base import (
     dash_insensitive_pattern as _dash_insensitive_pattern,
@@ -40,6 +41,7 @@ def _load_and_enrich_by_ids(ids: list[int]) -> list[dict]:
 
 
 class ItemRepository:
+    @retry_transient()
     def find_all(self, limit: int = 20, offset: int = 0, sort_by: str = "item_id") -> dict:
         if sort_by in _SORTED_SORT_OPTIONS:
             return self._find_sorted(sort_by, limit, offset)
@@ -48,6 +50,7 @@ class ItemRepository:
         rows, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": _enrich_items(rows), "total": total}
 
+    @retry_transient()
     def search(
         self, query: str, limit: int = 20, offset: int = 0, *, in_stock: bool = False, sort_by: str = "item_id"
     ) -> dict:
@@ -94,6 +97,7 @@ class ItemRepository:
         rows, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": _enrich_items(rows), "total": total}
 
+    @retry_transient()
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("item").select("*, category(name)").eq("id", id).maybe_single().execute()
         if response.data:

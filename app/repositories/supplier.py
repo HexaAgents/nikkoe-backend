@@ -1,7 +1,9 @@
 from app.dependencies import supabase
+from app.repositories.base import retry_transient
 
 
 class SupplierRepository:
+    @retry_transient()
     def find_all(self, limit: int = 50, offset: int = 0, search: str | None = None) -> dict:
         query = supabase.table("supplier").select("*", count="exact").order("name")
         if search:

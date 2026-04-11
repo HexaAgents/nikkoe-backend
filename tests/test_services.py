@@ -453,6 +453,11 @@ class TestSupplierQuoteService:
         service.delete_quote("q1")
         service.repo.remove.assert_called_once_with("q1")
 
+    def test_create_quote_propagates_repo_exception(self, service):
+        service.repo.create.side_effect = Exception("connection lost")
+        with pytest.raises(Exception, match="connection lost"):
+            service.create_quote({"item_id": 1})
+
 
 # ---------------------------------------------------------------------------
 # SaleService — search branch

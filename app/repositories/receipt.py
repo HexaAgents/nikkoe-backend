@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch
+from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch, retry_transient
 
 _LIST_SELECT = (
     "id, dateTime, status, reference, note, supplier_id, user_id, "
@@ -32,6 +32,7 @@ class ReceiptRepository:
 
         return receipts
 
+    @retry_transient()
     def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         query = supabase.table("receipt").select(_LIST_SELECT, count="exact").order("dateTime", desc=True)
         if status:
@@ -39,6 +40,7 @@ class ReceiptRepository:
         receipts, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": self._resolve_suppliers(receipts), "total": total}
 
+    @retry_transient()
     def search_by_part_number(
         self,
         search_term: str,
@@ -98,6 +100,7 @@ class ReceiptRepository:
             "total": total,
         }
 
+    @retry_transient()
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("receipt").select("*").eq("id", id).maybe_single().execute()
         receipt = response.data

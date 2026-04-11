@@ -1,9 +1,50 @@
+import functools
 import re
+import time
 
 from app.dependencies import supabase
 
 POSTGREST_PAGE = 1000
 IN_CHUNK = 300
+
+_TRANSIENT_MARKERS = (
+    "connectionterminated",
+    "resource temporarily unavailable",
+    "errno 35",
+    "errno 54",
+    "connection reset",
+    "server disconnected",
+    "remoteerror",
+    "remoteprotocolerror",
+)
+
+
+def _is_transient(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return any(marker in msg for marker in _TRANSIENT_MARKERS)
+
+
+def retry_transient(max_retries: int = 3, backoff: float = 0.5):
+    """Decorator: retry on transient HTTP/2 connection errors (GOAWAY, socket exhaustion).
+
+    Default schedule: 0.5s, 1.0s, 1.5s — giving httpx up to 3s to establish
+    a fresh connection after an HTTP/2 GOAWAY kills the shared connection.
+    """
+
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            for attempt in range(max_retries + 1):
+                try:
+                    return fn(*args, **kwargs)
+                except Exception as exc:
+                    if attempt == max_retries or not _is_transient(exc):
+                        raise
+                    time.sleep(backoff * (attempt + 1))
+
+        return wrapper
+
+    return decorator
 
 
 def dash_insensitive_pattern(query: str) -> str:

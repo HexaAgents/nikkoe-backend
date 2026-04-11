@@ -1,8 +1,9 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_load, dash_insensitive_pattern, paginated_fetch
+from app.repositories.base import batch_load, dash_insensitive_pattern, paginated_fetch, retry_transient
 
 
 class InventoryRepository:
+    @retry_transient()
     def find_movements(self, limit: int = 50, offset: int = 0, search: str | None = None) -> dict:
         if search:
             return self._search_movements(search, limit, offset)
@@ -72,10 +73,12 @@ class InventoryRepository:
             elif to_stock:
                 m["items"] = items_map.get(to_stock.get("item_id"))
 
+    @retry_transient()
     def find_by_item_id(self, item_id: int) -> list:
         response = supabase.table("stock").select("*, location(code)").eq("item_id", item_id).execute()
         return response.data or []
 
+    @retry_transient()
     def find_transfers_by_item_id(self, item_id: int) -> list:
         stock_resp = supabase.table("stock").select("id, location_id").eq("item_id", item_id).execute()
         stocks = stock_resp.data or []
@@ -132,6 +135,7 @@ class InventoryRepository:
         result.sort(key=lambda r: r.get("date") or "", reverse=True)
         return result
 
+    @retry_transient()
     def stock_valuation(self) -> list:
         PAGE_SIZE = 1000
 
@@ -222,6 +226,7 @@ class InventoryRepository:
         result.sort(key=lambda r: r.get("item_id", ""))
         return result
 
+    @retry_transient()
     def find_on_hand(self) -> list:
         all_rows: list = []
         page_size = 1000
@@ -338,10 +343,10 @@ class InventoryRepository:
             .select("id, quantity")
             .eq("item_id", from_item_id)
             .eq("location_id", from_location_id)
-            .maybe_single()
+            .limit(1)
             .execute()
         )
-        from_stock = from_stock_resp.data
+        from_stock = from_stock_resp.data[0] if from_stock_resp.data else None
         if not from_stock:
             raise AppError(404, "No stock found for source item at that location")
         if from_stock["quantity"] < quantity:
@@ -355,10 +360,10 @@ class InventoryRepository:
             .select("id, quantity")
             .eq("item_id", to_item_id)
             .eq("location_id", to_location_id)
-            .maybe_single()
+            .limit(1)
             .execute()
         )
-        existing_to = to_stock_resp.data
+        existing_to = to_stock_resp.data[0] if to_stock_resp.data else None
 
         try:
             supabase.table("stock").update({"quantity": from_stock["quantity"] - quantity}).eq(

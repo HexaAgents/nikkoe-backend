@@ -1,5 +1,5 @@
 from app.dependencies import supabase
-from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch
+from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch, retry_transient
 
 _LIST_SELECT = (
     "*, "
@@ -10,6 +10,7 @@ _LIST_SELECT = (
 
 
 class SaleRepository:
+    @retry_transient()
     def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
         query = supabase.table("sale").select(_LIST_SELECT, count="exact").order("date", desc=True)
         if status:
@@ -17,6 +18,7 @@ class SaleRepository:
         sales, total = paginated_fetch(query, offset=offset, limit=limit)
         return {"data": sales, "total": total}
 
+    @retry_transient()
     def search_by_part_number(
         self,
         search_term: str,

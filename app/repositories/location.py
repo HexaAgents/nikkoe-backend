@@ -1,9 +1,12 @@
 from app.dependencies import supabase
+from app.repositories.base import retry_transient
 
 PAGE_SIZE = 1000
+IN_CHUNK = 300
 
 
 class LocationRepository:
+    @retry_transient()
     def find_all(self, limit: int = 5000, offset: int = 0, search: str | None = None) -> dict:
         all_data: list = []
         total = 0
@@ -39,26 +42,28 @@ class LocationRepository:
             return {}
 
         summary: dict[int, dict] = {}
-        offset = 0
-        while True:
-            response = (
-                supabase.table("stock")
-                .select("location_id, item_id, quantity")
-                .in_("location_id", location_ids)
-                .gt("quantity", 0)
-                .range(offset, offset + PAGE_SIZE - 1)
-                .execute()
-            )
-            rows = response.data or []
-            for row in rows:
-                loc_id = row["location_id"]
-                if loc_id not in summary:
-                    summary[loc_id] = {"total_quantity": 0, "items": set()}
-                summary[loc_id]["total_quantity"] += row.get("quantity", 0)
-                summary[loc_id]["items"].add(row["item_id"])
-            if len(rows) < PAGE_SIZE:
-                break
-            offset += PAGE_SIZE
+        for chunk_start in range(0, len(location_ids), IN_CHUNK):
+            chunk = location_ids[chunk_start : chunk_start + IN_CHUNK]
+            offset = 0
+            while True:
+                response = (
+                    supabase.table("stock")
+                    .select("location_id, item_id, quantity")
+                    .in_("location_id", chunk)
+                    .gt("quantity", 0)
+                    .range(offset, offset + PAGE_SIZE - 1)
+                    .execute()
+                )
+                rows = response.data or []
+                for row in rows:
+                    loc_id = row["location_id"]
+                    if loc_id not in summary:
+                        summary[loc_id] = {"total_quantity": 0, "items": set()}
+                    summary[loc_id]["total_quantity"] += row.get("quantity", 0)
+                    summary[loc_id]["items"].add(row["item_id"])
+                if len(rows) < PAGE_SIZE:
+                    break
+                offset += PAGE_SIZE
 
         return {
             loc_id: {
@@ -68,10 +73,12 @@ class LocationRepository:
             for loc_id, info in summary.items()
         }
 
+    @retry_transient()
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("location").select("*").eq("id", id).maybe_single().execute()
         return response.data
 
+    @retry_transient()
     def find_items_by_location(self, location_id: int) -> list:
         response = (
             supabase.table("stock")

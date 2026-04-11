@@ -2,27 +2,31 @@
 
 ## Overview
 
-**524 tests** across 14 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
+**639 tests** across 18 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
 
 ```
 tests/
-  conftest.py                    Shared fixtures (TestClient, mock users, auth overrides)
-  test_health.py             (2) Smoke test — app boots and responds
-  test_schemas.py           (96) Pydantic model validation rules
-  test_errors.py            (19) Error classes and exception handlers
-  test_services.py          (73) Business logic with mocked repositories
-  test_routers.py           (52) HTTP input validation (reject bad data)
-  test_router_responses.py (111) HTTP happy-path tests (every endpoint)
-  test_auth_enforcement.py  (48) Auth gate — 401 on every protected route
-  test_response_contracts.py(33) Frontend contract — JSON shape assertions
+  conftest.py                     Shared fixtures (TestClient, mock users, auth overrides)
+  test_health.py              (2) Smoke test — app boots and responds
+  test_schemas.py           (108) Pydantic model validation rules
+  test_errors.py             (19) Error classes and exception handlers
+  test_services.py           (75) Business logic with mocked repositories
+  test_routers.py            (61) HTTP input validation (reject bad data)
+  test_router_responses.py  (117) HTTP happy-path tests (every endpoint)
+  test_auth_enforcement.py   (56) Auth gate — 401 on every protected route
+  test_response_contracts.py (47) Frontend contract — JSON shape assertions
+  test_repositories.py       (36) Repository-level tests (upsert, retry, chunking, code guards)
   test_invoice_parser_unit.py(23) Invoice PDF parser logic
-  test_stock_valuation.py    (6) Stock valuation report
+  test_endpoint_smoke.py     (16) Every endpoint returns non-500 with mocked services
+  test_auth_cache.py          (7) Auth token caching
+  test_stock_valuation.py     (6) Stock valuation report
+  test_dependencies.py        (5) Supabase client configuration guards
   ebay/
-    conftest.py                  eBay-specific fixtures
-    test_ebay_client.py     (16) eBay API client functions
-    test_ebay_routers.py    (19) eBay HTTP endpoints
-    test_ebay_schemas.py     (9) eBay data shape validation
-    test_ebay_sync.py       (17) eBay sync service logic
+    conftest.py                   eBay-specific fixtures
+    test_ebay_client.py      (16) eBay API client functions
+    test_ebay_routers.py     (19) eBay HTTP endpoints
+    test_ebay_schemas.py      (9) eBay data shape validation
+    test_ebay_sync.py        (17) eBay sync service logic
 ```
 
 ### Layer separation
@@ -35,6 +39,7 @@ tests/
 | `test_router_responses.py` | HTTP behaviour | An endpoint's status code, delegation, or data flow changed |
 | `test_auth_enforcement.py` | Security | A protected endpoint lost its auth guard |
 | `test_response_contracts.py` | API contract | The JSON shape the frontend depends on changed |
+| `test_repositories.py` | Data access | Repository query logic, upsert, retry, or chunking is broken |
 | `test_errors.py` | Error handling | Wrong status code or message for an error case |
 | `test_health.py` | Smoke | App can't boot at all |
 
@@ -312,7 +317,7 @@ Tests every Pydantic model in `app/schemas.py` for happy path, boundary values, 
 
 ---
 
-### `test_services.py` (53 tests)
+### `test_services.py` (75 tests)
 
 All services tested with mocked repositories — no database calls.
 
@@ -895,7 +900,7 @@ Every protected endpoint returns **401** when no Authorization header is provide
 
 ---
 
-### `test_response_contracts.py` (30 tests)
+### `test_response_contracts.py` (47 tests)
 
 Verifies the exact JSON shape the frontend depends on. If any of these fail, **the frontend will break** because it parses the response with specific key expectations.
 
@@ -998,6 +1003,53 @@ Auth is overridden via `app.dependency_overrides` so tests never contact Supabas
 
 ---
 
+### `test_repositories.py` (36 tests)
+
+Tests the data access layer directly by mocking the Supabase client at the import boundary. Verifies query-building logic, branching (insert vs update), error handling, retry behaviour, and code-level guards.
+
+#### TestSupplierQuoteRepositoryCreate (5 tests)
+
+| Test | What it tests | If this fails |
+|------|---------------|---------------|
+| `test_create_inserts_when_no_existing_row` | Insert path when no match exists | New supplier quotes can't be created |
+| `test_create_updates_when_existing_row_found` | Update path when item+supplier match exists | Existing quotes can't be updated |
+| `test_create_handles_multiple_existing_rows` | `.limit(1)` handles duplicates gracefully | **Regression**: the 406 "Cannot coerce" error returns |
+| `test_create_wraps_unexpected_errors_in_app_error` | DB errors become `AppError(400)` | Raw Supabase errors leak to the frontend |
+| `test_create_does_not_use_maybe_single` | Source code guard: `maybe_single` is absent | The exact bug that caused the original 406 is reintroduced |
+
+#### TestInventoryRepositoryFindOnHand (4 tests)
+
+| Test | What it tests | If this fails |
+|------|---------------|---------------|
+| `test_returns_all_rows` | Returns stock rows from paginated query | On-hand inventory doesn't load |
+| `test_returns_empty_list_when_no_stock` | Empty table returns `[]` | Empty inventory crashes |
+| `test_retries_transient_errors` | `@retry_transient` retries on `ConnectionTerminated` | HTTP/2 GOAWAY causes 500 on first page load |
+| `test_raises_after_retries_exhausted` | Raises after all retries fail | Transient errors silently swallowed |
+
+#### TestRetryTransient (5 tests)
+
+| Test | What it tests | If this fails |
+|------|---------------|---------------|
+| `test_returns_value_on_success` | Decorator passes through on success | Retry decorator breaks normal flow |
+| `test_retries_on_connection_terminated` | Retries HTTP/2 GOAWAY errors | Connection drops cause immediate 500 |
+| `test_retries_on_errno_35` | Retries socket exhaustion errors | Concurrent requests fail under load |
+| `test_raises_after_max_retries_exhausted` | Gives up after max retries | Infinite retry loops |
+| `test_does_not_retry_non_transient_errors` | Real bugs are not retried | SQL errors masked by retry delays |
+
+#### TestRepositoriesUseRetryDecorator (7 tests)
+
+Parameterized guard test ensuring key repository methods are wrapped with `@retry_transient`. Prevents someone from accidentally removing the decorator.
+
+#### TestLocationRepositoryFindAll (3 tests)
+
+| Test | What it tests | If this fails |
+|------|---------------|---------------|
+| `test_find_all_returns_locations_with_stock_summary` | Locations enriched with stock counts | Locations page shows wrong quantities |
+| `test_get_stock_summary_chunks_large_location_lists` | `.in_()` is chunked for large ID lists | **Regression**: locations 500 from URL length overflow |
+| `test_get_stock_summary_empty_ids_returns_empty` | No locations returns empty dict | Empty location list crashes |
+
+---
+
 ## CI Enforcement
 
 The test suite is enforced in `.github/workflows/ci.yml`:
@@ -1017,6 +1069,7 @@ The test suite is enforced in `.github/workflows/ci.yml`:
 | Bad input no longer rejected | `test_routers.py` fails |
 | Service logic broken | `test_services.py` fails |
 | Schema validation weakened | `test_schemas.py` fails |
+| Repository query/retry logic broken | `test_repositories.py` fails |
 | Coverage drops below 60% | `--cov-fail-under=60` blocks merge |
 
 **Branch protection** (set in GitHub UI) requires the `test` job to pass before merging to `main`.

@@ -57,7 +57,7 @@ app/
     auth.py            JWT auth dependency -- verifies token via Supabase, loads User profile (first_name + last_name)
 
   repositories/
-    base.py            batch_load utility for efficient relation loading (integer IDs)
+    base.py            batch_load, paginated_fetch, retry_transient decorator for HTTP/2 resilience
     category.py        CRUD → Category table (id, name)
     channel.py         Read-only → Channel table (id, name)
     currency.py        Read-only → Currency table (id, name)
@@ -100,12 +100,21 @@ app/
     users.py           GET /api/users/me, POST /api/users (→ User table)
 
 tests/
-  conftest.py          Shared fixtures (TestClient, mock users, auth overrides)
-  test_health.py       Smoke test — app boots and /api/health responds
-  test_schemas.py      Pydantic model validation rules (19 schemas, ~80 tests)
-  test_errors.py       Error classes and exception handlers
-  test_services.py     Business logic with mocked repositories (~40 tests)
-  test_routers.py      HTTP endpoints via TestClient (~60 tests)
+  conftest.py                Shared fixtures (TestClient, mock users, auth overrides)
+  test_health.py         (2) Smoke test — app boots and /api/health responds
+  test_schemas.py      (108) Pydantic model validation rules
+  test_errors.py        (19) Error classes and exception handlers
+  test_services.py      (75) Business logic with mocked repositories
+  test_routers.py       (61) HTTP validation (malformed bodies → 422)
+  test_router_responses.(117) Happy-path router responses with mocked services
+  test_response_contracts(47) Response shape contracts (paginated, array, etc.)
+  test_auth_enforcement  (56) Every protected endpoint returns 401 without token
+  test_repositories.py   (36) Repository-level tests (upsert, retry, chunking guards)
+  test_endpoint_smoke    (16) Every endpoint returns non-500 with mocked services
+  test_dependencies.py    (5) Supabase client configuration guards
+  test_auth_cache.py      (7) Auth token caching
+  test_invoice_parser    (23) Invoice parser unit tests
+  test_stock_valuation    (6) Stock valuation logic
 
 docs/
   login-flow.drawio              Step-by-step login authentication flowchart
@@ -114,7 +123,7 @@ docs/
   endpoint-flowcharts/           Per-endpoint flowcharts
 
 supabase/
-  migrations/          SQL migrations (void/status columns for Sale and Receipt, auto-increment sequences)
+  migrations/          SQL migrations (void/status, auto-increment sequences, item_supplier dedup + unique constraint)
 ```
 
 ## Testing
@@ -124,4 +133,4 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest --tb=short -q
 ```
 
-182 tests covering schemas, services, routers, error handlers, and the health endpoint. All tests use mocked repositories and auth — no database or network required. See `tests/README.md` for detailed documentation of every test.
+639 tests across 18 files covering schemas, services, routers, repositories, error handlers, auth enforcement, response contracts, and more. All tests use mocked dependencies — no database or network required. See `tests/README.md` for detailed documentation of every test.

@@ -674,6 +674,14 @@ class TestLocationEndpoints:
             authed_client.get("/api/locations/?search=WH")
         svc.list_locations.assert_called_once_with(5000, 0, search="WH")
 
+    def test_list_locations_returns_error_on_service_failure(self, authed_client):
+        with patch("app.routers.locations.service") as svc:
+            svc.list_locations.side_effect = Exception("DB error")
+            resp = authed_client.get("/api/locations/")
+        assert resp.status_code == 500
+        assert "error" in resp.json()
+        assert isinstance(resp.json()["error"], str)
+
     def test_get_location_items_returns_200(self, authed_client):
         with patch("app.routers.locations.service") as svc:
             svc.get_location_items.return_value = _paginated([])
@@ -895,6 +903,14 @@ class TestInventoryEndpoints:
         assert resp.status_code == 200
         assert resp.json() == on_hand
 
+    def test_list_on_hand_returns_error_on_service_failure(self, authed_client):
+        with patch("app.routers.inventory.service") as svc:
+            svc.list_on_hand.side_effect = Exception("DB error")
+            resp = authed_client.get("/api/inventory/on-hand")
+        assert resp.status_code == 500
+        assert "error" in resp.json()
+        assert isinstance(resp.json()["error"], str)
+
     def test_transfer_stock_returns_201(self, authed_client):
         with patch("app.routers.inventory.service") as svc:
             svc.transfer_stock.return_value = {"transfer_id": 1}
@@ -1044,6 +1060,14 @@ class TestSupplierQuoteEndpoints:
         assert resp.status_code == 200
         assert resp.json()["success"] is True
         svc.delete_quote.assert_called_once_with(1)
+
+    def test_create_quote_returns_error_on_service_failure(self, authed_client):
+        with patch("app.routers.supplier_quotes.service") as svc:
+            svc.create_quote.side_effect = Exception("DB error")
+            resp = authed_client.post("/api/supplier-quotes/", json=self.QUOTE_BODY)
+        assert resp.status_code == 500
+        assert "error" in resp.json()
+        assert isinstance(resp.json()["error"], str)
 
 
 # =====================================================================
