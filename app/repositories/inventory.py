@@ -219,7 +219,7 @@ class InventoryRepository:
                     "description": item.get("description"),
                     "total_quantity": total_qty,
                     "unit_price": unit_price,
-                    "stock_valuation": round(unit_price * total_qty, 2) if unit_price is not None else None,
+                    "stock_valuation": round(unit_price * total_qty, 3) if unit_price is not None else None,
                 }
             )
 
