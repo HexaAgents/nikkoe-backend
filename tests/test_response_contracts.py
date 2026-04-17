@@ -308,7 +308,7 @@ class TestInventoryContract:
 
     def test_cross_transfer_returns_object(self, authed_client):
         with patch("app.routers.inventory.service") as svc:
-            svc.cross_transfer_stock.return_value = {"id": 1, "quantity": 5}
+            svc.cross_transfer_stock.return_value = {"id": 1, "quantity": 5, "from_item_id": 1, "to_item_id": 3}
             resp = authed_client.post(
                 "/api/inventory/transfer-cross",
                 json={"from_item_id": 1, "from_location_id": 2, "to_item_id": 3, "to_location_id": 4, "quantity": 5},
@@ -316,16 +316,21 @@ class TestInventoryContract:
         assert resp.status_code == 201
         body = resp.json()
         assert "id" in body and "quantity" in body
+        assert "from_item_id" in body
+        assert "to_item_id" in body
 
     def test_transfer_returns_object(self, authed_client):
         with patch("app.routers.inventory.service") as svc:
-            svc.transfer_stock.return_value = {"id": 1, "quantity": 3}
+            svc.transfer_stock.return_value = {"id": 1, "quantity": 3, "from_item_id": 10, "to_item_id": 10}
             resp = authed_client.post(
                 "/api/inventory/transfer",
                 json={"from_stock_id": 1, "to_location_id": 2, "quantity": 3},
             )
         assert resp.status_code == 201
-        assert "id" in resp.json()
+        body = resp.json()
+        assert "id" in body
+        assert "from_item_id" in body
+        assert "to_item_id" in body
 
 
 class TestAuthContract:
@@ -399,6 +404,27 @@ class TestItemSubResourceContracts:
             svc.get_item_transfers.return_value = []
             resp = authed_client.get("/api/items/1/transfers")
         assert isinstance(resp.json(), list)
+
+    def test_item_transfers_contain_from_to_item_and_location(self, authed_client):
+        transfer = {
+            "id": 1,
+            "quantity": 3,
+            "date": "2026-04-17T00:00:00+00:00",
+            "notes": None,
+            "from_item": {"id": 10, "item_id": "PART-A"},
+            "to_item": {"id": 20, "item_id": "PART-B"},
+            "from_location": {"id": 1, "code": "WH-A"},
+            "to_location": {"id": 2, "code": "WH-B"},
+            "users": None,
+        }
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_transfers.return_value = [transfer]
+            resp = authed_client.get("/api/items/10/transfers")
+        body = resp.json()
+        assert len(body) == 1
+        _assert_keys(body[0], {"id", "quantity", "date", "from_item", "to_item", "from_location", "to_location"})
+        _assert_keys(body[0]["from_item"], {"id", "item_id"})
+        _assert_keys(body[0]["to_item"], {"id", "item_id"})
 
 
 class TestCreateEndpointContracts:

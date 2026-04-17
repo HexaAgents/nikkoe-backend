@@ -62,7 +62,7 @@ app/
     channel.py         Read-only → Channel table (id, name)
     currency.py        Read-only → Currency table (id, name)
     customer.py        List/create → Customer table (id, name, email, phone, address)
-    inventory.py       Transfer table (movements), Stock table (on-hand balances)
+    inventory.py       Transfer table (movements with from_item_id/to_item_id), Stock table (on-hand balances)
     item.py            CRUD → Item table (id, item_id text, description, category_id)
     location.py        CRUD → Location table (id, code)
     receipt.py         Receipt + Receipt_Stock — multi-step inserts with Stock lookup, quantity increment
@@ -123,7 +123,7 @@ docs/
   endpoint-flowcharts/           Per-endpoint flowcharts
 
 supabase/
-  migrations/          SQL migrations (void/status, auto-increment sequences, item_supplier dedup + unique constraint)
+  migrations/          SQL migrations (void/status, auto-increment sequences, item_supplier dedup + unique constraint, transfer item_id columns)
 ```
 
 ## Testing
@@ -133,4 +133,4 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest --tb=short -q
 ```
 
-639 tests across 18 files covering schemas, services, routers, repositories, error handlers, auth enforcement, response contracts, and more. All tests use mocked dependencies — no database or network required. See `tests/README.md` for detailed documentation of every test.
+642 tests across 18 files covering schemas, services, routers, repositories, error handlers, auth enforcement, response contracts, and more. All tests use mocked dependencies — no database or network required. See `tests/README.md` for detailed documentation of every test.

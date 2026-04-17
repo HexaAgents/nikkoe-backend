@@ -571,6 +571,29 @@ class TestItemEndpoints:
         assert resp.json() == []
         svc.get_item_transfers.assert_called_once_with(1)
 
+    def test_get_item_transfers_includes_item_info(self, authed_client):
+        transfer = {
+            "id": 100,
+            "quantity": 5,
+            "date": "2026-04-17T12:00:00+00:00",
+            "notes": None,
+            "from_item": {"id": 10, "item_id": "PIC16F1847-IP"},
+            "to_item": {"id": 20, "item_id": "PIC16F1847-I/P"},
+            "from_location": {"id": 1, "code": "BV4"},
+            "to_location": {"id": 2, "code": "BE6"},
+            "users": {"id": 1, "first_name": "Test", "last_name": "User"},
+        }
+        with patch("app.routers.items.service") as svc:
+            svc.get_item_transfers.return_value = [transfer]
+            resp = authed_client.get("/api/items/10/transfers")
+        assert resp.status_code == 200
+        body = resp.json()
+        assert len(body) == 1
+        assert body[0]["from_item"]["item_id"] == "PIC16F1847-IP"
+        assert body[0]["to_item"]["item_id"] == "PIC16F1847-I/P"
+        assert body[0]["from_location"]["code"] == "BV4"
+        assert body[0]["to_location"]["code"] == "BE6"
+
     def test_delete_item_returns_success(self, authed_client):
         with patch("app.routers.items.service") as svc:
             resp = authed_client.delete("/api/items/1")

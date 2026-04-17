@@ -143,6 +143,24 @@ class TestItemService:
         service.get_item_transfers("1")
         repos["inventory_repo"].find_transfers_by_item_id.assert_called_once_with("1")
 
+    def test_get_item_transfers_returns_from_to_items(self, service, repos):
+        transfer = {
+            "id": 1,
+            "quantity": 5,
+            "date": "2026-04-17",
+            "notes": None,
+            "from_item": {"id": 10, "item_id": "PART-A"},
+            "to_item": {"id": 20, "item_id": "PART-B"},
+            "from_location": {"id": 1, "code": "WH-A"},
+            "to_location": {"id": 2, "code": "WH-B"},
+            "users": None,
+        }
+        repos["inventory_repo"].find_transfers_by_item_id.return_value = [transfer]
+        result = service.get_item_transfers(10)
+        assert len(result) == 1
+        assert result[0]["from_item"]["item_id"] == "PART-A"
+        assert result[0]["to_item"]["item_id"] == "PART-B"
+
 
 # ---------------------------------------------------------------------------
 # SaleService

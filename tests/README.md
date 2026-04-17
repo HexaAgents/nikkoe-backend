@@ -2,7 +2,7 @@
 
 ## Overview
 
-**639 tests** across 18 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
+**642 tests** across 18 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
 
 ```
 tests/
@@ -10,11 +10,11 @@ tests/
   test_health.py              (2) Smoke test — app boots and responds
   test_schemas.py           (108) Pydantic model validation rules
   test_errors.py             (19) Error classes and exception handlers
-  test_services.py           (75) Business logic with mocked repositories
+  test_services.py           (76) Business logic with mocked repositories
   test_routers.py            (61) HTTP input validation (reject bad data)
-  test_router_responses.py  (117) HTTP happy-path tests (every endpoint)
+  test_router_responses.py  (118) HTTP happy-path tests (every endpoint)
   test_auth_enforcement.py   (56) Auth gate — 401 on every protected route
-  test_response_contracts.py (47) Frontend contract — JSON shape assertions
+  test_response_contracts.py (48) Frontend contract — JSON shape assertions
   test_repositories.py       (36) Repository-level tests (upsert, retry, chunking, code guards)
   test_invoice_parser_unit.py(23) Invoice PDF parser logic
   test_endpoint_smoke.py     (16) Every endpoint returns non-500 with mocked services
@@ -317,11 +317,11 @@ Tests every Pydantic model in `app/schemas.py` for happy path, boundary values, 
 
 ---
 
-### `test_services.py` (75 tests)
+### `test_services.py` (76 tests)
 
 All services tested with mocked repositories — no database calls.
 
-#### TestItemService (11 tests)
+#### TestItemService (12 tests)
 
 | Test | What it tests | If this fails |
 |------|---------------|---------------|
@@ -336,6 +336,7 @@ All services tested with mocked repositories — no database calls.
 | `test_get_item_inventory_delegates` | Calls `inventory_repo.find_by_item_id` | Inventory for an item is not fetched |
 | `test_get_item_receipts_delegates` | Calls `receipt_repo.find_by_item_id` | Receipt history for an item is not fetched |
 | `test_get_item_sales_delegates` | Calls `sale_repo.find_by_item_id` | Sale history for an item is not fetched |
+| `test_get_item_transfers_returns_from_to_items` | Transfer history returns `from_item`/`to_item` with part numbers | Transfer table on item page shows "-" instead of part numbers |
 
 #### TestSaleService (6 tests)
 
@@ -594,7 +595,7 @@ HTTP-level validation tests via FastAPI TestClient. Verify that Pydantic rules a
 
 ---
 
-### `test_router_responses.py` (94 tests)
+### `test_router_responses.py` (95 tests)
 
 Happy-path and behaviour tests for **every** API endpoint. Services are mocked; tests verify correct status codes, response shapes, argument delegation, and data flow.
 
@@ -662,7 +663,7 @@ Happy-path and behaviour tests for **every** API endpoint. Services are mocked; 
 | `test_void_receipt_returns_success` | Void returns `{success: true}` | **Receipt voiding is broken** |
 | `test_void_receipt_without_reason` | Void with no reason works | Void without reason crashes |
 
-#### TestItemEndpoints (18 tests)
+#### TestItemEndpoints (19 tests)
 
 | Test | What it tests | If this fails |
 |------|---------------|---------------|
@@ -684,6 +685,7 @@ Happy-path and behaviour tests for **every** API endpoint. Services are mocked; 
 | `test_update_item_returns_200` | `PUT /api/items/1` returns 200 | **Item update is broken** |
 | `test_update_item_excludes_none_fields` | Only non-None fields are sent to service | Null fields overwrite real data |
 | `test_delete_item_returns_success` | `DELETE /api/items/1` returns `{success: true}` | **Item deletion is broken** |
+| `test_get_item_transfers_includes_item_info` | Item transfers return `from_item`/`to_item` with part numbers and `from_location`/`to_location` with codes | Transfer table on item detail page shows "-" for item names |
 
 #### TestCategoryEndpoints (6 tests)
 
@@ -900,7 +902,7 @@ Every protected endpoint returns **401** when no Authorization header is provide
 
 ---
 
-### `test_response_contracts.py` (47 tests)
+### `test_response_contracts.py` (48 tests)
 
 Verifies the exact JSON shape the frontend depends on. If any of these fail, **the frontend will break** because it parses the response with specific key expectations.
 
