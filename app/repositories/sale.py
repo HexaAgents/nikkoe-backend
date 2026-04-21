@@ -1,18 +1,45 @@
 from app.dependencies import supabase
 from app.repositories.base import batch_in_load, batch_load, dash_insensitive_pattern, paginated_fetch, retry_transient
 
-_LIST_SELECT = (
+_FK_CHANNEL = "channel_id"
+_FK_CUSTOMER = "customer_id"
+
+_LIST_SELECT_NEW = (
+    "*, "
+    "channels:channel!channel_id(id, name), "
+    "users:user!user_id(id, first_name, last_name), "
+    "customers:customer!customer_id(id, name)"
+)
+_LIST_SELECT_OLD = (
     "*, "
     "channels:channel!channel_id_id(id, name), "
     "users:user!user_id(id, first_name, last_name), "
     "customers:customer!customer_id_id(id, name)"
 )
 
+_list_select_cache: str | None = None
+
+
+def _get_list_select() -> str:
+    global _list_select_cache, _FK_CHANNEL, _FK_CUSTOMER
+    if _list_select_cache is not None:
+        return _list_select_cache
+    try:
+        supabase.table("sale").select(_LIST_SELECT_NEW, count="exact").limit(1).execute()
+        _list_select_cache = _LIST_SELECT_NEW
+        _FK_CHANNEL = "channel_id"
+        _FK_CUSTOMER = "customer_id"
+    except Exception:
+        _list_select_cache = _LIST_SELECT_OLD
+        _FK_CHANNEL = "channel_id_id"
+        _FK_CUSTOMER = "customer_id_id"
+    return _list_select_cache
+
 
 class SaleRepository:
     @retry_transient()
     def find_all(self, limit: int = 50, offset: int = 0, status: str | None = None) -> dict:
-        query = supabase.table("sale").select(_LIST_SELECT, count="exact").order("date", desc=True)
+        query = supabase.table("sale").select(_get_list_select(), count="exact").order("date", desc=True)
         if status:
             query = query.eq("status", status)
         sales, total = paginated_fetch(query, offset=offset, limit=limit)
@@ -58,13 +85,13 @@ class SaleRepository:
         cust_resp = supabase.table("customer").select("id").ilike("name", f"%{search_term}%").execute()
         if cust_resp.data:
             cust_ids = [c["id"] for c in cust_resp.data]
-            sale_resp = supabase.table("sale").select("id").in_("customer_id_id", cust_ids).execute()
+            sale_resp = supabase.table("sale").select("id").in_(_FK_CUSTOMER, cust_ids).execute()
             matching_ids.update(r["id"] for r in (sale_resp.data or []))
 
         chan_resp = supabase.table("channel").select("id").ilike("name", f"%{search_term}%").execute()
         if chan_resp.data:
             chan_ids = [c["id"] for c in chan_resp.data]
-            sale_resp = supabase.table("sale").select("id").in_("channel_id_id", chan_ids).execute()
+            sale_resp = supabase.table("sale").select("id").in_(_FK_CHANNEL, chan_ids).execute()
             matching_ids.update(r["id"] for r in (sale_resp.data or []))
 
         if not matching_ids:
@@ -72,7 +99,7 @@ class SaleRepository:
 
         query = (
             supabase.table("sale")
-            .select(_LIST_SELECT, count="exact")
+            .select(_get_list_select(), count="exact")
             .in_("id", list(matching_ids))
             .order("date", desc=True)
         )
@@ -87,8 +114,10 @@ class SaleRepository:
         if not sale:
             return None
 
-        if sale.get("channel_id_id"):
-            ch = supabase.table("channel").select("*").eq("id", sale["channel_id_id"]).maybe_single().execute()
+        _get_list_select()
+        channel_fk = sale.get(_FK_CHANNEL)
+        if channel_fk:
+            ch = supabase.table("channel").select("*").eq("id", channel_fk).maybe_single().execute()
             sale["channels"] = ch.data
         if sale.get("user_id"):
             u = (
@@ -99,8 +128,9 @@ class SaleRepository:
                 .execute()
             )
             sale["users"] = u.data
-        if sale.get("customer_id_id"):
-            c = supabase.table("customer").select("id, name").eq("id", sale["customer_id_id"]).maybe_single().execute()
+        customer_fk = sale.get(_FK_CUSTOMER)
+        if customer_fk:
+            c = supabase.table("customer").select("id, name").eq("id", customer_fk).maybe_single().execute()
             sale["customers"] = c.data
 
         return sale
@@ -114,23 +144,18 @@ class SaleRepository:
         stocks_map = batch_load("stock", "id", stock_ids)
         currencies_map = batch_load("currency", "id", currency_ids)
 
+        item_ids = list({s.get("item_id") for s in stocks_map.values() if s.get("item_id")})
+        location_ids = list({s.get("location_id") for s in stocks_map.values() if s.get("location_id")})
+        items_map = batch_load("item", "id", item_ids, "id, item_id")
+        locations_map = batch_load("location", "id", location_ids, "id, code")
+
         for ln in lines:
             stock = stocks_map.get(ln.get("stock_id"))
             ln["stock"] = stock
             ln["currencies"] = currencies_map.get(ln.get("currency_id"))
             if stock:
-                item_resp = (
-                    supabase.table("item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
-                )
-                loc_resp = (
-                    supabase.table("location")
-                    .select("id, code")
-                    .eq("id", stock.get("location_id"))
-                    .maybe_single()
-                    .execute()
-                )
-                ln["items"] = item_resp.data
-                ln["locations"] = loc_resp.data
+                ln["items"] = items_map.get(stock.get("item_id"))
+                ln["locations"] = locations_map.get(stock.get("location_id"))
 
         return lines
 
@@ -162,8 +187,9 @@ class SaleRepository:
         currencies_map = batch_load("currency", "id", currency_ids)
         locations_map = batch_load("location", "id", location_ids)
 
-        customer_ids = list({s.get("customer_id_id") for s in sales_map.values() if s.get("customer_id_id")})
-        channel_ids = list({s.get("channel_id_id") for s in sales_map.values() if s.get("channel_id_id")})
+        _get_list_select()
+        customer_ids = list({s.get(_FK_CUSTOMER) for s in sales_map.values() if s.get(_FK_CUSTOMER)})
+        channel_ids = list({s.get(_FK_CHANNEL) for s in sales_map.values() if s.get(_FK_CHANNEL)})
         user_ids = list({s.get("user_id") for s in sales_map.values() if s.get("user_id")})
 
         customers_map = batch_load("customer", "id", customer_ids, "id, name")
@@ -185,8 +211,8 @@ class SaleRepository:
                     "status": sale.get("status"),
                     "note": sale.get("note"),
                     "channel_ref": sale.get("channel_ref"),
-                    "customers": customers_map.get(sale.get("customer_id_id")),
-                    "channels": channels_map.get(sale.get("channel_id_id")),
+                    "customers": customers_map.get(sale.get(_FK_CUSTOMER)),
+                    "channels": channels_map.get(sale.get(_FK_CHANNEL)),
                     "users": users_map.get(sale.get("user_id")),
                     "currencies": currencies_map.get(ln.get("currency_id")),
                     "locations": locations_map.get(stock.get("location_id")),
@@ -197,12 +223,38 @@ class SaleRepository:
         return result
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
+        import json
         from datetime import datetime, timezone
 
         if not sale.get("date"):
             sale["date"] = datetime.now(timezone.utc).isoformat()
 
-        sale = {k: v for k, v in sale.items() if v is not None}
+        sale_payload = {k: v for k, v in sale.items() if v is not None}
+
+        rpc_lines = []
+        for line in lines:
+            rpc_line = {
+                "item_id": line.get("item_id"),
+                "location_id": line.get("location_id"),
+                "quantity": line.get("quantity"),
+                "unit_price": line.get("unit_price"),
+                "currency_id": line.get("currency_id"),
+            }
+            rpc_lines.append({k: v for k, v in rpc_line.items() if v is not None})
+
+        try:
+            resp = supabase.rpc(
+                "create_sale_tx",
+                {"p_sale": json.dumps(sale_payload), "p_lines": json.dumps(rpc_lines)},
+            ).execute()
+            sale_id = resp.data
+            sale_row = supabase.table("sale").select("*").eq("id", sale_id).single().execute()
+            return sale_row.data
+        except Exception:
+            return self._create_fallback(sale_payload, lines)
+
+    def _create_fallback(self, sale: dict, lines: list[dict]) -> dict:
+        """Pre-migration fallback: multi-step inserts when create_sale_tx RPC is unavailable."""
         sale_resp = supabase.table("sale").insert(sale).execute()
         sale_row = sale_resp.data[0]
         sale_id = sale_row["id"]
@@ -215,18 +267,14 @@ class SaleRepository:
             if not stock_id and item_id and location_id:
                 try:
                     existing = (
-                        supabase.table("stock")
-                        .select("id")
-                        .eq("item_id", item_id)
-                        .eq("location_id", location_id)
-                        .maybe_single()
-                        .execute()
+                        supabase.table("stock").select("id")
+                        .eq("item_id", item_id).eq("location_id", location_id)
+                        .limit(1).execute()
                     )
                     if existing and existing.data:
-                        stock_id = existing.data["id"]
+                        stock_id = existing.data[0]["id"]
                 except Exception:
-                    existing = None
-
+                    pass
                 if not stock_id:
                     new_stock = (
                         supabase.table("stock")
@@ -248,22 +296,30 @@ class SaleRepository:
         return sale_row
 
     def void_sale(self, sale_id: int, user_id: int, reason: str) -> None:
+        try:
+            supabase.rpc(
+                "void_sale_tx",
+                {"p_sale_id": sale_id, "p_user_id": user_id, "p_reason": reason},
+            ).execute()
+        except Exception:
+            self._void_fallback(sale_id, user_id, reason)
+
+    def _void_fallback(self, sale_id: int, user_id: int, reason: str) -> None:
+        """Pre-migration fallback for voiding."""
         from datetime import datetime, timezone
 
         lines_resp = supabase.table("sale_stock").select("stock_id, quantity").eq("sale_id", sale_id).execute()
         for line in lines_resp.data or []:
-            stock_id = line.get("stock_id")
+            sid = line.get("stock_id")
             qty = line.get("quantity", 0)
-            if stock_id and qty:
-                stock_row = supabase.table("stock").select("quantity").eq("id", stock_id).single().execute()
-                restored_qty = (stock_row.data.get("quantity") or 0) + qty
-                supabase.table("stock").update({"quantity": restored_qty}).eq("id", stock_id).execute()
+            if sid and qty:
+                stock_row = supabase.table("stock").select("quantity").eq("id", sid).single().execute()
+                restored = (stock_row.data.get("quantity") or 0) + qty
+                supabase.table("stock").update({"quantity": restored}).eq("id", sid).execute()
 
-        supabase.table("sale").update(
-            {
-                "status": "VOIDED",
-                "void_reason": reason,
-                "voided_at": datetime.now(timezone.utc).isoformat(),
-                "voided_by": user_id,
-            }
-        ).eq("id", sale_id).execute()
+        supabase.table("sale").update({
+            "status": "VOIDED",
+            "void_reason": reason,
+            "voided_at": datetime.now(timezone.utc).isoformat(),
+            "voided_by": user_id,
+        }).eq("id", sale_id).execute()

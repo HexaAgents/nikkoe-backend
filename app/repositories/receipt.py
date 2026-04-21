@@ -134,24 +134,19 @@ class ReceiptRepository:
         currencies_map = batch_load("currency", "id", currency_ids)
         suppliers_map = batch_load("supplier", "id", supplier_ids)
 
+        item_ids = list({s.get("item_id") for s in stocks_map.values() if s.get("item_id")})
+        location_ids = list({s.get("location_id") for s in stocks_map.values() if s.get("location_id")})
+        items_map = batch_load("item", "id", item_ids, "id, item_id")
+        locations_map = batch_load("location", "id", location_ids, "id, code")
+
         for ln in lines:
             stock = stocks_map.get(ln.get("stock_id"))
             ln["stock"] = stock
             ln["currencies"] = currencies_map.get(ln.get("currency_id"))
             ln["suppliers"] = suppliers_map.get(ln.get("supplier_id"))
             if stock:
-                item_resp = (
-                    supabase.table("item").select("id, item_id").eq("id", stock.get("item_id")).maybe_single().execute()
-                )
-                loc_resp = (
-                    supabase.table("location")
-                    .select("id, code")
-                    .eq("id", stock.get("location_id"))
-                    .maybe_single()
-                    .execute()
-                )
-                ln["items"] = item_resp.data
-                ln["locations"] = loc_resp.data
+                ln["items"] = items_map.get(stock.get("item_id"))
+                ln["locations"] = locations_map.get(stock.get("location_id"))
 
         return lines
 
@@ -278,12 +273,39 @@ class ReceiptRepository:
         return result
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
+        import json
         from datetime import datetime, timezone
 
         if not receipt.get("dateTime"):
             receipt["dateTime"] = datetime.now(timezone.utc).isoformat()
 
-        receipt = {k: v for k, v in receipt.items() if v is not None}
+        receipt_payload = {k: v for k, v in receipt.items() if v is not None}
+
+        rpc_lines = []
+        for line in lines:
+            rpc_line = {
+                "item_id": line.get("item_id"),
+                "location_id": line.get("location_id"),
+                "quantity": line.get("quantity"),
+                "unit_price": line.get("unit_price"),
+                "currency_id": line.get("currency_id"),
+                "supplier_id": line.get("supplier_id"),
+            }
+            rpc_lines.append({k: v for k, v in rpc_line.items() if v is not None})
+
+        try:
+            resp = supabase.rpc(
+                "create_receipt_tx",
+                {"p_receipt": json.dumps(receipt_payload), "p_lines": json.dumps(rpc_lines)},
+            ).execute()
+            receipt_id = resp.data
+            receipt_row = supabase.table("receipt").select("*").eq("id", receipt_id).single().execute()
+            return receipt_row.data
+        except Exception:
+            return self._create_fallback(receipt_payload, lines)
+
+    def _create_fallback(self, receipt: dict, lines: list[dict]) -> dict:
+        """Pre-migration fallback: multi-step inserts when create_receipt_tx RPC is unavailable."""
         receipt_resp = supabase.table("receipt").insert(receipt).execute()
         receipt_row = receipt_resp.data[0]
         receipt_id = receipt_row["id"]
@@ -296,18 +318,14 @@ class ReceiptRepository:
             if not stock_id and item_id and location_id:
                 try:
                     existing = (
-                        supabase.table("stock")
-                        .select("id")
-                        .eq("item_id", item_id)
-                        .eq("location_id", location_id)
-                        .maybe_single()
-                        .execute()
+                        supabase.table("stock").select("id")
+                        .eq("item_id", item_id).eq("location_id", location_id)
+                        .limit(1).execute()
                     )
                     if existing and existing.data:
-                        stock_id = existing.data["id"]
+                        stock_id = existing.data[0]["id"]
                 except Exception:
-                    existing = None
-
+                    pass
                 if not stock_id:
                     new_stock = (
                         supabase.table("stock")
@@ -329,22 +347,30 @@ class ReceiptRepository:
         return receipt_row
 
     def void_receipt(self, receipt_id: int, user_id: int, reason: str) -> None:
+        try:
+            supabase.rpc(
+                "void_receipt_tx",
+                {"p_receipt_id": receipt_id, "p_user_id": user_id, "p_reason": reason},
+            ).execute()
+        except Exception:
+            self._void_fallback(receipt_id, user_id, reason)
+
+    def _void_fallback(self, receipt_id: int, user_id: int, reason: str) -> None:
+        """Pre-migration fallback for voiding."""
         from datetime import datetime, timezone
 
         lines_resp = supabase.table("receipt_stock").select("stock_id, quantity").eq("receipt_id", receipt_id).execute()
         for line in lines_resp.data or []:
-            stock_id = line.get("stock_id")
+            sid = line.get("stock_id")
             qty = line.get("quantity", 0)
-            if stock_id and qty:
-                stock_row = supabase.table("stock").select("quantity").eq("id", stock_id).single().execute()
-                restored_qty = (stock_row.data.get("quantity") or 0) - qty
-                supabase.table("stock").update({"quantity": restored_qty}).eq("id", stock_id).execute()
+            if sid and qty:
+                stock_row = supabase.table("stock").select("quantity").eq("id", sid).single().execute()
+                restored = (stock_row.data.get("quantity") or 0) - qty
+                supabase.table("stock").update({"quantity": restored}).eq("id", sid).execute()
 
-        supabase.table("receipt").update(
-            {
-                "status": "VOIDED",
-                "void_reason": reason,
-                "voided_at": datetime.now(timezone.utc).isoformat(),
-                "voided_by": user_id,
-            }
-        ).eq("id", receipt_id).execute()
+        supabase.table("receipt").update({
+            "status": "VOIDED",
+            "void_reason": reason,
+            "voided_at": datetime.now(timezone.utc).isoformat(),
+            "voided_by": user_id,
+        }).eq("id", receipt_id).execute()

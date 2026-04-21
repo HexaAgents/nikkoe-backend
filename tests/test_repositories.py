@@ -24,69 +24,36 @@ from app.repositories.supplier_quote import SupplierQuoteRepository
 class TestSupplierQuoteRepositoryCreate:
     DATA = {"item_id": 1, "supplier_id": 2, "cost": 10.0, "currency_id": 1}
 
-    @staticmethod
-    def _mock_select_chain(table_mock, rows: list):
-        """Wire the .select().eq().eq().limit().execute() chain."""
-        (
-            table_mock.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.return_value
-        ) = MagicMock(data=rows)
-
-    @staticmethod
-    def _mock_insert_chain(table_mock, rows: list):
-        """Wire the .insert().execute() chain."""
-        table_mock.insert.return_value.execute.return_value = MagicMock(data=rows)
-
-    @staticmethod
-    def _mock_update_chain(table_mock, rows: list):
-        """Wire the .update().eq().execute() chain."""
-        (table_mock.update.return_value.eq.return_value.execute.return_value) = MagicMock(data=rows)
-
     @patch("app.repositories.supplier_quote.supabase")
-    def test_create_inserts_when_no_existing_row(self, mock_sb):
+    def test_create_upserts_and_returns_row(self, mock_sb):
         table = mock_sb.table.return_value
-        self._mock_select_chain(table, [])
-        self._mock_insert_chain(table, [{"id": 99, **self.DATA}])
+        table.upsert.return_value.execute.return_value = MagicMock(
+            data=[{"id": 99, **self.DATA}]
+        )
 
         repo = SupplierQuoteRepository()
         result = repo.create(dict(self.DATA))
 
-        table.insert.assert_called_once_with(self.DATA)
-        table.update.assert_not_called()
+        table.upsert.assert_called_once_with(self.DATA, on_conflict="item_id,supplier_id")
         assert result["id"] == 99
 
     @patch("app.repositories.supplier_quote.supabase")
-    def test_create_updates_when_existing_row_found(self, mock_sb):
+    def test_create_updates_existing_via_upsert(self, mock_sb):
+        """Upsert with matching item_id+supplier_id updates the existing row."""
         table = mock_sb.table.return_value
-        self._mock_select_chain(table, [{"id": 42}])
-        self._mock_update_chain(table, [{"id": 42, "cost": 10.0, "currency_id": 1}])
-
-        repo = SupplierQuoteRepository()
-        result = repo.create(dict(self.DATA))
-
-        expected_update = {"cost": 10.0, "currency_id": 1}
-        table.update.assert_called_once_with(expected_update)
-        table.insert.assert_not_called()
-        assert result["id"] == 42
-
-    @patch("app.repositories.supplier_quote.supabase")
-    def test_create_handles_multiple_existing_rows(self, mock_sb):
-        """Regression: .limit(1) must not fail when duplicates exist in the DB."""
-        table = mock_sb.table.return_value
-        self._mock_select_chain(table, [{"id": 42}])
-        self._mock_update_chain(table, [{"id": 42, "cost": 10.0}])
+        table.upsert.return_value.execute.return_value = MagicMock(
+            data=[{"id": 42, "cost": 10.0, "currency_id": 1}]
+        )
 
         repo = SupplierQuoteRepository()
         result = repo.create(dict(self.DATA))
 
         assert result["id"] == 42
-        table.update.assert_called_once()
 
     @patch("app.repositories.supplier_quote.supabase")
     def test_create_wraps_unexpected_errors_in_app_error(self, mock_sb):
         table = mock_sb.table.return_value
-        table.select.return_value.eq.return_value.eq.return_value.limit.return_value.execute.side_effect = RuntimeError(
-            "connection lost"
-        )
+        table.upsert.return_value.execute.side_effect = RuntimeError("connection lost")
 
         repo = SupplierQuoteRepository()
         with pytest.raises(AppError) as exc_info:
@@ -96,7 +63,7 @@ class TestSupplierQuoteRepositoryCreate:
         assert "Failed to save supplier quote" in exc_info.value.message
 
     def test_create_does_not_use_maybe_single(self):
-        """Guard: the method must never use .maybe_single() again."""
+        """Guard: the method must never use .maybe_single()."""
         source = inspect.getsource(SupplierQuoteRepository.create)
         assert "maybe_single" not in source
 

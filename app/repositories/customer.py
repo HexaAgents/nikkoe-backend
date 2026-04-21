@@ -13,5 +13,5 @@ class CustomerRepository:
         return {"data": response.data or [], "total": response.count or 0}
 
     def create(self, data: dict) -> dict:
-        response = supabase.table("customer").insert(data).select("id, name").execute()
+        response = supabase.table("customer").insert(data).execute()
         return response.data[0]

@@ -89,14 +89,17 @@ class EbaySyncService:
             location_id = self._get_ebay_location_id()
         customer_id = self._resolve_customer(order)
 
+        from app.repositories.sale import _get_list_select, _FK_CHANNEL, _FK_CUSTOMER
+
+        _get_list_select()
         sale_data = {
-            "channel_id_id": channel_id,
+            _FK_CHANNEL: channel_id,
             "channel_ref": order_id,
             "date": creation_date,
             "source": SOURCE_TAG,
         }
         if customer_id:
-            sale_data["customer_id_id"] = customer_id
+            sale_data[_FK_CUSTOMER] = customer_id
 
         lines_data = []
         for line_item in order.get("lineItems", []):
@@ -113,7 +116,6 @@ class EbaySyncService:
             stock_id = self._resolve_stock(item_id, location_id)
             line["sale_id"] = sale_id
             line["stock_id"] = stock_id
-            line["source"] = SOURCE_TAG
             supabase.table("sale_stock").insert(line).execute()
 
             if stock_id:
@@ -161,7 +163,6 @@ class EbaySyncService:
                 {
                     "item_id": sku,
                     "description": title[:1000] if title else None,
-                    "source": SOURCE_TAG,
                 }
             )
             .execute()
@@ -190,7 +191,6 @@ class EbaySyncService:
                     "item_id": item_id,
                     "location_id": location_id,
                     "quantity": 0,
-                    "source": SOURCE_TAG,
                 }
             )
             .execute()
@@ -222,7 +222,6 @@ class EbaySyncService:
 
         customer_data = {
             "name": username,
-            "source": SOURCE_TAG,
             **{k: v for k, v in address.items() if v},
         }
         new_customer = supabase.table("customer").insert(customer_data).execute()

@@ -76,7 +76,7 @@ class LocationRepository:
     @retry_transient()
     def find_by_id(self, id: int) -> dict | None:
         response = supabase.table("location").select("*").eq("id", id).maybe_single().execute()
-        return response.data
+        return response.data if response else None
 
     @retry_transient()
     def find_items_by_location(self, location_id: int) -> list:

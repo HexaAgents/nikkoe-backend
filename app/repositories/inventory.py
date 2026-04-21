@@ -157,18 +157,40 @@ class InventoryRepository:
 
     @retry_transient()
     def stock_valuation(self) -> list:
+        try:
+            return self._stock_valuation_view()
+        except Exception:
+            return self._stock_valuation_fallback()
+
+    def _stock_valuation_view(self) -> list:
+        all_rows: list = []
+        page_size = 1000
+        offset = 0
+        while True:
+            response = (
+                supabase.table("v_stock_valuation")
+                .select("*")
+                .order("item_id")
+                .range(offset, offset + page_size - 1)
+                .execute()
+            )
+            batch = response.data or []
+            all_rows.extend(batch)
+            if len(batch) < page_size:
+                break
+            offset += page_size
+        return all_rows
+
+    def _stock_valuation_fallback(self) -> list:
+        """Pre-migration fallback when v_stock_valuation view doesn't exist."""
         PAGE_SIZE = 1000
 
-        # 1. Load ALL items so every catalogue entry appears in the report.
         all_items: list = []
         offset = 0
         while True:
             resp = (
-                supabase.table("item")
-                .select("id, item_id, description")
-                .order("id")
-                .range(offset, offset + PAGE_SIZE - 1)
-                .execute()
+                supabase.table("item").select("id, item_id, description")
+                .order("id").range(offset, offset + PAGE_SIZE - 1).execute()
             )
             batch = resp.data or []
             all_items.extend(batch)
@@ -179,18 +201,14 @@ class InventoryRepository:
         if not all_items:
             return []
 
-        # 2. Load all stock rows and aggregate quantity per item PK.
         item_qty: dict[int, int] = {}
         stock_item_map: dict[int, int] = {}
         all_stock_ids: list[int] = []
         offset = 0
         while True:
             resp = (
-                supabase.table("stock")
-                .select("id, item_id, quantity")
-                .order("id")
-                .range(offset, offset + PAGE_SIZE - 1)
-                .execute()
+                supabase.table("stock").select("id, item_id, quantity")
+                .order("id").range(offset, offset + PAGE_SIZE - 1).execute()
             )
             batch = resp.data or []
             for row in batch:
@@ -201,15 +219,13 @@ class InventoryRepository:
                 break
             offset += PAGE_SIZE
 
-        # 3. Fetch receipt lines for pricing (only when stock exists).
         receipt_lines: list = []
         for i in range(0, len(all_stock_ids), PAGE_SIZE):
             batch_ids = all_stock_ids[i : i + PAGE_SIZE]
             resp = (
                 supabase.table("receipt_stock")
                 .select("stock_id, unit_price, receipt(dateTime, status)")
-                .in_("stock_id", batch_ids)
-                .execute()
+                .in_("stock_id", batch_ids).execute()
             )
             receipt_lines.extend(resp.data or [])
 
@@ -218,30 +234,27 @@ class InventoryRepository:
             receipt = rl.get("receipt") or {}
             if receipt.get("status") == "VOIDED":
                 continue
-            item_id = stock_item_map.get(rl.get("stock_id"))
-            if item_id is None:
+            iid = stock_item_map.get(rl.get("stock_id"))
+            if iid is None:
                 continue
             date = receipt.get("dateTime", "")
-            existing = item_price_map.get(item_id)
+            existing = item_price_map.get(iid)
             if not existing or date > existing["date"]:
-                item_price_map[item_id] = {"date": date, "unit_price": rl.get("unit_price")}
+                item_price_map[iid] = {"date": date, "unit_price": rl.get("unit_price")}
 
-        # 4. Build a row for every item (LEFT JOIN semantics).
         result = []
         for item in all_items:
             pk = item["id"]
             price_info = item_price_map.get(pk)
             unit_price = price_info["unit_price"] if price_info else None
             total_qty = item_qty.get(pk, 0)
-            result.append(
-                {
-                    "item_id": item.get("item_id", ""),
-                    "description": item.get("description"),
-                    "total_quantity": total_qty,
-                    "unit_price": unit_price,
-                    "stock_valuation": round(unit_price * total_qty, 3) if unit_price is not None else None,
-                }
-            )
+            result.append({
+                "item_id": item.get("item_id", ""),
+                "description": item.get("description"),
+                "total_quantity": total_qty,
+                "unit_price": unit_price,
+                "stock_valuation": round(unit_price * total_qty, 3) if unit_price is not None else None,
+            })
 
         result.sort(key=lambda r: r.get("item_id", ""))
         return result
@@ -268,81 +281,26 @@ class InventoryRepository:
         user_id: int | None = None,
         notes: str | None = None,
     ) -> dict:
-        from datetime import datetime, timezone
-
         from app.errors import AppError
 
-        # --- Phase 1: read & validate (no mutations) ---
-        from_stock_resp = supabase.table("stock").select("*").eq("id", from_stock_id).single().execute()
-        from_stock = from_stock_resp.data
-        if not from_stock:
-            raise AppError(404, f"Source stock row {from_stock_id} not found")
-
-        if from_stock["quantity"] < quantity:
-            raise AppError(
-                400,
-                f"Insufficient quantity: available {from_stock['quantity']}, requested {quantity}",
-            )
-
-        if from_stock["location_id"] == to_location_id:
-            raise AppError(400, "Source and destination locations must be different")
-
-        loc_resp = supabase.table("location").select("id").eq("id", to_location_id).execute()
-        if not loc_resp.data:
-            raise AppError(404, f"Destination location {to_location_id} not found")
-
-        to_stock_resp = (
-            supabase.table("stock")
-            .select("id, quantity")
-            .eq("item_id", from_stock["item_id"])
-            .eq("location_id", to_location_id)
-            .execute()
-        )
-        existing_to_stock = to_stock_resp.data[0] if to_stock_resp.data else None
-
-        # --- Phase 2: write (all mutations together) ---
         try:
-            if existing_to_stock:
-                to_stock_id = existing_to_stock["id"]
-                supabase.table("stock").update({"quantity": existing_to_stock["quantity"] + quantity}).eq(
-                    "id", to_stock_id
-                ).execute()
-            else:
-                new_stock_resp = (
-                    supabase.table("stock")
-                    .insert({"item_id": from_stock["item_id"], "location_id": to_location_id, "quantity": quantity})
-                    .execute()
-                )
-                to_stock_id = new_stock_resp.data[0]["id"]
-
-            supabase.table("stock").update({"quantity": from_stock["quantity"] - quantity}).eq(
-                "id", from_stock_id
+            resp = supabase.rpc(
+                "transfer_stock",
+                {
+                    "p_from_stock_id": from_stock_id,
+                    "p_to_location_id": to_location_id,
+                    "p_quantity": quantity,
+                    "p_user_id": user_id,
+                    "p_notes": notes,
+                },
             ).execute()
-
-            transfer_data = {
-                "stock_id_from_id": from_stock_id,
-                "stock_id_to_id": to_stock_id,
-                "quantity": quantity,
-                "date": datetime.now(timezone.utc).isoformat(),
-                "notes": notes,
-                "from_item_id": from_stock["item_id"],
-                "to_item_id": from_stock["item_id"],
-            }
-            if user_id is not None:
-                transfer_data["user_id"] = user_id
-
-            transfer_resp = supabase.table("transfer").insert(transfer_data).execute()
-            return transfer_resp.data[0]
-
-        except Exception:
-            try:
-                current = supabase.table("stock").select("quantity").eq("id", from_stock_id).single().execute()
-                if current and current.data and current.data["quantity"] != from_stock["quantity"]:
-                    supabase.table("stock").update({"quantity": from_stock["quantity"]}).eq(
-                        "id", from_stock_id
-                    ).execute()
-            except Exception:
-                pass
+            return resp.data
+        except Exception as exc:
+            msg = str(exc)
+            if "not found" in msg:
+                raise AppError(404, msg)
+            if "Insufficient" in msg or "must be different" in msg:
+                raise AppError(400, msg)
             raise
 
     def create_cross_transfer(
@@ -376,20 +334,20 @@ class InventoryRepository:
                 f"Insufficient quantity: available {from_stock['quantity']}, requested {quantity}",
             )
 
-        to_stock_resp = (
-            supabase.table("stock")
-            .select("id, quantity")
-            .eq("item_id", to_item_id)
-            .eq("location_id", to_location_id)
-            .limit(1)
-            .execute()
-        )
-        existing_to = to_stock_resp.data[0] if to_stock_resp.data else None
-
         try:
             supabase.table("stock").update({"quantity": from_stock["quantity"] - quantity}).eq(
                 "id", from_stock["id"]
             ).execute()
+
+            to_stock_resp = (
+                supabase.table("stock")
+                .select("id, quantity")
+                .eq("item_id", to_item_id)
+                .eq("location_id", to_location_id)
+                .limit(1)
+                .execute()
+            )
+            existing_to = to_stock_resp.data[0] if to_stock_resp.data else None
 
             if existing_to:
                 to_stock_id = existing_to["id"]

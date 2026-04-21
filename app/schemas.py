@@ -113,8 +113,8 @@ class CreateReceiptRequest(BaseModel):
 
 
 class SaleInput(BaseModel):
-    customer_id_id: int | None = None
-    channel_id_id: int | None = None
+    customer_id: int | None = None
+    channel_id: int | None = None
     channel_ref: str | None = None
     note: str | None = Field(default=None, max_length=1000)
 

@@ -17,20 +17,11 @@ class SupplierQuoteRepository:
 
     def create(self, data: dict) -> dict:
         try:
-            existing = (
+            response = (
                 supabase.table("item_supplier")
-                .select("id")
-                .eq("item_id", data["item_id"])
-                .eq("supplier_id", data["supplier_id"])
-                .limit(1)
+                .upsert(data, on_conflict="item_id,supplier_id")
                 .execute()
             )
-            if existing.data:
-                row_id = existing.data[0]["id"]
-                update_data = {k: v for k, v in data.items() if k not in ("item_id", "supplier_id")}
-                resp = supabase.table("item_supplier").update(update_data).eq("id", row_id).execute()
-                return resp.data[0]
-            response = supabase.table("item_supplier").insert(data).execute()
             return response.data[0]
         except AppError:
             raise

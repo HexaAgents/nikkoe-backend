@@ -2,7 +2,7 @@
 
 ## Overview
 
-**642 tests** across 18 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
+**639 tests** across 18 files, using **pytest** with mocked dependencies (no real database or network calls). Tests are organized by purpose so failures pinpoint the problem immediately.
 
 ```
 tests/
@@ -15,11 +15,11 @@ tests/
   test_router_responses.py  (118) HTTP happy-path tests (every endpoint)
   test_auth_enforcement.py   (56) Auth gate — 401 on every protected route
   test_response_contracts.py (48) Frontend contract — JSON shape assertions
-  test_repositories.py       (36) Repository-level tests (upsert, retry, chunking, code guards)
+  test_repositories.py       (34) Repository-level tests (upsert, retry, chunking, code guards)
   test_invoice_parser_unit.py(23) Invoice PDF parser logic
   test_endpoint_smoke.py     (16) Every endpoint returns non-500 with mocked services
   test_auth_cache.py          (7) Auth token caching
-  test_stock_valuation.py     (6) Stock valuation report
+  test_stock_valuation.py     (4) Stock valuation report (v_stock_valuation view)
   test_dependencies.py        (5) Supabase client configuration guards
   ebay/
     conftest.py                   eBay-specific fixtures
@@ -1009,13 +1009,12 @@ Auth is overridden via `app.dependency_overrides` so tests never contact Supabas
 
 Tests the data access layer directly by mocking the Supabase client at the import boundary. Verifies query-building logic, branching (insert vs update), error handling, retry behaviour, and code-level guards.
 
-#### TestSupplierQuoteRepositoryCreate (5 tests)
+#### TestSupplierQuoteRepositoryCreate (4 tests)
 
 | Test | What it tests | If this fails |
 |------|---------------|---------------|
-| `test_create_inserts_when_no_existing_row` | Insert path when no match exists | New supplier quotes can't be created |
-| `test_create_updates_when_existing_row_found` | Update path when item+supplier match exists | Existing quotes can't be updated |
-| `test_create_handles_multiple_existing_rows` | `.limit(1)` handles duplicates gracefully | **Regression**: the 406 "Cannot coerce" error returns |
+| `test_create_upserts_and_returns_row` | Upsert path creates or updates via `ON CONFLICT` | New supplier quotes can't be created |
+| `test_create_updates_existing_via_upsert` | Upsert updates when item+supplier match exists | Existing quotes can't be updated |
 | `test_create_wraps_unexpected_errors_in_app_error` | DB errors become `AppError(400)` | Raw Supabase errors leak to the frontend |
 | `test_create_does_not_use_maybe_single` | Source code guard: `maybe_single` is absent | The exact bug that caused the original 406 is reintroduced |
 

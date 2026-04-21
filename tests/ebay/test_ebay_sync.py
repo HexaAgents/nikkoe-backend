@@ -131,11 +131,11 @@ class TestSyncOrders:
 
         def table_side_effect(name):
             mock_table = MagicMock()
-            if name == "Sale":
+            if name == "sale":
                 mock_table.insert.return_value = sale_insert
-            elif name == "Sale_Stock":
+            elif name == "sale_stock":
                 mock_table.insert.return_value = line_insert
-            elif name == "Stock":
+            elif name == "stock":
                 mock_table.select.return_value = stock_select
                 mock_table.update.return_value = stock_update
             return mock_table
@@ -218,11 +218,11 @@ class TestSyncOrders:
 
         def table_side_effect(name):
             t = MagicMock()
-            if name == "Sale":
+            if name == "sale":
                 t.insert.return_value = sale_insert
-            elif name == "Sale_Stock":
+            elif name == "sale_stock":
                 t.insert.return_value = line_insert
-            elif name == "Stock":
+            elif name == "stock":
                 t.select.return_value = stock_select
                 t.update.return_value = stock_update
             return t
@@ -256,7 +256,7 @@ class TestResolveCustomer:
         assert result == 42
 
     @patch("app.services.ebay_sync.supabase")
-    def test_creates_new_customer_with_source(self, mock_sb):
+    def test_creates_new_customer_with_address(self, mock_sb):
         select_mock = MagicMock()
         select_mock.eq.return_value = select_mock
         select_mock.limit.return_value = select_mock
@@ -293,7 +293,7 @@ class TestResolveCustomer:
         assert result == 99
         insert_call = table_mock.insert.call_args[0][0]
         assert insert_call["name"] == "new_buyer"
-        assert insert_call["source"] == SOURCE_TAG
+        assert "source" not in insert_call
         assert insert_call["city"] == "London"
 
 
@@ -315,7 +315,7 @@ class TestResolveItem:
         assert svc._resolve_item("EXISTING-SKU", "Title") == 15
 
     @patch("app.services.ebay_sync.supabase")
-    def test_creates_item_with_source_tag(self, mock_sb):
+    def test_creates_item_without_source(self, mock_sb):
         select_mock = MagicMock()
         select_mock.eq.return_value = select_mock
         select_mock.limit.return_value = select_mock
@@ -336,4 +336,4 @@ class TestResolveItem:
         insert_call = table_mock.insert.call_args[0][0]
         assert insert_call["item_id"] == "NEW-SKU"
         assert insert_call["description"] == "Cool Widget"
-        assert insert_call["source"] == SOURCE_TAG
+        assert "source" not in insert_call

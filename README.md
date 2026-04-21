@@ -4,7 +4,7 @@ Python/FastAPI REST API for the Nikkoe inventory management platform. It handles
 
 ## How it works
 
-Every request flows through four layers: Router → Service → Repository → Database. The router receives the HTTP request, validates input with Pydantic schemas, and resolves the auth dependency. The service enforces business rules — such as converting a missing record into a `NotFoundError` — and orchestrates queries across multiple repositories when needed. Each repository builds and executes Supabase queries against PascalCase tables (Item, Sale, Receipt, Stock, etc.) with integer primary keys. For sale/receipt creation, the repository performs multi-step inserts: creates the header row, looks up or creates Stock rows for each item+location combination, inserts line items (Sale_Stock/Receipt_Stock), and updates Stock quantities.
+Every request flows through four layers: Router → Service → Repository → Database. The router receives the HTTP request, validates input with Pydantic schemas, and resolves the auth dependency. The service enforces business rules — such as converting a missing record into a `NotFoundError` — and orchestrates queries across multiple repositories when needed. Each repository builds and executes Supabase queries against lowercase tables (item, sale, receipt, stock, etc.) with integer primary keys. Sale/receipt creation and voiding use transactional Postgres RPCs (`create_sale_tx`, `create_receipt_tx`, `void_sale_tx`, `void_receipt_tx`) so stock quantity updates are atomic. Stock transfers use the `transfer_stock` RPC. The `stock(item_id, location_id)` unique constraint prevents duplicate stock rows.
 
 ## Why this design
 
@@ -62,13 +62,13 @@ app/
     channel.py         Read-only → Channel table (id, name)
     currency.py        Read-only → Currency table (id, name)
     customer.py        List/create → Customer table (id, name, email, phone, address)
-    inventory.py       Transfer table (movements with from_item_id/to_item_id), Stock table (on-hand balances)
+    inventory.py       Transfer table (movements with from_item_id/to_item_id), Stock table (on-hand balances), stock valuation via v_stock_valuation view. Uses transfer_stock RPC for atomic transfers.
     item.py            CRUD → Item table (id, item_id text, description, category_id)
     location.py        CRUD → Location table (id, code)
-    receipt.py         Receipt + Receipt_Stock — multi-step inserts with Stock lookup, quantity increment
-    sale.py            Sale + Sale_Stock — multi-step inserts with Stock lookup, quantity decrement
+    receipt.py         Receipt + Receipt_Stock — single RPC call (create_receipt_tx) for atomic creation and voiding with stock quantity updates
+    sale.py            Sale + Sale_Stock — single RPC call (create_sale_tx) for atomic creation and voiding with stock quantity updates
     supplier.py        CRUD → Supplier table (id, name, address, email, phone)
-    supplier_quote.py  CRUD → Item_supplier table (id, cost, currency_id, item_id, supplier_id)
+    supplier_quote.py  CRUD → Item_supplier table — uses Postgres upsert for atomic create-or-update
     user.py            User creation via Supabase Auth admin API
 
   services/
@@ -123,7 +123,7 @@ docs/
   endpoint-flowcharts/           Per-endpoint flowcharts
 
 supabase/
-  migrations/          SQL migrations (void/status, auto-increment sequences, item_supplier dedup + unique constraint, transfer item_id columns)
+  migrations/          SQL migrations (constraints, indexes, transactional RPCs, stock valuation view, source consolidation, FK renames)
 ```
 
 ## Testing
@@ -133,4 +133,4 @@ pip install -r requirements.txt -r requirements-dev.txt
 pytest --tb=short -q
 ```
 
-642 tests across 18 files covering schemas, services, routers, repositories, error handlers, auth enforcement, response contracts, and more. All tests use mocked dependencies — no database or network required. See `tests/README.md` for detailed documentation of every test.
+639 tests across 18 files covering schemas, services, routers, repositories, error handlers, auth enforcement, response contracts, and more. All tests use mocked dependencies — no database or network required. See `tests/README.md` for detailed documentation of every test.
