@@ -89,7 +89,7 @@ class EbaySyncService:
             location_id = self._get_ebay_location_id()
         customer_id = self._resolve_customer(order)
 
-        from app.repositories.sale import _get_list_select, _FK_CHANNEL, _FK_CUSTOMER
+        from app.repositories.sale import _FK_CHANNEL, _FK_CUSTOMER, _get_list_select
 
         _get_list_select()
         sale_data = {
