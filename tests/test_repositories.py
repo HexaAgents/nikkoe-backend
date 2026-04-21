@@ -27,9 +27,7 @@ class TestSupplierQuoteRepositoryCreate:
     @patch("app.repositories.supplier_quote.supabase")
     def test_create_upserts_and_returns_row(self, mock_sb):
         table = mock_sb.table.return_value
-        table.upsert.return_value.execute.return_value = MagicMock(
-            data=[{"id": 99, **self.DATA}]
-        )
+        table.upsert.return_value.execute.return_value = MagicMock(data=[{"id": 99, **self.DATA}])
 
         repo = SupplierQuoteRepository()
         result = repo.create(dict(self.DATA))
@@ -41,9 +39,7 @@ class TestSupplierQuoteRepositoryCreate:
     def test_create_updates_existing_via_upsert(self, mock_sb):
         """Upsert with matching item_id+supplier_id updates the existing row."""
         table = mock_sb.table.return_value
-        table.upsert.return_value.execute.return_value = MagicMock(
-            data=[{"id": 42, "cost": 10.0, "currency_id": 1}]
-        )
+        table.upsert.return_value.execute.return_value = MagicMock(data=[{"id": 42, "cost": 10.0, "currency_id": 1}])
 
         repo = SupplierQuoteRepository()
         result = repo.create(dict(self.DATA))

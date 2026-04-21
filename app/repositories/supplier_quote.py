@@ -17,11 +17,7 @@ class SupplierQuoteRepository:
 
     def create(self, data: dict) -> dict:
         try:
-            response = (
-                supabase.table("item_supplier")
-                .upsert(data, on_conflict="item_id,supplier_id")
-                .execute()
-            )
+            response = supabase.table("item_supplier").upsert(data, on_conflict="item_id,supplier_id").execute()
             return response.data[0]
         except AppError:
             raise

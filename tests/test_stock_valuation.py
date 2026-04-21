@@ -16,10 +16,22 @@ class TestStockValuation:
 
     def test_returns_rows_from_view(self, mock_sb):
         view_rows = [
-            {"id": 10, "item_id": "P-100", "description": "Widget", "total_quantity": 8,
-             "unit_price": 12.50, "stock_valuation": 100.0},
-            {"id": 20, "item_id": "P-200", "description": "Gadget", "total_quantity": 7,
-             "unit_price": 8.00, "stock_valuation": 56.0},
+            {
+                "id": 10,
+                "item_id": "P-100",
+                "description": "Widget",
+                "total_quantity": 8,
+                "unit_price": 12.50,
+                "stock_valuation": 100.0,
+            },
+            {
+                "id": 20,
+                "item_id": "P-200",
+                "description": "Gadget",
+                "total_quantity": 7,
+                "unit_price": 8.00,
+                "stock_valuation": 56.0,
+            },
         ]
         mock_sb.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = (
             MagicMock(data=view_rows)
@@ -34,8 +46,14 @@ class TestStockValuation:
 
     def test_null_price_items_included(self, mock_sb):
         view_rows = [
-            {"id": 10, "item_id": "P-100", "description": "Widget", "total_quantity": 0,
-             "unit_price": None, "stock_valuation": None},
+            {
+                "id": 10,
+                "item_id": "P-100",
+                "description": "Widget",
+                "total_quantity": 0,
+                "unit_price": None,
+                "stock_valuation": None,
+            },
         ]
         mock_sb.table.return_value.select.return_value.order.return_value.range.return_value.execute.return_value = (
             MagicMock(data=view_rows)
@@ -47,11 +65,27 @@ class TestStockValuation:
 
     def test_paginates_large_results(self, mock_sb):
         """View results paginate through 1000-row pages."""
-        page1 = [{"id": i, "item_id": f"P-{i}", "description": "X",
-                   "total_quantity": 1, "unit_price": 1.0, "stock_valuation": 1.0}
-                  for i in range(1000)]
-        page2 = [{"id": 1000, "item_id": "P-1000", "description": "Y",
-                   "total_quantity": 2, "unit_price": 2.0, "stock_valuation": 4.0}]
+        page1 = [
+            {
+                "id": i,
+                "item_id": f"P-{i}",
+                "description": "X",
+                "total_quantity": 1,
+                "unit_price": 1.0,
+                "stock_valuation": 1.0,
+            }
+            for i in range(1000)
+        ]
+        page2 = [
+            {
+                "id": 1000,
+                "item_id": "P-1000",
+                "description": "Y",
+                "total_quantity": 2,
+                "unit_price": 2.0,
+                "stock_valuation": 4.0,
+            }
+        ]
 
         call_count = {"n": 0}
 

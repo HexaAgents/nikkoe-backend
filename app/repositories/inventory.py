@@ -189,8 +189,11 @@ class InventoryRepository:
         offset = 0
         while True:
             resp = (
-                supabase.table("item").select("id, item_id, description")
-                .order("id").range(offset, offset + PAGE_SIZE - 1).execute()
+                supabase.table("item")
+                .select("id, item_id, description")
+                .order("id")
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
             )
             batch = resp.data or []
             all_items.extend(batch)
@@ -207,8 +210,11 @@ class InventoryRepository:
         offset = 0
         while True:
             resp = (
-                supabase.table("stock").select("id, item_id, quantity")
-                .order("id").range(offset, offset + PAGE_SIZE - 1).execute()
+                supabase.table("stock")
+                .select("id, item_id, quantity")
+                .order("id")
+                .range(offset, offset + PAGE_SIZE - 1)
+                .execute()
             )
             batch = resp.data or []
             for row in batch:
@@ -225,7 +231,8 @@ class InventoryRepository:
             resp = (
                 supabase.table("receipt_stock")
                 .select("stock_id, unit_price, receipt(dateTime, status)")
-                .in_("stock_id", batch_ids).execute()
+                .in_("stock_id", batch_ids)
+                .execute()
             )
             receipt_lines.extend(resp.data or [])
 
@@ -248,13 +255,15 @@ class InventoryRepository:
             price_info = item_price_map.get(pk)
             unit_price = price_info["unit_price"] if price_info else None
             total_qty = item_qty.get(pk, 0)
-            result.append({
-                "item_id": item.get("item_id", ""),
-                "description": item.get("description"),
-                "total_quantity": total_qty,
-                "unit_price": unit_price,
-                "stock_valuation": round(unit_price * total_qty, 3) if unit_price is not None else None,
-            })
+            result.append(
+                {
+                    "item_id": item.get("item_id", ""),
+                    "description": item.get("description"),
+                    "total_quantity": total_qty,
+                    "unit_price": unit_price,
+                    "stock_valuation": round(unit_price * total_qty, 3) if unit_price is not None else None,
+                }
+            )
 
         result.sort(key=lambda r: r.get("item_id", ""))
         return result

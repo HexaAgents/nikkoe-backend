@@ -267,9 +267,12 @@ class SaleRepository:
             if not stock_id and item_id and location_id:
                 try:
                     existing = (
-                        supabase.table("stock").select("id")
-                        .eq("item_id", item_id).eq("location_id", location_id)
-                        .limit(1).execute()
+                        supabase.table("stock")
+                        .select("id")
+                        .eq("item_id", item_id)
+                        .eq("location_id", location_id)
+                        .limit(1)
+                        .execute()
                     )
                     if existing and existing.data:
                         stock_id = existing.data[0]["id"]
@@ -317,9 +320,11 @@ class SaleRepository:
                 restored = (stock_row.data.get("quantity") or 0) + qty
                 supabase.table("stock").update({"quantity": restored}).eq("id", sid).execute()
 
-        supabase.table("sale").update({
-            "status": "VOIDED",
-            "void_reason": reason,
-            "voided_at": datetime.now(timezone.utc).isoformat(),
-            "voided_by": user_id,
-        }).eq("id", sale_id).execute()
+        supabase.table("sale").update(
+            {
+                "status": "VOIDED",
+                "void_reason": reason,
+                "voided_at": datetime.now(timezone.utc).isoformat(),
+                "voided_by": user_id,
+            }
+        ).eq("id", sale_id).execute()
