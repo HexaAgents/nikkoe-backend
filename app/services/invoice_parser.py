@@ -170,6 +170,8 @@ def parse_invoice_stream(file_bytes: bytes):
         supplier_name = parsed.get("supplier_name")
         matched_supplier_id = _resolve_supplier(supplier_name)
 
+        lines = parsed.get("lines", [])
+
         yield _sse(
             "header",
             {
@@ -177,10 +179,9 @@ def parse_invoice_stream(file_bytes: bytes):
                 "matched_supplier_id": matched_supplier_id,
                 "reference": parsed.get("reference"),
                 "currency_symbol": parsed.get("currency_symbol"),
+                "total_lines": len(lines),
             },
         )
-
-        lines = parsed.get("lines", [])
         for line_data in lines:
             pn = line_data.get("part_number", "")
             mid, mname, loc_id, loc_code = None, None, None, None
