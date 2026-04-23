@@ -17,10 +17,17 @@ You are an invoice parser for an electronics parts distributor.
 Extract structured data from the invoice text provided by the user.
 
 Rules:
-1. Only extract physical product/component line items.
-2. SKIP shipping, transport, handling, postage (P&P), bank charges, and insurance lines.
-3. "part_number" must be the manufacturer or distributor part number exactly as printed \
-(e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve original casing and dashes.
+1. "lines" must contain ONLY physical product/component line items. DO NOT put
+   shipping, transport, carriage, postage (P&P), delivery, bank charges, or
+   insurance rows into "lines".
+2. "shipping_total" is the sum of all shipping / freight / carriage / postage
+   (P&P) / delivery charges on the invoice, as a single decimal number in the
+   invoice currency. Use the net/pre-tax amount where both are shown. Return 0
+   if the invoice shows no shipping charge. Exclude handling fees unless they
+   are clearly a delivery charge.
+3. "part_number" must be the manufacturer or distributor part number exactly as
+   printed (e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve
+   original casing and dashes.
 4. "quantity" is the integer count of items (e.g. "5 PCS" → 5).
 5. "unit_price" is the price PER SINGLE UNIT as a decimal number.
    - If the invoice shows a bulk price like "8,73/10 PCS", compute per-unit: 8.73 / 10 = 0.873
@@ -36,6 +43,7 @@ Return ONLY a JSON object with this exact structure (no markdown, no extra text)
   "supplier_name": "string or null",
   "reference": "string or null",
   "currency_symbol": "string or null",
+  "shipping_total": decimal_number,
   "lines": [
     {
       "part_number": "string",
@@ -171,6 +179,7 @@ def parse_invoice_stream(file_bytes: bytes):
         matched_supplier_id = _resolve_supplier(supplier_name)
 
         lines = parsed.get("lines", [])
+        shipping_total = _coerce_shipping_total(parsed.get("shipping_total"))
 
         yield _sse(
             "header",
@@ -179,6 +188,7 @@ def parse_invoice_stream(file_bytes: bytes):
                 "matched_supplier_id": matched_supplier_id,
                 "reference": parsed.get("reference"),
                 "currency_symbol": parsed.get("currency_symbol"),
+                "shipping_total": shipping_total,
                 "total_lines": len(lines),
             },
         )
@@ -243,5 +253,19 @@ def parse_invoice(file_bytes: bytes) -> ParseInvoiceResponse:
         matched_supplier_id=matched_supplier_id,
         reference=parsed.get("reference"),
         currency_symbol=parsed.get("currency_symbol"),
+        shipping_total=_coerce_shipping_total(parsed.get("shipping_total")),
         lines=resolved_lines,
     )
+
+
+def _coerce_shipping_total(raw) -> float:
+    """Coerce an LLM shipping-total value to a non-negative rounded float."""
+    if raw is None:
+        return 0.0
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return 0.0
+    if not (val == val) or val < 0:  # NaN or negative
+        return 0.0
+    return round(val, 4)

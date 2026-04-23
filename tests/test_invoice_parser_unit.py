@@ -7,6 +7,7 @@ import pytest
 from app.errors import AppError
 from app.schemas import ParseInvoiceResponse, ResolvedLineItem
 from app.services.invoice_parser import (
+    _coerce_shipping_total,
     _resolve_items,
     _resolve_location,
     _resolve_supplier,
@@ -146,6 +147,26 @@ class TestResolveItems:
         assert result[0].matched_item_id is None
 
 
+class TestCoerceShippingTotal:
+    def test_none_returns_zero(self):
+        assert _coerce_shipping_total(None) == 0.0
+
+    def test_numeric_passthrough(self):
+        assert _coerce_shipping_total(12.5) == 12.5
+
+    def test_numeric_string_parsed(self):
+        assert _coerce_shipping_total("7.99") == 7.99
+
+    def test_non_numeric_returns_zero(self):
+        assert _coerce_shipping_total("free") == 0.0
+
+    def test_negative_returns_zero(self):
+        assert _coerce_shipping_total(-3.0) == 0.0
+
+    def test_rounds_to_four_decimals(self):
+        assert _coerce_shipping_total(1.234567) == 1.2346
+
+
 class TestParseInvoice:
     @patch("app.services.invoice_parser._resolve_items")
     @patch("app.services.invoice_parser._resolve_supplier", return_value=10)
@@ -156,6 +177,7 @@ class TestParseInvoice:
             "supplier_name": "TME",
             "reference": "123",
             "currency_symbol": "£",
+            "shipping_total": 4.25,
             "lines": [{"part_number": "X", "quantity": 1, "unit_price": 1.0}],
         }
         mock_items.return_value = [
@@ -173,7 +195,22 @@ class TestParseInvoice:
         assert isinstance(result, ParseInvoiceResponse)
         assert result.supplier_name == "TME"
         assert result.matched_supplier_id == 10
+        assert result.shipping_total == 4.25
         assert len(result.lines) == 1
+
+    @patch("app.services.invoice_parser._resolve_items", return_value=[])
+    @patch("app.services.invoice_parser._resolve_supplier", return_value=None)
+    @patch("app.services.invoice_parser._call_llm")
+    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="Invoice text here")
+    def test_missing_shipping_defaults_to_zero(self, _pdf, mock_llm, _sup, _items):
+        mock_llm.return_value = {
+            "supplier_name": None,
+            "reference": None,
+            "currency_symbol": "£",
+            "lines": [],
+        }
+        result = parse_invoice(b"fake-pdf")
+        assert result.shipping_total == 0.0
 
     @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="   ")
     def test_raises_on_empty_text(self, _mock_pdf):
@@ -192,6 +229,7 @@ class TestParseInvoiceStream:
             "supplier_name": "Acme",
             "reference": "INV-1",
             "currency_symbol": "$",
+            "shipping_total": 9.99,
             "lines": [{"part_number": "P1", "quantity": 2, "unit_price": 3.5}],
         }
         mock_sb.table.return_value.select.return_value.filter.return_value.limit.return_value.execute.return_value = (
@@ -199,9 +237,11 @@ class TestParseInvoiceStream:
         )
 
         events = list(parse_invoice_stream(b"pdf-bytes"))
-        assert any("header" in e for e in events)
-        assert any("line" in e for e in events)
-        assert any("done" in e for e in events)
+        header_events = [e for e in events if "event: header" in e]
+        assert len(header_events) == 1
+        assert '"shipping_total": 9.99' in header_events[0]
+        assert any("event: line" in e for e in events)
+        assert any("event: done" in e for e in events)
 
     @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="  ")
     def test_yields_error_on_empty_pdf(self, _pdf):

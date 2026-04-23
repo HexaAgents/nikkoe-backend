@@ -201,5 +201,6 @@ class ParseInvoiceResponse(BaseModel):
     matched_supplier_id: int | None = None
     reference: str | None = None
     currency_symbol: str | None = None
+    shipping_total: float = 0.0
     note: str | None = None
     lines: list[ResolvedLineItem]
