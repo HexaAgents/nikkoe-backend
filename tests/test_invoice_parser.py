@@ -5,7 +5,10 @@ Run with:
     .venv/bin/python -m pytest tests/test_invoice_parser.py -v -s
 
 Requires OPENAI_API_KEY in .env (or as an environment variable).
+PDF fixtures live in the parent workspace directory; tests are skipped
+when they are not present (e.g. in CI).
 """
+
 from __future__ import annotations
 
 import os
@@ -13,14 +16,12 @@ import sys
 from pathlib import Path
 
 import pytest
-
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from dotenv import load_dotenv
 
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from app.services.invoice_parser import extract_text_from_pdf, _call_llm
+from app.services.invoice_parser import _call_llm, extract_text_from_pdf  # noqa: E402
 
 WORKSPACE = Path(__file__).resolve().parent.parent.parent
 
@@ -33,8 +34,14 @@ def _read(path: Path) -> bytes:
     return path.read_bytes()
 
 
+def _require(path: Path) -> None:
+    if not path.exists():
+        pytest.skip(f"Fixture PDF not available: {path.name}")
+
+
 class TestTextExtraction:
     def test_tme_extraction(self):
+        _require(TME_PDF)
         text = extract_text_from_pdf(_read(TME_PDF))
         assert "PEC16-4215F-N0024" in text
         assert "SN74LS153N" in text
@@ -42,12 +49,14 @@ class TestTextExtraction:
         assert "Transfer Multisort Elektronik" in text
 
     def test_hongtaiyu_extraction(self):
+        _require(HONGTAIYU_PDF)
         text = extract_text_from_pdf(_read(HONGTAIYU_PDF))
         assert "UCN5818EPF" in text
         assert "TC5092AP" in text
         assert "HK Hongtaiyu" in text
 
     def test_farnell_extraction(self):
+        _require(FARNELL_PDF)
         text = extract_text_from_pdf(_read(FARNELL_PDF))
         assert "1892676" in text
         assert "Premier Farnell" in text
@@ -59,6 +68,7 @@ class TestTextExtraction:
 )
 class TestLLMParsing:
     def test_tme_parsing(self):
+        _require(TME_PDF)
         text = extract_text_from_pdf(_read(TME_PDF))
         parsed = _call_llm(text)
 
@@ -69,7 +79,7 @@ class TestLLMParsing:
         assert parsed.get("currency_symbol") == "£"
 
         lines = parsed.get("lines", [])
-        part_numbers = [l["part_number"] for l in lines]
+        part_numbers = [line["part_number"] for line in lines]
 
         assert "PEC16-4215F-N0024" in part_numbers
         assert "SN74LS153N" in part_numbers
@@ -79,34 +89,45 @@ class TestLLMParsing:
         transport_parts = [p for p in part_numbers if p.lower() == "transport"]
         assert len(transport_parts) == 0, "Transport line should be skipped"
 
-        pec_line = next(l for l in lines if l["part_number"] == "PEC16-4215F-N0024")
+        pec_line = next(line for line in lines if line["part_number"] == "PEC16-4215F-N0024")
         assert pec_line["quantity"] == 1
         assert abs(pec_line["unit_price"] - 1.95) < 0.01
 
-        sn74_line = next(l for l in lines if l["part_number"] == "SN74LS153N")
+        sn74_line = next(line for line in lines if line["part_number"] == "SN74LS153N")
         assert sn74_line["quantity"] == 5
         assert abs(sn74_line["unit_price"] - 0.873) < 0.01, (
             f"Per-10 pricing not computed correctly: got {sn74_line['unit_price']}"
         )
 
         expected_parts = [
-            "PEC16-4215F-N0024", "SN74LS153N", "R9011-1-200K",
-            "S20LC40UT-5000", "MB152", "282189-1", "IRFZ14PBF",
-            "STP160N3LL", "FTR-K1CK012W", "EC11E15244G1",
+            "PEC16-4215F-N0024",
+            "SN74LS153N",
+            "R9011-1-200K",
+            "S20LC40UT-5000",
+            "MB152",
+            "282189-1",
+            "IRFZ14PBF",
+            "STP160N3LL",
+            "FTR-K1CK012W",
+            "EC11E15244G1",
         ]
         for p in expected_parts:
             assert p in part_numbers, f"Missing part: {p}"
 
-        capacitor_line = next((l for l in lines if "16" in l["part_number"] and "17" in l["part_number"]), None)
+        capacitor_line = next(
+            (line for line in lines if "16" in line["part_number"] and "17" in line["part_number"]),
+            None,
+        )
         if capacitor_line:
             assert capacitor_line["quantity"] == 5
             assert abs(capacitor_line["unit_price"] - 3.30) < 0.01
 
         print(f"\nTME: Parsed {len(lines)} line items (expected ~11-12)")
-        for l in lines:
-            print(f"  {l['part_number']:30s} qty={l['quantity']:3d}  unit_price={l['unit_price']:.4f}")
+        for line in lines:
+            print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  unit_price={line['unit_price']:.4f}")
 
     def test_hongtaiyu_parsing(self):
+        _require(HONGTAIYU_PDF)
         text = extract_text_from_pdf(_read(HONGTAIYU_PDF))
         parsed = _call_llm(text)
 
@@ -115,7 +136,7 @@ class TestLLMParsing:
         assert parsed.get("currency_symbol") == "$"
 
         lines = parsed.get("lines", [])
-        part_numbers = [l["part_number"] for l in lines]
+        part_numbers = [line["part_number"] for line in lines]
 
         assert "UCN5818EPF" in part_numbers
         assert "MR752" in part_numbers
@@ -125,24 +146,25 @@ class TestLLMParsing:
         shipping_parts = [p for p in part_numbers if "ship" in p.lower() or "charge" in p.lower()]
         assert len(shipping_parts) == 0, "Shipping charge should be skipped"
 
-        ucn_line = next(l for l in lines if l["part_number"] == "UCN5818EPF")
+        ucn_line = next(line for line in lines if line["part_number"] == "UCN5818EPF")
         assert ucn_line["quantity"] == 1
         assert abs(ucn_line["unit_price"] - 9.00) < 0.01
 
-        tc_line = next(l for l in lines if l["part_number"] == "TC5092AP")
+        tc_line = next(line for line in lines if line["part_number"] == "TC5092AP")
         assert tc_line["quantity"] == 33
         assert abs(tc_line["unit_price"] - 8.50) < 0.01
 
         assert len(lines) >= 40, f"Expected 40+ items, got {len(lines)}"
 
         print(f"\nHongtaiyu: Parsed {len(lines)} line items (expected ~50+)")
-        for l in lines[:10]:
-            print(f"  {l['part_number']:30s} qty={l['quantity']:3d}  unit_price={l['unit_price']:.4f}")
+        for line in lines[:10]:
+            print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  unit_price={line['unit_price']:.4f}")
         if len(lines) > 10:
             print(f"  ... and {len(lines) - 10} more")
 
     def test_farnell_parsing(self):
         """Generalizability test -- this invoice was NOT used during development."""
+        _require(FARNELL_PDF)
         text = extract_text_from_pdf(_read(FARNELL_PDF))
         parsed = _call_llm(text)
 
