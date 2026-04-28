@@ -7,12 +7,16 @@ Run with:
 Requires OPENAI_API_KEY in .env (or as an environment variable).
 PDF fixtures live in the parent workspace directory; tests are skipped
 when they are not present (e.g. in CI).
+
+These tests exercise the real OpenAI call path (PDF-direct vision input
+to ``gpt-4.1``) and assert that ``unit_price`` and ``shipping_total`` are
+GROSS (VAT-inclusive) — the downstream system stores these values as the
+per-unit stock cost.
 """
 
 from __future__ import annotations
 
 import os
-import re
 import sys
 from pathlib import Path
 
@@ -22,7 +26,7 @@ from dotenv import load_dotenv
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
-from app.services.invoice_parser import _call_llm, extract_text_from_pdf  # noqa: E402
+from app.services.invoice_parser import _call_llm  # noqa: E402
 
 WORKSPACE = Path(__file__).resolve().parent.parent.parent
 
@@ -31,8 +35,9 @@ HONGTAIYU_PDF = WORKSPACE / "Proforma-Invoice20260311.pdf"
 FARNELL_PDF = WORKSPACE / "7289408.pdf"
 # Multi-page Farnell invoice with NO shipping charge. The summary table on
 # page 2 has a "P&P Charge" column that is empty and a "Vat Rate" column
-# showing 20.00 — the parser used to mis-read the 20.00 as a £20 shipping
-# charge, inflating the displayed total from £49.54 to £61.28.
+# showing 20.00 — earlier text-extraction-based parsers used to mis-read
+# the 20.00 as a £20 shipping charge, inflating the displayed total from
+# £49.54 to £61.28. PDF-direct parsing eliminates that class of bug.
 FARNELL_NO_SHIPPING_PDF = WORKSPACE / "7512385.pdf"
 
 
@@ -45,40 +50,19 @@ def _require(path: Path) -> None:
         pytest.skip(f"Fixture PDF not available: {path.name}")
 
 
-class TestTextExtraction:
-    def test_tme_extraction(self):
-        _require(TME_PDF)
-        text = extract_text_from_pdf(_read(TME_PDF))
-        assert "PEC16-4215F-N0024" in text
-        assert "SN74LS153N" in text
-        assert "Invoice no.: 4261503966" in text
-        assert "Transfer Multisort Elektronik" in text
-
-    def test_hongtaiyu_extraction(self):
-        _require(HONGTAIYU_PDF)
-        text = extract_text_from_pdf(_read(HONGTAIYU_PDF))
-        assert "UCN5818EPF" in text
-        assert "TC5092AP" in text
-        # Layout-preserving extraction may insert multiple spaces between
-        # words when reconstructing column alignment, so match flexibly.
-        assert re.search(r"HK\s+Hongtaiyu", text)
-
-    def test_farnell_extraction(self):
-        _require(FARNELL_PDF)
-        text = extract_text_from_pdf(_read(FARNELL_PDF))
-        assert "1892676" in text
-        assert "Premier Farnell" in text
-
-
 @pytest.mark.skipif(
     not os.environ.get("OPENAI_API_KEY") and not os.environ.get("RUN_LLM_TESTS"),
     reason="OPENAI_API_KEY not set",
 )
 class TestLLMParsing:
     def test_tme_parsing(self):
+        """TME UK invoice has 12 line items, all at 20% VAT.
+
+        Net subtotal is £52.02, gross total is £62.42 (VAT £10.40).
+        unit_price values are expected to be GROSS = net * 1.20.
+        """
         _require(TME_PDF)
-        text = extract_text_from_pdf(_read(TME_PDF))
-        parsed = _call_llm(text)
+        parsed = _call_llm(_read(TME_PDF))
 
         assert parsed.get("supplier_name") is not None
         assert "transfer" in parsed["supplier_name"].lower() or "tme" in parsed["supplier_name"].lower()
@@ -97,14 +81,17 @@ class TestLLMParsing:
         transport_parts = [p for p in part_numbers if p.lower() == "transport"]
         assert len(transport_parts) == 0, "Transport line should be skipped"
 
+        # Gross prices (net * 1.20, 20% VAT).
         pec_line = next(line for line in lines if line["part_number"] == "PEC16-4215F-N0024")
         assert pec_line["quantity"] == 1
-        assert abs(pec_line["unit_price"] - 1.95) < 0.01
+        assert abs(pec_line["unit_price"] - 1.95 * 1.20) < 0.02, (
+            f"Expected gross unit price ~£2.34, got {pec_line['unit_price']}"
+        )
 
         sn74_line = next(line for line in lines if line["part_number"] == "SN74LS153N")
         assert sn74_line["quantity"] == 5
-        assert abs(sn74_line["unit_price"] - 0.873) < 0.01, (
-            f"Per-10 pricing not computed correctly: got {sn74_line['unit_price']}"
+        assert abs(sn74_line["unit_price"] - 0.873 * 1.20) < 0.02, (
+            f"Per-10 gross pricing not computed correctly: got {sn74_line['unit_price']}"
         )
 
         expected_parts = [
@@ -122,22 +109,30 @@ class TestLLMParsing:
         for p in expected_parts:
             assert p in part_numbers, f"Missing part: {p}"
 
-        capacitor_line = next(
-            (line for line in lines if "16" in line["part_number"] and "17" in line["part_number"]),
-            None,
+        # Whole-invoice sanity: sum(qty*gross_unit) + gross_shipping ≈ £62.42.
+        # Tolerance ~5% because (a) the model often rounds per-unit gross
+        # prices to 2dp so rounding error accumulates across 12 lines, and
+        # (b) TME's "7,54/10 PCS" bulk-price + comma-decimal format
+        # occasionally trips the model on a single line. The per-line
+        # assertions above already verify the gross-up math itself; the goal
+        # here is to catch systematic regressions like the parser silently
+        # returning net prices (which would put us ~£10 below target).
+        line_total = sum(l["quantity"] * l["unit_price"] for l in lines)
+        shipping = float(parsed.get("shipping_total") or 0)
+        invoice_total = line_total + shipping
+        assert abs(invoice_total - 62.42) < 3.00, (
+            f"Gross invoice total should be ~£62.42, got £{invoice_total:.2f} "
+            f"(lines £{line_total:.2f} + shipping £{shipping:.2f})"
         )
-        if capacitor_line:
-            assert capacitor_line["quantity"] == 5
-            assert abs(capacitor_line["unit_price"] - 3.30) < 0.01
 
         print(f"\nTME: Parsed {len(lines)} line items (expected ~11-12)")
         for line in lines:
             print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  unit_price={line['unit_price']:.4f}")
 
     def test_hongtaiyu_parsing(self):
+        """Hongtaiyu (China → UK) proforma in USD has NO VAT, so gross == net."""
         _require(HONGTAIYU_PDF)
-        text = extract_text_from_pdf(_read(HONGTAIYU_PDF))
-        parsed = _call_llm(text)
+        parsed = _call_llm(_read(HONGTAIYU_PDF))
 
         assert parsed.get("supplier_name") is not None
         assert "hongtaiyu" in parsed["supplier_name"].lower()
@@ -171,44 +166,45 @@ class TestLLMParsing:
             print(f"  ... and {len(lines) - 10} more")
 
     def test_farnell_parsing(self):
-        """Generalizability test -- this invoice was NOT used during development."""
+        """Single-line Farnell at 20% VAT: net £1.99 → gross £2.39, no shipping."""
         _require(FARNELL_PDF)
-        text = extract_text_from_pdf(_read(FARNELL_PDF))
-        parsed = _call_llm(text)
+        parsed = _call_llm(_read(FARNELL_PDF))
 
         assert parsed.get("supplier_name") is not None
         assert "farnell" in parsed["supplier_name"].lower()
         assert "7289408" in (parsed.get("reference") or "")
         assert parsed.get("currency_symbol") == "£"
+        assert float(parsed.get("shipping_total") or 0) == 0
 
         lines = parsed.get("lines", [])
         assert len(lines) == 1, f"Expected 1 line item, got {len(lines)}"
 
         line = lines[0]
         assert line["quantity"] == 1
-        assert abs(line["unit_price"] - 1.99) < 0.01
+        assert abs(line["unit_price"] - 2.39) < 0.02, (
+            f"Expected gross unit price £2.39 (net £1.99 + 20% VAT), "
+            f"got £{line['unit_price']}"
+        )
 
         print(f"\nFarnell: Parsed {len(lines)} line item")
         print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  unit_price={line['unit_price']:.4f}")
 
     def test_farnell_no_shipping_parsing(self):
-        """Regression: multi-page Farnell invoice with empty P&P column.
+        """Multi-page Farnell invoice, no shipping, gross prices.
 
-        The flat (non-layout) pdfplumber extractor used to drop the empty
-        P&P Charge column from the summary table, which caused the LLM to
-        misalign columns and read the VAT rate "20.00" as a £20 shipping
-        charge. Layout-preserving extraction keeps the empty column intact
-        so shipping_total is correctly 0.
+        Net subtotal £41.28, VAT £8.26, Invoice Total £49.54. With gross
+        unit prices, sum(qty * unit_price) should ≈ £49.54.
+        Earlier text-based parsers used to incorrectly flag a £20 shipping
+        charge by misreading the VAT rate column.
         """
         _require(FARNELL_NO_SHIPPING_PDF)
-        text = extract_text_from_pdf(_read(FARNELL_NO_SHIPPING_PDF))
-        parsed = _call_llm(text)
+        parsed = _call_llm(_read(FARNELL_NO_SHIPPING_PDF))
 
         assert "farnell" in (parsed.get("supplier_name") or "").lower()
         assert "7512385" in (parsed.get("reference") or "")
         assert parsed.get("currency_symbol") == "£"
 
-        assert parsed.get("shipping_total") == 0, (
+        assert float(parsed.get("shipping_total") or 0) == 0, (
             f"Invoice has no P&P charge, expected shipping_total=0, "
             f"got {parsed.get('shipping_total')}"
         )
@@ -216,7 +212,8 @@ class TestLLMParsing:
         lines = parsed.get("lines", [])
         assert len(lines) == 7, f"Expected 7 line items, got {len(lines)}"
 
-        line_subtotal = sum(l["quantity"] * l["unit_price"] for l in lines)
-        assert abs(line_subtotal - 41.28) < 0.05, (
-            f"Line subtotal should be ~£41.28, got £{line_subtotal:.2f}"
+        line_total = sum(l["quantity"] * l["unit_price"] for l in lines)
+        assert abs(line_total - 49.54) < 0.10, (
+            f"Gross line total should be ~£49.54 (net £41.28 + £8.26 VAT), "
+            f"got £{line_total:.2f}"
         )

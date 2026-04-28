@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-import io
+import base64
 import json
 
-import pdfplumber
 from openai import OpenAI
 
 from app.config import settings
@@ -17,51 +16,77 @@ from app.schemas import ParseInvoiceResponse, ResolvedLineItem
 _alias_repo = SupplierAliasRepository()
 _supplier_quote_repo = SupplierQuoteRepository()
 
+# We send the PDF directly to a vision-capable model rather than extracting
+# text first. Text extraction (even with layout=True) silently mangles
+# multi-column summary tables on real-world invoices (e.g. the Farnell
+# "Vat Rate | Goods | Vat | P&P Charge" block). Letting the model see the
+# rendered page eliminates the entire class of layout-flattening bugs.
+_MODEL = "gpt-4.1"
+
 _SYSTEM_PROMPT = """\
 You are an invoice parser for an electronics parts distributor.
-Extract structured data from the invoice text provided by the user.
+You will be given a PDF invoice as a file input. Read it directly,
+including its tables, columns and totals block, and return structured JSON.
 
-The text is extracted from a PDF with column alignment preserved via spaces.
-Use the spatial alignment of values under their column headers when reading
-totals/summary tables — do NOT confuse a "Vat Rate" % column (e.g. "20.00")
-with a shipping/P&P amount.
+PRICES MUST BE GROSS (VAT-inclusive). The downstream system stores these
+values as the per-unit stock cost, so they must already include any sales
+tax / VAT printed on the invoice.
 
 Rules:
-1. "lines" must contain ONLY physical product/component line items. DO NOT put
-   shipping, transport, carriage, postage (P&P), delivery, bank charges, or
-   insurance rows into "lines".
-2. "shipping_total" is the sum of all shipping / freight / carriage / postage
-   (P&P) / delivery charges on the invoice, as a single decimal number in the
-   invoice currency. Use the net/pre-tax amount where both are shown. Return 0
-   if the invoice shows no shipping charge. Exclude handling fees unless they
-   are clearly a delivery charge.
-   - CRITICAL: A label like "P&P Charge", "Shipping", "Carriage", "Delivery",
-     etc. with NO numeric value next to it (or a blank column underneath it)
-     means there is NO shipping charge — return 0. Do NOT borrow a number
-     from a different column (such as the VAT rate %, goods subtotal, or VAT
-     amount) just because a shipping label exists on the page.
+
+1. "lines" must contain ONLY physical product / component line items. DO NOT
+   put shipping, transport, carriage, postage (P&P), delivery, bank charges,
+   handling or insurance rows into "lines".
+
+2. "unit_price" is the GROSS (VAT-inclusive) price per single unit, as a
+   decimal number in the invoice currency.
+   - If the invoice prints both net and gross per unit, use the gross.
+   - If the invoice prints only a net price plus a VAT rate column (e.g.
+     Farnell prints `Net Price 0.9450  Vat Rate 20.00`), compute
+     gross = net * (1 + rate/100). Round to 4 decimal places.
+   - If the invoice has zero VAT (rate is 0% or the invoice has no VAT
+     section at all — e.g. proforma invoices from non-VAT-registered
+     overseas suppliers), gross == net; just return the printed price.
+   - If the invoice shows a bulk price like "8,73/10 PCS", compute per-unit:
+     8.73 / 10 = 0.873 (then apply VAT if applicable).
+   - Convert European comma decimals to dots: "1,95" → 1.95.
+
+3. "shipping_total" is the GROSS (VAT-inclusive) sum of all shipping /
+   freight / carriage / postage (P&P) / delivery charges, as a single
+   decimal number in the invoice currency. Apply the same gross-up rule as
+   for unit_price. Return 0 if the invoice shows no shipping charge.
+   - CRITICAL: A label like "P&P Charge", "Shipping", "Carriage", or
+     "Delivery" with NO numeric value next to it means there is NO shipping
+     charge — return 0. Do NOT borrow a number from a different column
+     (VAT rate %, goods subtotal, VAT amount, etc.) just because a shipping
+     label exists on the page.
    - A "Vat Rate" of "20.00" (a percentage) is NEVER the shipping amount.
-3. "part_number" must be the manufacturer or distributor part number exactly as
-   printed (e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve
+
+4. "part_number" must be the manufacturer or distributor part number exactly
+   as printed (e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve
    original casing and dashes.
-4. "quantity" is the integer count of items (e.g. "5 PCS" → 5).
-5. "unit_price" is the price PER SINGLE UNIT as a decimal number.
-   - If the invoice shows a bulk price like "8,73/10 PCS", compute per-unit: 8.73 / 10 = 0.873
-   - Convert European comma decimals to dots: "1,95" → 1.95
-   - Use the net/pre-tax price when both net and gross are shown.
+
+5. "quantity" is the integer count of items (e.g. "5 PCS" → 5).
+
 6. "description" is a short description if present (one line max), or null.
+
 7. "currency_symbol" is one of "£", "$", "€" based on the document.
+
 8. "supplier_name" is the company that issued the invoice.
-9. "reference" is the invoice number, order number, or other primary reference identifier.
 
-Sanity check before returning: if the invoice prints an explicit
-"Invoice Total" / "Grand Total" / "Total Due", then
-  shipping_total + sum(quantity*unit_price for each line) + any displayed VAT
-should be approximately equal to that total. If your shipping_total breaks
-this equality and there is no clearly labelled shipping row with a value, set
-shipping_total = 0.
+9. "reference" is the invoice number, order number, or other primary
+   reference identifier.
 
-Return ONLY a JSON object with this exact structure (no markdown, no extra text):
+SANITY CHECK before returning: if the invoice prints an explicit
+"Invoice Total" / "Grand Total" / "Total Due" / "TOTAL" line, then
+   shipping_total + sum(quantity * unit_price for each line)
+should be approximately equal to that printed total (within 1% to allow for
+rounding when grossing-up per-unit). If you cannot make the totals balance,
+double-check whether you accidentally returned net prices — if so, multiply
+each unit_price (and shipping_total) by (1 + vat_rate/100).
+
+Return ONLY a JSON object with this exact structure (no markdown, no extra
+text):
 {
   "supplier_name": "string or null",
   "reference": "string or null",
@@ -78,43 +103,48 @@ Return ONLY a JSON object with this exact structure (no markdown, no extra text)
 }"""
 
 
-def extract_text_from_pdf(file_bytes: bytes) -> str:
-    """Extract text from a PDF, preserving the visual column layout.
+def _call_llm(file_bytes: bytes) -> dict:
+    """Send the PDF to OpenAI and return the parsed JSON dict.
 
-    pdfplumber's default ``extract_text`` flattens multi-column tables onto a
-    single line, which mangles invoice summary blocks (the canonical example
-    is a Farnell "Vat Rate | Goods | Vat | P&P Charge" row where the P&P
-    column is empty — the flat extractor drops the empty cell entirely and
-    the LLM downstream then mis-aligns "20.00" (a VAT %) as a shipping
-    charge). ``layout=True`` reconstructs the original spatial layout using
-    the character positions, so empty columns remain empty and downstream
-    parsing is far more robust.
+    Uses the Responses API with an ``input_file`` content block so the model
+    sees the rendered PDF (layout, tables, column alignment) rather than a
+    flattened text approximation.
     """
-    with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        pages = []
-        for page in pdf.pages:
-            raw = page.extract_text(layout=True) or ""
-            stripped = "\n".join(line.rstrip() for line in raw.splitlines())
-            pages.append(stripped)
-    return "\n\n".join(pages)
-
-
-def _call_llm(text: str) -> dict:
     if not settings.OPENAI_API_KEY:
         raise AppError(500, "OPENAI_API_KEY is not configured")
+    if not file_bytes:
+        raise AppError(400, "Empty PDF file")
 
+    pdf_b64 = base64.b64encode(file_bytes).decode("ascii")
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": _SYSTEM_PROMPT},
-            {"role": "user", "content": f"Parse this invoice:\n\n{text}"},
+    response = client.responses.create(
+        model=_MODEL,
+        instructions=_SYSTEM_PROMPT,
+        input=[
+            {
+                "role": "user",
+                "content": [
+                    {
+                        "type": "input_text",
+                        "text": (
+                            "Parse this invoice and return ONLY the JSON object "
+                            "described in the system instructions. Remember: prices "
+                            "must be GROSS (VAT-inclusive)."
+                        ),
+                    },
+                    {
+                        "type": "input_file",
+                        "filename": "invoice.pdf",
+                        "file_data": f"data:application/pdf;base64,{pdf_b64}",
+                    },
+                ],
+            }
         ],
+        text={"format": {"type": "json_object"}},
         temperature=0,
     )
 
-    raw = response.choices[0].message.content or "{}"
+    raw = (response.output_text or "").strip() or "{}"
     return json.loads(raw)
 
 
@@ -245,12 +275,11 @@ def _sse(event: str, data: dict) -> str:
 def parse_invoice_stream(file_bytes: bytes):
     """Yield SSE events: header → line (×N) → done, so the frontend can render progressively."""
     try:
-        text = extract_text_from_pdf(file_bytes)
-        if not text.strip():
-            yield _sse("error", {"error": "Could not extract any text from the PDF"})
+        if not file_bytes:
+            yield _sse("error", {"error": "Empty PDF file"})
             return
 
-        parsed = _call_llm(text)
+        parsed = _call_llm(file_bytes)
 
         supplier_name = parsed.get("supplier_name")
         matched_supplier_id = _resolve_supplier(supplier_name)
@@ -299,11 +328,10 @@ def parse_invoice_stream(file_bytes: bytes):
 
 
 def parse_invoice(file_bytes: bytes) -> ParseInvoiceResponse:
-    text = extract_text_from_pdf(file_bytes)
-    if not text.strip():
-        raise AppError(400, "Could not extract any text from the PDF")
+    if not file_bytes:
+        raise AppError(400, "Empty PDF file")
 
-    parsed = _call_llm(text)
+    parsed = _call_llm(file_bytes)
 
     supplier_name = parsed.get("supplier_name")
     matched_supplier_id = _resolve_supplier(supplier_name)

@@ -171,8 +171,7 @@ class TestParseInvoice:
     @patch("app.services.invoice_parser._resolve_items")
     @patch("app.services.invoice_parser._resolve_supplier", return_value=10)
     @patch("app.services.invoice_parser._call_llm")
-    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="Invoice text here")
-    def test_happy_path(self, _mock_pdf, mock_llm, _mock_supplier, mock_items):
+    def test_happy_path(self, mock_llm, _mock_supplier, mock_items):
         mock_llm.return_value = {
             "supplier_name": "TME",
             "reference": "123",
@@ -197,12 +196,13 @@ class TestParseInvoice:
         assert result.matched_supplier_id == 10
         assert result.shipping_total == 4.25
         assert len(result.lines) == 1
+        # Verify the LLM was called with the raw bytes (no text extraction step).
+        mock_llm.assert_called_once_with(b"fake-pdf")
 
     @patch("app.services.invoice_parser._resolve_items", return_value=[])
     @patch("app.services.invoice_parser._resolve_supplier", return_value=None)
     @patch("app.services.invoice_parser._call_llm")
-    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="Invoice text here")
-    def test_missing_shipping_defaults_to_zero(self, _pdf, mock_llm, _sup, _items):
+    def test_missing_shipping_defaults_to_zero(self, mock_llm, _sup, _items):
         mock_llm.return_value = {
             "supplier_name": None,
             "reference": None,
@@ -212,10 +212,9 @@ class TestParseInvoice:
         result = parse_invoice(b"fake-pdf")
         assert result.shipping_total == 0.0
 
-    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="   ")
-    def test_raises_on_empty_text(self, _mock_pdf):
-        with pytest.raises(AppError, match="Could not extract any text"):
-            parse_invoice(b"empty-pdf")
+    def test_raises_on_empty_pdf(self):
+        with pytest.raises(AppError, match="Empty PDF"):
+            parse_invoice(b"")
 
 
 class TestParseInvoiceStream:
@@ -223,8 +222,7 @@ class TestParseInvoiceStream:
     @patch("app.services.invoice_parser.supabase")
     @patch("app.services.invoice_parser._resolve_supplier", return_value=5)
     @patch("app.services.invoice_parser._call_llm")
-    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="Invoice text")
-    def test_yields_header_lines_done(self, _pdf, mock_llm, _sup, mock_sb, _loc):
+    def test_yields_header_lines_done(self, mock_llm, _sup, mock_sb, _loc):
         mock_llm.return_value = {
             "supplier_name": "Acme",
             "reference": "INV-1",
@@ -242,19 +240,20 @@ class TestParseInvoiceStream:
         assert '"shipping_total": 9.99' in header_events[0]
         assert any("event: line" in e for e in events)
         assert any("event: done" in e for e in events)
+        mock_llm.assert_called_once_with(b"pdf-bytes")
 
-    @patch("app.services.invoice_parser.extract_text_from_pdf", return_value="  ")
-    def test_yields_error_on_empty_pdf(self, _pdf):
-        events = list(parse_invoice_stream(b"empty"))
+    def test_yields_error_on_empty_pdf(self):
+        events = list(parse_invoice_stream(b""))
         assert len(events) == 1
         assert "error" in events[0]
+        assert "Empty PDF" in events[0]
 
-    @patch("app.services.invoice_parser.extract_text_from_pdf", side_effect=AppError(500, "broken"))
-    def test_yields_error_on_app_error(self, _pdf):
+    @patch("app.services.invoice_parser._call_llm", side_effect=AppError(500, "broken"))
+    def test_yields_error_on_app_error(self, _llm):
         events = list(parse_invoice_stream(b"bad"))
         assert any("broken" in e for e in events)
 
-    @patch("app.services.invoice_parser.extract_text_from_pdf", side_effect=RuntimeError("boom"))
-    def test_yields_error_on_unexpected_exception(self, _pdf):
+    @patch("app.services.invoice_parser._call_llm", side_effect=RuntimeError("boom"))
+    def test_yields_error_on_unexpected_exception(self, _llm):
         events = list(parse_invoice_stream(b"bad"))
         assert any("boom" in e for e in events)
