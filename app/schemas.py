@@ -142,6 +142,21 @@ class SupplierQuoteInput(BaseModel):
     note: str | None = Field(default=None, max_length=500)
 
 
+class SupplierAliasInput(BaseModel):
+    alias: str = Field(min_length=1, max_length=255)
+
+
+class SupplierAlias(BaseModel):
+    id: int
+    alias: str
+    supplier_id: int
+
+
+class SupplierPartMappingInput(BaseModel):
+    supplier_id: int
+    supplier_part_number: str = Field(min_length=1, max_length=255)
+
+
 class CreateUserInput(BaseModel):
     email: EmailStr
     password: str = Field(min_length=6)

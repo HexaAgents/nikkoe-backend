@@ -8,7 +8,7 @@ from app.repositories.item import ItemRepository
 from app.repositories.receipt import ReceiptRepository
 from app.repositories.sale import SaleRepository
 from app.repositories.supplier_quote import SupplierQuoteRepository
-from app.schemas import ItemInput, ItemUpdateInput
+from app.schemas import ItemInput, ItemUpdateInput, SupplierPartMappingInput
 from app.services.item import ItemService
 
 
@@ -100,3 +100,17 @@ def update_item(item_id: int, body: ItemUpdateInput, user: CurrentUser = Depends
 def delete_item(item_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_item(item_id)
     return {"success": True}
+
+
+@router.post("/{item_id}/supplier-mappings", status_code=201)
+def create_item_supplier_mapping(
+    item_id: int,
+    body: SupplierPartMappingInput,
+    user: CurrentUser = Depends(get_current_user),
+):
+    """Record that *supplier* prints `supplier_part_number` for this item, so
+    future invoices from that supplier auto-resolve to this item without the
+    user touching the resolution dialog again."""
+    return quote_repo.set_supplier_part_number(
+        item_id, body.supplier_id, body.supplier_part_number
+    )

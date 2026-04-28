@@ -12,6 +12,7 @@ when they are not present (e.g. in CI).
 from __future__ import annotations
 
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -28,6 +29,11 @@ WORKSPACE = Path(__file__).resolve().parent.parent.parent
 TME_PDF = WORKSPACE / "4261503966.pdf"
 HONGTAIYU_PDF = WORKSPACE / "Proforma-Invoice20260311.pdf"
 FARNELL_PDF = WORKSPACE / "7289408.pdf"
+# Multi-page Farnell invoice with NO shipping charge. The summary table on
+# page 2 has a "P&P Charge" column that is empty and a "Vat Rate" column
+# showing 20.00 — the parser used to mis-read the 20.00 as a £20 shipping
+# charge, inflating the displayed total from £49.54 to £61.28.
+FARNELL_NO_SHIPPING_PDF = WORKSPACE / "7512385.pdf"
 
 
 def _read(path: Path) -> bytes:
@@ -53,7 +59,9 @@ class TestTextExtraction:
         text = extract_text_from_pdf(_read(HONGTAIYU_PDF))
         assert "UCN5818EPF" in text
         assert "TC5092AP" in text
-        assert "HK Hongtaiyu" in text
+        # Layout-preserving extraction may insert multiple spaces between
+        # words when reconstructing column alignment, so match flexibly.
+        assert re.search(r"HK\s+Hongtaiyu", text)
 
     def test_farnell_extraction(self):
         _require(FARNELL_PDF)
@@ -182,3 +190,33 @@ class TestLLMParsing:
 
         print(f"\nFarnell: Parsed {len(lines)} line item")
         print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  unit_price={line['unit_price']:.4f}")
+
+    def test_farnell_no_shipping_parsing(self):
+        """Regression: multi-page Farnell invoice with empty P&P column.
+
+        The flat (non-layout) pdfplumber extractor used to drop the empty
+        P&P Charge column from the summary table, which caused the LLM to
+        misalign columns and read the VAT rate "20.00" as a £20 shipping
+        charge. Layout-preserving extraction keeps the empty column intact
+        so shipping_total is correctly 0.
+        """
+        _require(FARNELL_NO_SHIPPING_PDF)
+        text = extract_text_from_pdf(_read(FARNELL_NO_SHIPPING_PDF))
+        parsed = _call_llm(text)
+
+        assert "farnell" in (parsed.get("supplier_name") or "").lower()
+        assert "7512385" in (parsed.get("reference") or "")
+        assert parsed.get("currency_symbol") == "£"
+
+        assert parsed.get("shipping_total") == 0, (
+            f"Invoice has no P&P charge, expected shipping_total=0, "
+            f"got {parsed.get('shipping_total')}"
+        )
+
+        lines = parsed.get("lines", [])
+        assert len(lines) == 7, f"Expected 7 line items, got {len(lines)}"
+
+        line_subtotal = sum(l["quantity"] * l["unit_price"] for l in lines)
+        assert abs(line_subtotal - 41.28) < 0.05, (
+            f"Line subtotal should be ~£41.28, got £{line_subtotal:.2f}"
+        )

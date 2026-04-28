@@ -10,11 +10,21 @@ from app.config import settings
 from app.dependencies import supabase
 from app.errors import AppError
 from app.repositories.base import dash_insensitive_pattern
+from app.repositories.supplier_alias import SupplierAliasRepository
+from app.repositories.supplier_quote import SupplierQuoteRepository
 from app.schemas import ParseInvoiceResponse, ResolvedLineItem
+
+_alias_repo = SupplierAliasRepository()
+_supplier_quote_repo = SupplierQuoteRepository()
 
 _SYSTEM_PROMPT = """\
 You are an invoice parser for an electronics parts distributor.
 Extract structured data from the invoice text provided by the user.
+
+The text is extracted from a PDF with column alignment preserved via spaces.
+Use the spatial alignment of values under their column headers when reading
+totals/summary tables — do NOT confuse a "Vat Rate" % column (e.g. "20.00")
+with a shipping/P&P amount.
 
 Rules:
 1. "lines" must contain ONLY physical product/component line items. DO NOT put
@@ -25,6 +35,12 @@ Rules:
    invoice currency. Use the net/pre-tax amount where both are shown. Return 0
    if the invoice shows no shipping charge. Exclude handling fees unless they
    are clearly a delivery charge.
+   - CRITICAL: A label like "P&P Charge", "Shipping", "Carriage", "Delivery",
+     etc. with NO numeric value next to it (or a blank column underneath it)
+     means there is NO shipping charge — return 0. Do NOT borrow a number
+     from a different column (such as the VAT rate %, goods subtotal, or VAT
+     amount) just because a shipping label exists on the page.
+   - A "Vat Rate" of "20.00" (a percentage) is NEVER the shipping amount.
 3. "part_number" must be the manufacturer or distributor part number exactly as
    printed (e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve
    original casing and dashes.
@@ -37,6 +53,13 @@ Rules:
 7. "currency_symbol" is one of "£", "$", "€" based on the document.
 8. "supplier_name" is the company that issued the invoice.
 9. "reference" is the invoice number, order number, or other primary reference identifier.
+
+Sanity check before returning: if the invoice prints an explicit
+"Invoice Total" / "Grand Total" / "Total Due", then
+  shipping_total + sum(quantity*unit_price for each line) + any displayed VAT
+should be approximately equal to that total. If your shipping_total breaks
+this equality and there is no clearly labelled shipping row with a value, set
+shipping_total = 0.
 
 Return ONLY a JSON object with this exact structure (no markdown, no extra text):
 {
@@ -56,8 +79,23 @@ Return ONLY a JSON object with this exact structure (no markdown, no extra text)
 
 
 def extract_text_from_pdf(file_bytes: bytes) -> str:
+    """Extract text from a PDF, preserving the visual column layout.
+
+    pdfplumber's default ``extract_text`` flattens multi-column tables onto a
+    single line, which mangles invoice summary blocks (the canonical example
+    is a Farnell "Vat Rate | Goods | Vat | P&P Charge" row where the P&P
+    column is empty — the flat extractor drops the empty cell entirely and
+    the LLM downstream then mis-aligns "20.00" (a VAT %) as a shipping
+    charge). ``layout=True`` reconstructs the original spatial layout using
+    the character positions, so empty columns remain empty and downstream
+    parsing is far more robust.
+    """
     with pdfplumber.open(io.BytesIO(file_bytes)) as pdf:
-        pages = [page.extract_text() or "" for page in pdf.pages]
+        pages = []
+        for page in pdf.pages:
+            raw = page.extract_text(layout=True) or ""
+            stripped = "\n".join(line.rstrip() for line in raw.splitlines())
+            pages.append(stripped)
     return "\n\n".join(pages)
 
 
@@ -101,33 +139,62 @@ def _resolve_location(item_id: int) -> tuple[int | None, str | None]:
     return None, None
 
 
-def _resolve_items(lines: list[dict]) -> list[ResolvedLineItem]:
+def _lookup_item_by_part_number(part_number: str, supplier_id: int | None) -> tuple[int | None, str | None]:
+    """Resolve a printed part number to a DB item.
+
+    Tries, in order:
+    1. A user-recorded supplier-part-number alias (item_supplier.supplier_part_number).
+       Highest signal: an actual human said "this supplier prints this string for this item".
+    2. The historical dash-insensitive fuzzy match against item.item_id.
+    """
+    if not part_number:
+        return None, None
+
+    # 1. User-recorded supplier alias.
+    if supplier_id is not None:
+        item_id = _supplier_quote_repo.find_item_by_supplier_part_number(supplier_id, part_number)
+        if item_id is not None:
+            try:
+                resp = (
+                    supabase.table("item")
+                    .select("id, item_id")
+                    .eq("id", item_id)
+                    .limit(1)
+                    .execute()
+                )
+                if resp.data:
+                    return resp.data[0]["id"], resp.data[0]["item_id"]
+            except Exception:
+                pass
+
+    # 2. Fuzzy match by item_id.
+    try:
+        pattern = dash_insensitive_pattern(part_number)
+        resp = (
+            supabase.table("item").select("id, item_id").filter("item_id", "imatch", pattern).limit(5).execute()
+        )
+        if resp.data:
+            exact = next(
+                (r for r in resp.data if r["item_id"].upper() == part_number.upper()),
+                None,
+            )
+            best = exact or resp.data[0]
+            return best["id"], best["item_id"]
+    except Exception:
+        pass
+    return None, None
+
+
+def _resolve_items(lines: list[dict], supplier_id: int | None = None) -> list[ResolvedLineItem]:
     resolved: list[ResolvedLineItem] = []
 
     for line in lines:
         part_number = line.get("part_number", "")
-        matched_id = None
-        matched_name = None
+        matched_id, matched_name = _lookup_item_by_part_number(part_number, supplier_id)
         matched_location_id = None
         matched_location_code = None
-
-        if part_number:
-            try:
-                pattern = dash_insensitive_pattern(part_number)
-                resp = (
-                    supabase.table("item").select("id, item_id").filter("item_id", "imatch", pattern).limit(5).execute()
-                )
-                if resp.data:
-                    exact = next(
-                        (r for r in resp.data if r["item_id"].upper() == part_number.upper()),
-                        None,
-                    )
-                    best = exact or resp.data[0]
-                    matched_id = best["id"]
-                    matched_name = best["item_id"]
-                    matched_location_id, matched_location_code = _resolve_location(matched_id)
-            except Exception:
-                pass
+        if matched_id is not None:
+            matched_location_id, matched_location_code = _resolve_location(matched_id)
 
         resolved.append(
             ResolvedLineItem(
@@ -148,6 +215,16 @@ def _resolve_items(lines: list[dict]) -> list[ResolvedLineItem]:
 def _resolve_supplier(name: str | None) -> int | None:
     if not name:
         return None
+
+    # 1. User-recorded alias takes priority — "Premier Farnell UK Ltd" → Farnell.
+    try:
+        alias = _alias_repo.find_by_alias(name)
+        if alias:
+            return alias["supplier_id"]
+    except Exception:
+        pass
+
+    # 2. Fall back to fuzzy name match.
     try:
         resp = supabase.table("supplier").select("id, name").ilike("name", f"%{name}%").limit(5).execute()
         if resp.data:
@@ -194,26 +271,10 @@ def parse_invoice_stream(file_bytes: bytes):
         )
         for line_data in lines:
             pn = line_data.get("part_number", "")
-            mid, mname, loc_id, loc_code = None, None, None, None
-
-            if pn:
-                try:
-                    pattern = dash_insensitive_pattern(pn)
-                    resp = (
-                        supabase.table("item")
-                        .select("id, item_id")
-                        .filter("item_id", "imatch", pattern)
-                        .limit(5)
-                        .execute()
-                    )
-                    if resp.data:
-                        exact = next((r for r in resp.data if r["item_id"].upper() == pn.upper()), None)
-                        best = exact or resp.data[0]
-                        mid = best["id"]
-                        mname = best["item_id"]
-                        loc_id, loc_code = _resolve_location(mid)
-                except Exception:
-                    pass
+            mid, mname = _lookup_item_by_part_number(pn, matched_supplier_id)
+            loc_id, loc_code = (None, None)
+            if mid is not None:
+                loc_id, loc_code = _resolve_location(mid)
 
             yield _sse(
                 "line",
@@ -246,7 +307,7 @@ def parse_invoice(file_bytes: bytes) -> ParseInvoiceResponse:
 
     supplier_name = parsed.get("supplier_name")
     matched_supplier_id = _resolve_supplier(supplier_name)
-    resolved_lines = _resolve_items(parsed.get("lines", []))
+    resolved_lines = _resolve_items(parsed.get("lines", []), matched_supplier_id)
 
     return ParseInvoiceResponse(
         supplier_name=supplier_name,

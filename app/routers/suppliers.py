@@ -2,11 +2,13 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.middleware.auth import CurrentUser, get_current_user
 from app.repositories.supplier import SupplierRepository
-from app.schemas import SupplierInput
+from app.repositories.supplier_alias import SupplierAliasRepository
+from app.schemas import SupplierAliasInput, SupplierInput
 from app.services.supplier import SupplierService
 
 repo = SupplierRepository()
 service = SupplierService(repo)
+alias_repo = SupplierAliasRepository()
 router = APIRouter(prefix="/api/suppliers", tags=["suppliers"])
 
 
@@ -41,4 +43,27 @@ def create_supplier(body: SupplierInput, user: CurrentUser = Depends(get_current
 @router.delete("/{supplier_id}")
 def delete_supplier(supplier_id: int, user: CurrentUser = Depends(get_current_user)):
     service.delete_supplier(supplier_id)
+    return {"success": True}
+
+
+@router.get("/{supplier_id}/aliases")
+def list_supplier_aliases(supplier_id: int, user: CurrentUser = Depends(get_current_user)):
+    return alias_repo.find_by_supplier(supplier_id)
+
+
+@router.post("/{supplier_id}/aliases", status_code=201)
+def create_supplier_alias(
+    supplier_id: int,
+    body: SupplierAliasInput,
+    user: CurrentUser = Depends(get_current_user),
+):
+    if not service.get_supplier(supplier_id):
+        raise HTTPException(status_code=404, detail="Supplier not found")
+    created_by = user.profile.user_id if user.profile else None
+    return alias_repo.upsert(supplier_id, body.alias, created_by=created_by)
+
+
+@router.delete("/aliases/{alias_id}")
+def delete_supplier_alias(alias_id: int, user: CurrentUser = Depends(get_current_user)):
+    alias_repo.remove(alias_id)
     return {"success": True}
