@@ -98,9 +98,7 @@ class TestLLMParsing:
             assert line.get("vat_rate") in (20, 20.0), (
                 f"Line {line['part_number']} expected 20% VAT, got {line.get('vat_rate')}"
             )
-            assert line.get("unit_price_net") is not None, (
-                f"Line {line['part_number']} missing unit_price_net"
-            )
+            assert line.get("unit_price_net") is not None, f"Line {line['part_number']} missing unit_price_net"
 
         # Per-line NET checks against printed prices.
         pec_line = next(line for line in lines if line["part_number"] == "PEC16-4215F-N0024")
@@ -161,8 +159,10 @@ class TestLLMParsing:
         _require(TME2_PDF)
         parsed = _call_llm(_read(TME2_PDF))
 
-        assert "transfer" in (parsed.get("supplier_name") or "").lower() or \
-            "tme" in (parsed.get("supplier_name") or "").lower()
+        assert (
+            "transfer" in (parsed.get("supplier_name") or "").lower()
+            or "tme" in (parsed.get("supplier_name") or "").lower()
+        )
         assert "4261509868" in (parsed.get("reference") or "")
         assert parsed.get("currency_symbol") == "£"
 
@@ -182,8 +182,15 @@ class TestLLMParsing:
         )
 
         expected_parts = [
-            "TLC27L4CN", "D5SB60-7000", "EVQP0E07K", "AO3403", "SN74LS247N",
-            "SMAJ13A-TR", "SN74AHCT32N", "T300-26D", "ERZV10D911",
+            "TLC27L4CN",
+            "D5SB60-7000",
+            "EVQP0E07K",
+            "AO3403",
+            "SN74LS247N",
+            "SMAJ13A-TR",
+            "SN74AHCT32N",
+            "T300-26D",
+            "ERZV10D911",
         ]
         for p in expected_parts:
             assert p in part_numbers, f"Missing part: {p}"
@@ -197,15 +204,11 @@ class TestLLMParsing:
         # Net product subtotal ≈ £20.38 (close to printed £28.08 net minus
         # £7.70 net shipping). 5% tolerance for LLM rounding.
         product_net = sum(ln["quantity"] * ln["unit_price_net"] for ln in lines)
-        assert abs(product_net - 20.38) < 1.00, (
-            f"Net product subtotal should be ~£20.38, got £{product_net:.2f}"
-        )
+        assert abs(product_net - 20.38) < 1.00, f"Net product subtotal should be ~£20.38, got £{product_net:.2f}"
 
         # Whole-invoice net + shipping ≈ £28.08.
         invoice_net = product_net + float(parsed.get("shipping_net") or 0)
-        assert abs(invoice_net - 28.08) < 1.00, (
-            f"Full net total should be ~£28.08, got £{invoice_net:.2f}"
-        )
+        assert abs(invoice_net - 28.08) < 1.00, f"Full net total should be ~£28.08, got £{invoice_net:.2f}"
 
         # Printed totals block should show 28.08 / 5.62 / 33.70 if extracted.
         if parsed.get("printed_totals"):
@@ -246,8 +249,7 @@ class TestLLMParsing:
         for line in lines:
             rate = line.get("vat_rate")
             assert rate is None or rate == 0, (
-                f"Line {line['part_number']} unexpected vat_rate={rate} "
-                f"(USD proforma has no VAT)"
+                f"Line {line['part_number']} unexpected vat_rate={rate} (USD proforma has no VAT)"
             )
 
         ucn_line = next(line for line in lines if line["part_number"] == "UCN5818EPF")
@@ -262,10 +264,7 @@ class TestLLMParsing:
 
         print(f"\nHongtaiyu: Parsed {len(lines)} line items (expected ~50+)")
         for line in lines[:10]:
-            print(
-                f"  {line['part_number']:30s} qty={line['quantity']:3d}  "
-                f"net={line['unit_price_net']:.4f}"
-            )
+            print(f"  {line['part_number']:30s} qty={line['quantity']:3d}  net={line['unit_price_net']:.4f}")
         if len(lines) > 10:
             print(f"  ... and {len(lines) - 10} more")
 
@@ -293,10 +292,7 @@ class TestLLMParsing:
         )
         # Gross = net * (1 + rate/100).
         gross = line["unit_price_net"] * (1 + line["vat_rate"] / 100)
-        assert abs(gross - 2.388) < 0.02, (
-            f"Expected gross unit price £2.388 (net £1.99 + 20% VAT), "
-            f"computed £{gross}"
-        )
+        assert abs(gross - 2.388) < 0.02, f"Expected gross unit price £2.388 (net £1.99 + 20% VAT), computed £{gross}"
 
         # Printed totals: 1.99 / 0.40 / 2.39 if extracted.
         if parsed.get("printed_totals"):
@@ -324,8 +320,7 @@ class TestLLMParsing:
 
         assert (parsed.get("shipping_net") or 0) == 0
         assert float(parsed.get("shipping_total") or 0) == 0, (
-            f"Invoice has no P&P charge, expected shipping_total=0, "
-            f"got {parsed.get('shipping_total')}"
+            f"Invoice has no P&P charge, expected shipping_total=0, got {parsed.get('shipping_total')}"
         )
 
         lines = parsed.get("lines", [])
@@ -338,18 +333,12 @@ class TestLLMParsing:
 
         # Net line total ≈ £41.28.
         net_total = sum(ln["quantity"] * ln["unit_price_net"] for ln in lines)
-        assert abs(net_total - 41.28) < 0.10, (
-            f"Net line total should be ~£41.28, got £{net_total:.2f}"
-        )
+        assert abs(net_total - 41.28) < 0.10, f"Net line total should be ~£41.28, got £{net_total:.2f}"
 
         # Gross line total ≈ £49.54 — derive gross from net + rate.
-        gross_total = sum(
-            ln["quantity"] * ln["unit_price_net"] * (1 + ln["vat_rate"] / 100)
-            for ln in lines
-        )
+        gross_total = sum(ln["quantity"] * ln["unit_price_net"] * (1 + ln["vat_rate"] / 100) for ln in lines)
         assert abs(gross_total - 49.54) < 0.10, (
-            f"Gross line total should be ~£49.54 (net £41.28 + £8.26 VAT), "
-            f"computed £{gross_total:.2f}"
+            f"Gross line total should be ~£49.54 (net £41.28 + £8.26 VAT), computed £{gross_total:.2f}"
         )
 
         # Printed totals: 41.28 / 8.26 / 49.54 if extracted.

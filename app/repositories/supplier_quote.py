@@ -54,9 +54,7 @@ class SupplierQuoteRepository:
         except Exception:
             return None
 
-    def set_supplier_part_number(
-        self, item_id: int, supplier_id: int, supplier_part_number: str
-    ) -> dict:
+    def set_supplier_part_number(self, item_id: int, supplier_id: int, supplier_part_number: str) -> dict:
         """Record that *supplier* prints *supplier_part_number* for *item*.
 
         Upserts on the existing (item_id, supplier_id) row so this never
@@ -71,11 +69,7 @@ class SupplierQuoteRepository:
                 "supplier_id": supplier_id,
                 "supplier_part_number": clean,
             }
-            response = (
-                supabase.table("item_supplier")
-                .upsert(payload, on_conflict="item_id,supplier_id")
-                .execute()
-            )
+            response = supabase.table("item_supplier").upsert(payload, on_conflict="item_id,supplier_id").execute()
             return response.data[0]
         except AppError:
             raise

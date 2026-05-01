@@ -202,13 +202,7 @@ def _lookup_item_by_part_number(part_number: str, supplier_id: int | None) -> tu
         item_id = _supplier_quote_repo.find_item_by_supplier_part_number(supplier_id, part_number)
         if item_id is not None:
             try:
-                resp = (
-                    supabase.table("item")
-                    .select("id, item_id")
-                    .eq("id", item_id)
-                    .limit(1)
-                    .execute()
-                )
+                resp = supabase.table("item").select("id, item_id").eq("id", item_id).limit(1).execute()
                 if resp.data:
                     return resp.data[0]["id"], resp.data[0]["item_id"]
             except Exception:
@@ -217,9 +211,7 @@ def _lookup_item_by_part_number(part_number: str, supplier_id: int | None) -> tu
     # 2. Fuzzy match by item_id.
     try:
         pattern = dash_insensitive_pattern(part_number)
-        resp = (
-            supabase.table("item").select("id, item_id").filter("item_id", "imatch", pattern).limit(5).execute()
-        )
+        resp = supabase.table("item").select("id, item_id").filter("item_id", "imatch", pattern).limit(5).execute()
         if resp.data:
             exact = next(
                 (r for r in resp.data if r["item_id"].upper() == part_number.upper()),

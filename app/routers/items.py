@@ -111,6 +111,4 @@ def create_item_supplier_mapping(
     """Record that *supplier* prints `supplier_part_number` for this item, so
     future invoices from that supplier auto-resolve to this item without the
     user touching the resolution dialog again."""
-    return quote_repo.set_supplier_part_number(
-        item_id, body.supplier_id, body.supplier_part_number
-    )
+    return quote_repo.set_supplier_part_number(item_id, body.supplier_id, body.supplier_part_number)

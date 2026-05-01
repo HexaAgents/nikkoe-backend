@@ -109,9 +109,7 @@ class TestResolveItems:
         mock_sb.table.return_value.select.return_value.filter.return_value.limit.return_value.execute.return_value = (
             MagicMock(data=[{"id": 42, "item_id": "SN74LS153N"}])
         )
-        result = _resolve_items(
-            [{"part_number": "SN74LS153N", "quantity": 5, "unit_price_net": 0.873, "vat_rate": 20}]
-        )
+        result = _resolve_items([{"part_number": "SN74LS153N", "quantity": 5, "unit_price_net": 0.873, "vat_rate": 20}])
         assert len(result) == 1
         assert result[0].matched_item_id == 42
         assert result[0].quantity == 5
@@ -128,9 +126,7 @@ class TestResolveItems:
         assert result[0].matched_item_id is None
 
     def test_empty_part_number_skips_lookup(self):
-        result = _resolve_items(
-            [{"part_number": "", "quantity": 2, "unit_price_net": 1.0, "vat_rate": 20}]
-        )
+        result = _resolve_items([{"part_number": "", "quantity": 2, "unit_price_net": 1.0, "vat_rate": 20}])
         assert result[0].matched_item_id is None
         assert result[0].quantity == 2
         assert result[0].vat_rate == 20
@@ -149,9 +145,7 @@ class TestResolveItems:
                 ]
             )
         )
-        result = _resolve_items(
-            [{"part_number": "ABC123", "quantity": 1, "unit_price_net": 1.0, "vat_rate": 20}]
-        )
+        result = _resolve_items([{"part_number": "ABC123", "quantity": 1, "unit_price_net": 1.0, "vat_rate": 20}])
         assert result[0].matched_item_id == 2
 
     @patch("app.services.invoice_parser.supabase")
@@ -162,9 +156,7 @@ class TestResolveItems:
 
     def test_no_vat_rate_treated_as_zero(self):
         """Overseas proforma with no VAT system → unit_price == unit_price_net."""
-        result = _resolve_items(
-            [{"part_number": "FOO", "quantity": 1, "unit_price_net": 9.0, "vat_rate": None}]
-        )
+        result = _resolve_items([{"part_number": "FOO", "quantity": 1, "unit_price_net": 9.0, "vat_rate": None}])
         assert result[0].vat_rate is None
         assert result[0].unit_price_net == 9.0
         assert result[0].unit_price == 9.0  # net * 1.00
@@ -299,9 +291,7 @@ class TestParseInvoice:
             "shipping_net": 4.25,
             "shipping_vat_rate": 20,
             "printed_totals": {"net": 28.08, "vat": 5.62, "gross": 33.70},
-            "lines": [
-                {"part_number": "X", "quantity": 1, "unit_price_net": 1.0, "vat_rate": 20}
-            ],
+            "lines": [{"part_number": "X", "quantity": 1, "unit_price_net": 1.0, "vat_rate": 20}],
         }
         mock_items.return_value = [
             ResolvedLineItem(
@@ -379,9 +369,7 @@ class TestParseInvoiceStream:
             "shipping_net": 7.70,
             "shipping_vat_rate": 20,
             "printed_totals": {"net": 28.08, "vat": 5.62, "gross": 33.70},
-            "lines": [
-                {"part_number": "P1", "quantity": 2, "unit_price_net": 3.0, "vat_rate": 20}
-            ],
+            "lines": [{"part_number": "P1", "quantity": 2, "unit_price_net": 3.0, "vat_rate": 20}],
         }
         mock_sb.table.return_value.select.return_value.filter.return_value.limit.return_value.execute.return_value = (
             MagicMock(data=[{"id": 99, "item_id": "P1"}])

@@ -19,11 +19,7 @@ class SupplierAliasRepository:
         # for SELECT, so use ilike with no wildcards, which postgres can still
         # answer using the trigram/gin indexes if any.
         resp = (
-            supabase.table("supplier_alias")
-            .select("id, alias, supplier_id")
-            .ilike("alias", alias)
-            .limit(1)
-            .execute()
+            supabase.table("supplier_alias").select("id, alias, supplier_id").ilike("alias", alias).limit(1).execute()
         )
         rows = resp.data
         if not isinstance(rows, list) or not rows:
