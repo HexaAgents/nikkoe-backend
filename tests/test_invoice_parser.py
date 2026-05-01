@@ -132,7 +132,7 @@ class TestLLMParsing:
         # Tolerance ~5% because TME's "7,54/10 PCS" bulk-price + comma-decimal
         # format occasionally trips the model on a single line; the per-line
         # assertions above already verify the parsing itself.
-        net_total = sum(l["quantity"] * l["unit_price_net"] for l in lines)
+        net_total = sum(ln["quantity"] * ln["unit_price_net"] for ln in lines)
         shipping_net = float(parsed.get("shipping_net") or 0)
         printed_net_total = net_total + shipping_net
         assert abs(printed_net_total - 52.02) < 3.00, (
@@ -196,7 +196,7 @@ class TestLLMParsing:
 
         # Net product subtotal ≈ £20.38 (close to printed £28.08 net minus
         # £7.70 net shipping). 5% tolerance for LLM rounding.
-        product_net = sum(l["quantity"] * l["unit_price_net"] for l in lines)
+        product_net = sum(ln["quantity"] * ln["unit_price_net"] for ln in lines)
         assert abs(product_net - 20.38) < 1.00, (
             f"Net product subtotal should be ~£20.38, got £{product_net:.2f}"
         )
@@ -337,15 +337,15 @@ class TestLLMParsing:
             )
 
         # Net line total ≈ £41.28.
-        net_total = sum(l["quantity"] * l["unit_price_net"] for l in lines)
+        net_total = sum(ln["quantity"] * ln["unit_price_net"] for ln in lines)
         assert abs(net_total - 41.28) < 0.10, (
             f"Net line total should be ~£41.28, got £{net_total:.2f}"
         )
 
         # Gross line total ≈ £49.54 — derive gross from net + rate.
         gross_total = sum(
-            l["quantity"] * l["unit_price_net"] * (1 + l["vat_rate"] / 100)
-            for l in lines
+            ln["quantity"] * ln["unit_price_net"] * (1 + ln["vat_rate"] / 100)
+            for ln in lines
         )
         assert abs(gross_total - 49.54) < 0.10, (
             f"Gross line total should be ~£49.54 (net £41.28 + £8.26 VAT), "
