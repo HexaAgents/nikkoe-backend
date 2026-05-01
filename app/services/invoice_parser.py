@@ -11,7 +11,7 @@ from app.errors import AppError
 from app.repositories.base import dash_insensitive_pattern
 from app.repositories.supplier_alias import SupplierAliasRepository
 from app.repositories.supplier_quote import SupplierQuoteRepository
-from app.schemas import ParseInvoiceResponse, ResolvedLineItem
+from app.schemas import ParseInvoiceResponse, PrintedTotals, ResolvedLineItem
 
 _alias_repo = SupplierAliasRepository()
 _supplier_quote_repo = SupplierQuoteRepository()
@@ -28,33 +28,36 @@ You are an invoice parser for an electronics parts distributor.
 You will be given a PDF invoice as a file input. Read it directly,
 including its tables, columns and totals block, and return structured JSON.
 
-PRICES MUST BE GROSS (VAT-inclusive). The downstream system stores these
-values as the per-unit stock cost, so they must already include any sales
-tax / VAT printed on the invoice.
+You return NET prices and VAT rates separately. The backend computes the
+gross (VAT-inclusive) price from these — it does NOT trust any pre-grossed
+value from you, so DO NOT round gross prices yourself.
 
 Rules:
 
 1. "lines" must contain ONLY physical product / component line items. DO NOT
    put shipping, transport, carriage, postage (P&P), delivery, bank charges,
-   handling or insurance rows into "lines".
+   handling or insurance rows into "lines". On TME invoices the row literally
+   labelled "Transport" is shipping, NOT a product line — it goes into
+   shipping_net / shipping_vat_rate.
 
-2. "unit_price" is the GROSS (VAT-inclusive) price per single unit, as a
+2. "unit_price_net" is the NET (VAT-EXCLUSIVE) price per single unit, as a
    decimal number in the invoice currency.
-   - If the invoice prints both net and gross per unit, use the gross.
-   - If the invoice prints only a net price plus a VAT rate column (e.g.
-     Farnell prints `Net Price 0.9450  Vat Rate 20.00`), compute
-     gross = net * (1 + rate/100). Round to 4 decimal places.
-   - If the invoice has zero VAT (rate is 0% or the invoice has no VAT
-     section at all — e.g. proforma invoices from non-VAT-registered
-     overseas suppliers), gross == net; just return the printed price.
+   - If the invoice prints "Net Price" per unit, use that.
    - If the invoice shows a bulk price like "8,73/10 PCS", compute per-unit:
-     8.73 / 10 = 0.873 (then apply VAT if applicable).
+     8.73 / 10 = 0.873.
    - Convert European comma decimals to dots: "1,95" → 1.95.
+   - If the invoice has no VAT at all (e.g. proforma from a non-VAT
+     registered overseas supplier), report the printed unit price as the
+     net price.
 
-3. "shipping_total" is the GROSS (VAT-inclusive) sum of all shipping /
-   freight / carriage / postage (P&P) / delivery charges, as a single
-   decimal number in the invoice currency. Apply the same gross-up rule as
-   for unit_price. Return 0 if the invoice shows no shipping charge.
+3. "vat_rate" is the per-line VAT rate as a number (e.g. 20 for 20%, 5 for
+   5%, 0 for zero-rated). Use null only when the invoice has no VAT system
+   at all (overseas proforma). Do not embed the % sign.
+
+4. "shipping_net" is the NET sum of all shipping / freight / carriage /
+   postage (P&P) / delivery / transport charges (TME's "Transport" row
+   counts here), as a single decimal number in the invoice currency.
+   Return 0 if the invoice shows no shipping charge.
    - CRITICAL: A label like "P&P Charge", "Shipping", "Carriage", or
      "Delivery" with NO numeric value next to it means there is NO shipping
      charge — return 0. Do NOT borrow a number from a different column
@@ -62,28 +65,38 @@ Rules:
      label exists on the page.
    - A "Vat Rate" of "20.00" (a percentage) is NEVER the shipping amount.
 
-4. "part_number" must be the manufacturer or distributor part number exactly
+5. "shipping_vat_rate" is the VAT rate applied to shipping (typically the
+   same as the line VAT rate on UK invoices). Return null when there is no
+   shipping or no VAT.
+
+6. "printed_totals" is the invoice's own Net / VAT / Gross totals block
+   (e.g. TME's `Net Amount %VAT VAT Gross amount  28,08 20 5,62 33,70` or
+   Farnell's `Invoice Subtotal 41.28  Vat 8.26  Invoice Total GBP 49.54`).
+   Return:
+       { "net": decimal, "vat": decimal, "gross": decimal }
+   when the block is printed; otherwise null. These let the UI cross-check
+   our per-line maths against what the invoice itself states.
+
+7. "part_number" must be the manufacturer or distributor part number exactly
    as printed (e.g. "SN74LS153N", "PEC16-4215F-N0024", "1892676"). Preserve
    original casing and dashes.
 
-5. "quantity" is the integer count of items (e.g. "5 PCS" → 5).
+8. "quantity" is the integer count of items (e.g. "5 PCS" → 5).
 
-6. "description" is a short description if present (one line max), or null.
+9. "description" is a short description if present (one line max), or null.
 
-7. "currency_symbol" is one of "£", "$", "€" based on the document.
+10. "currency_symbol" is one of "£", "$", "€" based on the document.
 
-8. "supplier_name" is the company that issued the invoice.
+11. "supplier_name" is the company that issued the invoice.
 
-9. "reference" is the invoice number, order number, or other primary
-   reference identifier.
+12. "reference" is the invoice number, order number, or other primary
+    reference identifier.
 
-SANITY CHECK before returning: if the invoice prints an explicit
-"Invoice Total" / "Grand Total" / "Total Due" / "TOTAL" line, then
-   shipping_total + sum(quantity * unit_price for each line)
-should be approximately equal to that printed total (within 1% to allow for
-rounding when grossing-up per-unit). If you cannot make the totals balance,
-double-check whether you accidentally returned net prices — if so, multiply
-each unit_price (and shipping_total) by (1 + vat_rate/100).
+SANITY CHECK before returning: if printed_totals is present, then
+   sum(quantity * unit_price_net for each line) + shipping_net
+should be approximately equal to printed_totals.net (within 1% to allow for
+rounding). If not, re-check whether you accidentally returned the LINE
+TOTAL net rather than per-UNIT net for any line.
 
 Return ONLY a JSON object with this exact structure (no markdown, no extra
 text):
@@ -91,13 +104,16 @@ text):
   "supplier_name": "string or null",
   "reference": "string or null",
   "currency_symbol": "string or null",
-  "shipping_total": decimal_number,
+  "shipping_net": decimal_number,
+  "shipping_vat_rate": decimal_number_or_null,
+  "printed_totals": { "net": decimal, "vat": decimal, "gross": decimal } or null,
   "lines": [
     {
       "part_number": "string",
       "description": "string or null",
       "quantity": integer,
-      "unit_price": decimal_number
+      "unit_price_net": decimal_number,
+      "vat_rate": decimal_number_or_null
     }
   ]
 }"""
@@ -128,8 +144,9 @@ def _call_llm(file_bytes: bytes) -> dict:
                         "type": "input_text",
                         "text": (
                             "Parse this invoice and return ONLY the JSON object "
-                            "described in the system instructions. Remember: prices "
-                            "must be GROSS (VAT-inclusive)."
+                            "described in the system instructions. Remember: return "
+                            "NET prices plus a per-line vat_rate; the backend will "
+                            "compute gross."
                         ),
                     },
                     {
@@ -226,12 +243,18 @@ def _resolve_items(lines: list[dict], supplier_id: int | None = None) -> list[Re
         if matched_id is not None:
             matched_location_id, matched_location_code = _resolve_location(matched_id)
 
+        net = _coerce_decimal(line.get("unit_price_net"))
+        rate = _coerce_rate(line.get("vat_rate"))
+        gross = _gross_from_net(net, rate) if net is not None else _coerce_decimal(line.get("unit_price"))
+
         resolved.append(
             ResolvedLineItem(
                 part_number=part_number,
                 description=line.get("description"),
                 quantity=max(int(line.get("quantity", 1)), 1),
-                unit_price=round(float(line.get("unit_price", 0)), 4),
+                unit_price=round(float(gross or 0.0), 4),
+                unit_price_net=net,
+                vat_rate=rate,
                 matched_item_id=matched_id,
                 matched_item_name=matched_name,
                 matched_location_id=matched_location_id,
@@ -285,7 +308,18 @@ def parse_invoice_stream(file_bytes: bytes):
         matched_supplier_id = _resolve_supplier(supplier_name)
 
         lines = parsed.get("lines", [])
-        shipping_total = _coerce_shipping_total(parsed.get("shipping_total"))
+
+        shipping_net = _coerce_shipping_total(parsed.get("shipping_net"))
+        shipping_vat_rate = _coerce_rate(parsed.get("shipping_vat_rate"))
+        # Re-derive gross from net + rate so we never trust an LLM-grossed total.
+        # Fall back to the legacy `shipping_total` field if the LLM only emitted
+        # that (defensive — the new prompt does not request it).
+        if parsed.get("shipping_net") is None and parsed.get("shipping_total") is not None:
+            shipping_total = _coerce_shipping_total(parsed.get("shipping_total"))
+        else:
+            shipping_total = round(_gross_from_net(shipping_net, shipping_vat_rate), 4)
+
+        printed_totals = _coerce_printed_totals(parsed.get("printed_totals"))
 
         yield _sse(
             "header",
@@ -295,6 +329,9 @@ def parse_invoice_stream(file_bytes: bytes):
                 "reference": parsed.get("reference"),
                 "currency_symbol": parsed.get("currency_symbol"),
                 "shipping_total": shipping_total,
+                "shipping_net": shipping_net,
+                "shipping_vat_rate": shipping_vat_rate,
+                "printed_totals": printed_totals.model_dump() if printed_totals else None,
                 "total_lines": len(lines),
             },
         )
@@ -305,13 +342,22 @@ def parse_invoice_stream(file_bytes: bytes):
             if mid is not None:
                 loc_id, loc_code = _resolve_location(mid)
 
+            net = _coerce_decimal(line_data.get("unit_price_net"))
+            rate = _coerce_rate(line_data.get("vat_rate"))
+            if net is not None:
+                gross = round(_gross_from_net(net, rate), 4)
+            else:
+                gross = round(float(line_data.get("unit_price", 0) or 0), 4)
+
             yield _sse(
                 "line",
                 {
                     "part_number": pn,
                     "description": line_data.get("description"),
                     "quantity": max(int(line_data.get("quantity", 1)), 1),
-                    "unit_price": round(float(line_data.get("unit_price", 0)), 4),
+                    "unit_price": gross,
+                    "unit_price_net": net,
+                    "vat_rate": rate,
                     "matched_item_id": mid,
                     "matched_item_name": mname,
                     "matched_location_id": loc_id,
@@ -337,12 +383,22 @@ def parse_invoice(file_bytes: bytes) -> ParseInvoiceResponse:
     matched_supplier_id = _resolve_supplier(supplier_name)
     resolved_lines = _resolve_items(parsed.get("lines", []), matched_supplier_id)
 
+    shipping_net = _coerce_shipping_total(parsed.get("shipping_net"))
+    shipping_vat_rate = _coerce_rate(parsed.get("shipping_vat_rate"))
+    if parsed.get("shipping_net") is None and parsed.get("shipping_total") is not None:
+        shipping_total = _coerce_shipping_total(parsed.get("shipping_total"))
+    else:
+        shipping_total = round(_gross_from_net(shipping_net, shipping_vat_rate), 4)
+
     return ParseInvoiceResponse(
         supplier_name=supplier_name,
         matched_supplier_id=matched_supplier_id,
         reference=parsed.get("reference"),
         currency_symbol=parsed.get("currency_symbol"),
-        shipping_total=_coerce_shipping_total(parsed.get("shipping_total")),
+        shipping_total=shipping_total,
+        shipping_net=shipping_net,
+        shipping_vat_rate=shipping_vat_rate,
+        printed_totals=_coerce_printed_totals(parsed.get("printed_totals")),
         lines=resolved_lines,
     )
 
@@ -358,3 +414,56 @@ def _coerce_shipping_total(raw) -> float:
     if not (val == val) or val < 0:  # NaN or negative
         return 0.0
     return round(val, 4)
+
+
+def _coerce_decimal(raw) -> float | None:
+    """Coerce an LLM decimal value to a non-negative float, or None."""
+    if raw is None:
+        return None
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not (val == val) or val < 0:  # NaN or negative
+        return None
+    return round(val, 4)
+
+
+def _coerce_rate(raw) -> float | None:
+    """Coerce a VAT-rate value to a non-negative float, or None.
+
+    Accepts numeric values directly. A string like "20.00" is parsed; the
+    "%" suffix is stripped if present. Negative or NaN inputs become None.
+    """
+    if raw is None:
+        return None
+    if isinstance(raw, str):
+        raw = raw.strip().rstrip("%").strip()
+        if not raw:
+            return None
+    try:
+        val = float(raw)
+    except (TypeError, ValueError):
+        return None
+    if not (val == val) or val < 0:
+        return None
+    return round(val, 4)
+
+
+def _gross_from_net(net: float | None, rate: float | None) -> float:
+    """Return gross = net * (1 + rate/100). Treats None as 0."""
+    safe_net = float(net) if net is not None else 0.0
+    safe_rate = float(rate) if rate is not None else 0.0
+    return round(safe_net * (1.0 + safe_rate / 100.0), 4)
+
+
+def _coerce_printed_totals(raw) -> PrintedTotals | None:
+    """Coerce an LLM `printed_totals` block into a validated model, or None."""
+    if not isinstance(raw, dict):
+        return None
+    net = _coerce_decimal(raw.get("net"))
+    vat = _coerce_decimal(raw.get("vat"))
+    gross = _coerce_decimal(raw.get("gross"))
+    if net is None or vat is None or gross is None:
+        return None
+    return PrintedTotals(net=net, vat=vat, gross=gross)

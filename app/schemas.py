@@ -202,6 +202,8 @@ class ParsedLineItem(BaseModel):
     description: str | None = None
     quantity: int
     unit_price: float
+    unit_price_net: float | None = None
+    vat_rate: float | None = None
 
 
 class ResolvedLineItem(ParsedLineItem):
@@ -211,11 +213,26 @@ class ResolvedLineItem(ParsedLineItem):
     matched_location_code: str | None = None
 
 
+class PrintedTotals(BaseModel):
+    """The Net / VAT / Gross totals block as printed at the bottom of an invoice.
+
+    Used by the UI to cross-check our per-line maths against the invoice's
+    own statement of its totals.
+    """
+
+    net: float
+    vat: float
+    gross: float
+
+
 class ParseInvoiceResponse(BaseModel):
     supplier_name: str | None = None
     matched_supplier_id: int | None = None
     reference: str | None = None
     currency_symbol: str | None = None
     shipping_total: float = 0.0
+    shipping_net: float | None = None
+    shipping_vat_rate: float | None = None
+    printed_totals: PrintedTotals | None = None
     note: str | None = None
     lines: list[ResolvedLineItem]
