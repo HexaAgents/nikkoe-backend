@@ -5,7 +5,9 @@ from datetime import datetime, timezone
 
 from app.dependencies import supabase
 from app.ebay import client as ebay_client
+from app.errors import AppError
 from app.repositories.ebay_token import EbaySyncLogRepository, EbayTokenRepository
+from app.repositories.sale import SaleRepository
 
 logger = logging.getLogger(__name__)
 
@@ -17,9 +19,11 @@ class EbaySyncService:
         self,
         token_repo: EbayTokenRepository | None = None,
         sync_log_repo: EbaySyncLogRepository | None = None,
+        sale_repo: SaleRepository | None = None,
     ):
         self.token_repo = token_repo or EbayTokenRepository()
         self.sync_log_repo = sync_log_repo or EbaySyncLogRepository()
+        self.sale_repo = sale_repo or SaleRepository()
 
     def sync_orders(self, date_from: str | None = None) -> dict:
         """Run a sync: fetch eBay orders and import them as Sales."""
@@ -45,15 +49,23 @@ class EbaySyncService:
             fetched = len(orders)
             imported = 0
             skipped = 0
+            oversold_messages: list[str] = []
 
             for order in orders:
                 if self._is_paid(order) and not self._already_imported(order):
-                    self._import_order(order, channel_id, location_id)
-                    imported += 1
+                    sale_row = self._import_order(order, channel_id, location_id, oversold_messages)
+                    if sale_row is None:
+                        skipped += 1
+                    else:
+                        imported += 1
                 else:
                     skipped += 1
 
             sync_to = datetime.now(timezone.utc).isoformat()
+            error_message = "; ".join(oversold_messages) if oversold_messages else None
+            if error_message:
+                logger.warning("eBay sync completed with %d oversold order(s): %s", len(oversold_messages), error_message)
+
             result = self.sync_log_repo.complete(
                 log_id,
                 orders_fetched=fetched,
@@ -61,6 +73,13 @@ class EbaySyncService:
                 orders_skipped=skipped,
                 sync_to=sync_to,
             )
+            if error_message:
+                # Surface oversold orders to the caller without marking the whole sync as FAILED.
+                # The status stays SUCCESS but error_message is populated for visibility.
+                supabase.table(EbaySyncLogRepository.TABLE).update({"error_message": error_message}).eq(
+                    "id", log_id
+                ).execute()
+                result["error_message"] = error_message
             return result
 
         except Exception as exc:
@@ -79,7 +98,19 @@ class EbaySyncService:
         resp = supabase.table("sale").select("id").eq("channel_ref", order_id).limit(1).execute()
         return bool(resp.data)
 
-    def _import_order(self, order: dict, channel_id: int | None = None, location_id: int | None = None) -> dict:
+    def _import_order(
+        self,
+        order: dict,
+        channel_id: int | None = None,
+        location_id: int | None = None,
+        oversold_messages: list[str] | None = None,
+    ) -> dict | None:
+        """Import a single eBay order as a Sale via SaleRepository.create.
+
+        Returns the inserted sale row on success, or None if the order was skipped
+        because it would have driven a stock row negative (oversell). In the
+        oversell case, a human-readable note is appended to oversold_messages.
+        """
         order_id = order["orderId"]
         creation_date = order.get("creationDate", datetime.now(timezone.utc).isoformat())
 
@@ -89,41 +120,45 @@ class EbaySyncService:
             location_id = self._get_ebay_location_id()
         customer_id = self._resolve_customer(order)
 
-        from app.repositories.sale import _FK_CHANNEL, _FK_CUSTOMER, _get_list_select
-
-        _get_list_select()
-        sale_data = {
-            _FK_CHANNEL: channel_id,
+        sale_data: dict = {
+            "channel_id": channel_id,
             "channel_ref": order_id,
             "date": creation_date,
             "source": SOURCE_TAG,
         }
         if customer_id:
-            sale_data[_FK_CUSTOMER] = customer_id
+            sale_data["customer_id"] = customer_id
 
-        lines_data = []
+        lines_data: list[dict] = []
         for line_item in order.get("lineItems", []):
-            line = self._map_line_item(line_item, location_id)
+            mapped = self._map_line_item(line_item, location_id)
+            item_db_id = mapped.pop("_item_db_id", None)
+            if not item_db_id:
+                # Without a resolved item we cannot record the line; skip this line.
+                continue
+            line = {
+                "item_id": item_db_id,
+                "location_id": location_id,
+                "quantity": mapped.get("quantity"),
+                "unit_price": mapped.get("unit_price"),
+            }
+            if "currency_id" in mapped:
+                line["currency_id"] = mapped["currency_id"]
             lines_data.append(line)
 
-        sale_data_clean = {k: v for k, v in sale_data.items() if v is not None}
-        sale_resp = supabase.table("sale").insert(sale_data_clean).execute()
-        sale_row = sale_resp.data[0]
-        sale_id = sale_row["id"]
+        if not lines_data:
+            return None
 
-        for line in lines_data:
-            item_id = line.pop("_item_db_id", None)
-            stock_id = self._resolve_stock(item_id, location_id)
-            line["sale_id"] = sale_id
-            line["stock_id"] = stock_id
-            supabase.table("sale_stock").insert(line).execute()
-
-            if stock_id:
-                stock_row = supabase.table("stock").select("quantity").eq("id", stock_id).single().execute()
-                new_qty = (stock_row.data.get("quantity") or 0) - line.get("quantity", 0)
-                supabase.table("stock").update({"quantity": new_qty}).eq("id", stock_id).execute()
-
-        return sale_row
+        try:
+            return self.sale_repo.create(sale_data, lines_data)
+        except AppError as exc:
+            if exc.status_code == 400 and "Insufficient stock" in exc.message:
+                msg = f"order {order_id}: {exc.message}"
+                logger.warning("Skipping eBay %s", msg)
+                if oversold_messages is not None:
+                    oversold_messages.append(msg)
+                return None
+            raise
 
     def _map_line_item(self, line_item: dict, location_id: int) -> dict:
         sku = line_item.get("sku") or line_item.get("legacyItemId", "")

@@ -242,6 +242,8 @@ class SaleRepository:
             }
             rpc_lines.append({k: v for k, v in rpc_line.items() if v is not None})
 
+        from app.errors import AppError
+
         try:
             resp = supabase.rpc(
                 "create_sale_tx",
@@ -250,41 +252,75 @@ class SaleRepository:
             sale_id = resp.data
             sale_row = supabase.table("sale").select("*").eq("id", sale_id).single().execute()
             return sale_row.data
-        except Exception:
+        except Exception as exc:
+            # Bubble up validation errors raised by the RPC (e.g. insufficient stock)
+            # instead of silently re-running via the fallback path.
+            msg = str(exc)
+            if "Insufficient stock" in msg:
+                raise AppError(400, msg) from exc
             return self._create_fallback(sale_payload, lines)
 
     def _create_fallback(self, sale: dict, lines: list[dict]) -> dict:
         """Pre-migration fallback: multi-step inserts when create_sale_tx RPC is unavailable."""
+        from app.errors import AppError
+
+        # Pre-validate every line against current on-hand BEFORE inserting the sale, so we
+        # never half-create a sale and never drive stock.quantity negative.
+        prevalidated: list[dict] = []
+        for line in lines:
+            stock_id = line.get("stock_id")
+            item_id = line.get("item_id")
+            location_id = line.get("location_id")
+            qty = line.get("quantity") or 0
+
+            resolved_stock_id = stock_id
+            available = 0
+
+            if resolved_stock_id:
+                stock_row = (
+                    supabase.table("stock").select("quantity").eq("id", resolved_stock_id).single().execute()
+                )
+                available = (stock_row.data or {}).get("quantity") or 0
+            elif item_id and location_id:
+                existing = (
+                    supabase.table("stock")
+                    .select("id, quantity")
+                    .eq("item_id", item_id)
+                    .eq("location_id", location_id)
+                    .limit(1)
+                    .execute()
+                )
+                if existing and existing.data:
+                    resolved_stock_id = existing.data[0]["id"]
+                    available = existing.data[0].get("quantity") or 0
+
+            if available < qty:
+                raise AppError(
+                    400,
+                    f"Insufficient stock for item {item_id} at location {location_id}: "
+                    f"available {available}, requested {qty}",
+                )
+
+            prevalidated.append({"line": line, "resolved_stock_id": resolved_stock_id})
+
         sale_resp = supabase.table("sale").insert(sale).execute()
         sale_row = sale_resp.data[0]
         sale_id = sale_row["id"]
 
-        for line in lines:
-            stock_id = line.pop("stock_id", None)
+        for entry in prevalidated:
+            line = entry["line"]
+            stock_id = entry["resolved_stock_id"]
+            line.pop("stock_id", None)
             item_id = line.pop("item_id", None)
             location_id = line.pop("location_id", None)
 
             if not stock_id and item_id and location_id:
-                try:
-                    existing = (
-                        supabase.table("stock")
-                        .select("id")
-                        .eq("item_id", item_id)
-                        .eq("location_id", location_id)
-                        .limit(1)
-                        .execute()
-                    )
-                    if existing and existing.data:
-                        stock_id = existing.data[0]["id"]
-                except Exception:
-                    pass
-                if not stock_id:
-                    new_stock = (
-                        supabase.table("stock")
-                        .insert({"item_id": item_id, "location_id": location_id, "quantity": 0})
-                        .execute()
-                    )
-                    stock_id = new_stock.data[0]["id"]
+                new_stock = (
+                    supabase.table("stock")
+                    .insert({"item_id": item_id, "location_id": location_id, "quantity": 0})
+                    .execute()
+                )
+                stock_id = new_stock.data[0]["id"]
 
             line["sale_id"] = sale_id
             if stock_id:

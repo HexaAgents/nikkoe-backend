@@ -14,6 +14,7 @@ from app.errors import AppError
 from app.repositories.base import _is_transient, retry_transient
 from app.repositories.inventory import InventoryRepository
 from app.repositories.location import LocationRepository
+from app.repositories.sale import SaleRepository
 from app.repositories.supplier_quote import SupplierQuoteRepository
 
 # =====================================================================
@@ -342,3 +343,79 @@ class TestRepositoriesUseRetryDecorator:
         assert hasattr(method, "__wrapped__"), (
             f"{repo_cls.__name__}.{method_name} must be decorated with @retry_transient"
         )
+
+
+# =====================================================================
+# SaleRepository._create_fallback — oversell precheck
+# =====================================================================
+
+
+class TestSaleRepositoryCreateFallback:
+    """The fallback path runs when the create_sale_tx RPC is unavailable.
+
+    It must precheck on-hand quantity for every line BEFORE inserting the sale,
+    so an oversell aborts cleanly with a 400 instead of silently driving
+    stock.quantity negative (which is what produced the
+    "Total != SUM(Locations)" UI bug).
+    """
+
+    @patch("app.repositories.sale.supabase")
+    def test_raises_app_error_when_no_stock_row_exists(self, mock_sb):
+        select_chain = MagicMock()
+        select_chain.eq.return_value = select_chain
+        select_chain.limit.return_value = select_chain
+        select_chain.execute.return_value = MagicMock(data=[])
+
+        mock_sb.table.return_value.select.return_value = select_chain
+
+        repo = SaleRepository()
+        sale = {"channel_id": 1, "date": "2026-05-01T00:00:00Z"}
+        lines = [{"item_id": 99, "location_id": 7, "quantity": 3, "unit_price": 1.0}]
+
+        with pytest.raises(AppError) as exc_info:
+            repo._create_fallback(sale, lines)
+
+        assert exc_info.value.status_code == 400
+        assert "Insufficient stock" in exc_info.value.message
+        # Crucially: no sale or stock INSERT should have happened.
+        for call in mock_sb.table.return_value.insert.call_args_list:
+            assert False, f"unexpected insert during precheck failure: {call}"
+
+    @patch("app.repositories.sale.supabase")
+    def test_raises_app_error_when_existing_stock_too_small(self, mock_sb):
+        select_chain = MagicMock()
+        select_chain.eq.return_value = select_chain
+        select_chain.limit.return_value = select_chain
+        select_chain.execute.return_value = MagicMock(data=[{"id": 42, "quantity": 1}])
+
+        mock_sb.table.return_value.select.return_value = select_chain
+
+        repo = SaleRepository()
+        sale = {"channel_id": 1, "date": "2026-05-01T00:00:00Z"}
+        lines = [{"item_id": 99, "location_id": 7, "quantity": 5}]
+
+        with pytest.raises(AppError) as exc_info:
+            repo._create_fallback(sale, lines)
+
+        assert exc_info.value.status_code == 400
+        assert "available 1, requested 5" in exc_info.value.message
+
+    @patch("app.repositories.sale.supabase")
+    def test_propagates_insufficient_stock_from_rpc(self, mock_sb):
+        """create() should bubble RPC oversell errors as AppError(400) without retrying via fallback."""
+        rpc_chain = MagicMock()
+        rpc_chain.execute.side_effect = Exception(
+            "Insufficient stock for item 1 at location 2: available 0, requested 5"
+        )
+        mock_sb.rpc.return_value = rpc_chain
+
+        repo = SaleRepository()
+        # Spy on _create_fallback to confirm we don't silently re-run.
+        repo._create_fallback = MagicMock(side_effect=AssertionError("fallback should not run"))
+
+        with pytest.raises(AppError) as exc_info:
+            repo.create({"channel_id": 1}, [{"item_id": 1, "location_id": 2, "quantity": 5}])
+
+        assert exc_info.value.status_code == 400
+        assert "Insufficient stock" in exc_info.value.message
+        repo._create_fallback.assert_not_called()

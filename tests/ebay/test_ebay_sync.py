@@ -1,12 +1,14 @@
 from unittest.mock import MagicMock, patch
 
+from app.errors import AppError
 from app.services.ebay_sync import SOURCE_TAG, EbaySyncService
 
 
-def _make_service(token_repo=None, sync_log_repo=None):
+def _make_service(token_repo=None, sync_log_repo=None, sale_repo=None):
     return EbaySyncService(
         token_repo=token_repo or MagicMock(),
         sync_log_repo=sync_log_repo or MagicMock(),
+        sale_repo=sale_repo or MagicMock(),
     )
 
 
@@ -102,50 +104,85 @@ class TestSyncOrders:
         mock_client.get_valid_access_token.return_value = "tok"
         mock_client.get_all_orders.return_value = [sample_ebay_order]
 
-        svc = _make_service(sync_log_repo=sync_log)
+        sale_repo = MagicMock()
+        sale_repo.create.return_value = {"id": 100, "source": SOURCE_TAG}
 
-        # Stub internal helpers to bypass complex Supabase chaining
+        svc = _make_service(sync_log_repo=sync_log, sale_repo=sale_repo)
+
         svc._already_imported = lambda order: False
         svc._get_ebay_channel_id = lambda: 5
         svc._get_ebay_location_id = lambda: 10
         svc._resolve_customer = lambda order: 20
         svc._resolve_item = lambda sku, title: 30
-        svc._resolve_stock = lambda item_id, loc_id: 40
         svc._resolve_currency = lambda code: 1
-
-        # Mock Sale insert + Sale_Stock insert + Stock quantity update
-        sale_insert = MagicMock()
-        sale_insert.execute.return_value = MagicMock(data=[{"id": 100, "source": SOURCE_TAG}])
-
-        stock_select = MagicMock()
-        stock_select.eq.return_value = stock_select
-        stock_select.single.return_value = stock_select
-        stock_select.execute.return_value = MagicMock(data={"quantity": 10})
-
-        stock_update = MagicMock()
-        stock_update.eq.return_value = stock_update
-        stock_update.execute.return_value = MagicMock(data=[])
-
-        line_insert = MagicMock()
-        line_insert.execute.return_value = MagicMock(data=[{"id": 50}])
-
-        def table_side_effect(name):
-            mock_table = MagicMock()
-            if name == "sale":
-                mock_table.insert.return_value = sale_insert
-            elif name == "sale_stock":
-                mock_table.insert.return_value = line_insert
-            elif name == "stock":
-                mock_table.select.return_value = stock_select
-                mock_table.update.return_value = stock_update
-            return mock_table
-
-        mock_sb.table.side_effect = table_side_effect
 
         svc.sync_orders()
 
         sync_log.complete.assert_called_once()
         assert sync_log.complete.call_args.kwargs["orders_imported"] == 1
+        sale_repo.create.assert_called_once()
+        sale_data, lines_data = sale_repo.create.call_args[0]
+        assert sale_data["source"] == SOURCE_TAG
+        assert sale_data["channel_id"] == 5
+        assert lines_data and lines_data[0]["item_id"] == 30
+        assert lines_data[0]["location_id"] == 10
+
+    @patch("app.services.ebay_sync.ebay_client")
+    @patch("app.services.ebay_sync.supabase")
+    def test_skips_oversold_order(self, mock_sb, mock_client, sample_ebay_order):
+        """Orders that would oversell are skipped, logged via error_message, not imported."""
+        sync_log = MagicMock()
+        sync_log.create.return_value = {"id": 1}
+        sync_log.get_last_successful.return_value = None
+        sync_log.complete.return_value = {
+            "orders_fetched": 1,
+            "orders_imported": 0,
+            "orders_skipped": 1,
+        }
+
+        mock_client.get_valid_access_token.return_value = "tok"
+        mock_client.get_all_orders.return_value = [sample_ebay_order]
+
+        sale_repo = MagicMock()
+        sale_repo.create.side_effect = AppError(
+            400, "Insufficient stock for item 30 at location 10: available 0, requested 2"
+        )
+
+        svc = _make_service(sync_log_repo=sync_log, sale_repo=sale_repo)
+        svc._already_imported = lambda order: False
+        svc._get_ebay_channel_id = lambda: 5
+        svc._get_ebay_location_id = lambda: 10
+        svc._resolve_customer = lambda order: 20
+        svc._resolve_item = lambda sku, title: 30
+        svc._resolve_currency = lambda code: 1
+
+        # Capture the error_message UPDATE so we can assert it was set on the log row.
+        recorded_updates: list[dict] = []
+
+        def table_side_effect(name):
+            t = MagicMock()
+            if name == "ebay_sync_log":
+                update_chain = MagicMock()
+
+                def _update_capture(payload):
+                    recorded_updates.append(payload)
+                    return update_chain
+
+                t.update.side_effect = _update_capture
+                update_chain.eq.return_value = update_chain
+                update_chain.execute.return_value = MagicMock(data=[])
+            return t
+
+        mock_sb.table.side_effect = table_side_effect
+
+        result = svc.sync_orders()
+
+        sync_log.complete.assert_called_once()
+        assert sync_log.complete.call_args.kwargs["orders_imported"] == 0
+        assert sync_log.complete.call_args.kwargs["orders_skipped"] == 1
+        assert recorded_updates, "expected error_message update on ebay_sync_log"
+        assert "Insufficient stock" in recorded_updates[0]["error_message"]
+        assert "Insufficient stock" in result.get("error_message", "")
 
     @patch("app.services.ebay_sync.ebay_client")
     @patch("app.services.ebay_sync.supabase")
@@ -191,48 +228,23 @@ class TestSyncOrders:
         mock_client.get_valid_access_token.return_value = "tok"
         mock_client.get_all_orders.return_value = [sample_ebay_order, sample_unpaid_order]
 
-        svc = _make_service(sync_log_repo=sync_log)
+        sale_repo = MagicMock()
+        sale_repo.create.return_value = {"id": 100, "source": SOURCE_TAG}
+
+        svc = _make_service(sync_log_repo=sync_log, sale_repo=sale_repo)
 
         svc._already_imported = lambda order: False
         svc._get_ebay_channel_id = lambda: 5
         svc._get_ebay_location_id = lambda: 10
         svc._resolve_customer = lambda order: 20
         svc._resolve_item = lambda sku, title: 30
-        svc._resolve_stock = lambda item_id, loc_id: 40
         svc._resolve_currency = lambda code: 1
-
-        sale_insert = MagicMock()
-        sale_insert.execute.return_value = MagicMock(data=[{"id": 100}])
-
-        stock_select = MagicMock()
-        stock_select.eq.return_value = stock_select
-        stock_select.single.return_value = stock_select
-        stock_select.execute.return_value = MagicMock(data={"quantity": 10})
-
-        stock_update = MagicMock()
-        stock_update.eq.return_value = stock_update
-        stock_update.execute.return_value = MagicMock(data=[])
-
-        line_insert = MagicMock()
-        line_insert.execute.return_value = MagicMock(data=[{"id": 50}])
-
-        def table_side_effect(name):
-            t = MagicMock()
-            if name == "sale":
-                t.insert.return_value = sale_insert
-            elif name == "sale_stock":
-                t.insert.return_value = line_insert
-            elif name == "stock":
-                t.select.return_value = stock_select
-                t.update.return_value = stock_update
-            return t
-
-        mock_sb.table.side_effect = table_side_effect
 
         svc.sync_orders()
 
         assert sync_log.complete.call_args.kwargs["orders_imported"] == 1
         assert sync_log.complete.call_args.kwargs["orders_skipped"] == 1
+        sale_repo.create.assert_called_once()
 
 
 class TestResolveCustomer:
