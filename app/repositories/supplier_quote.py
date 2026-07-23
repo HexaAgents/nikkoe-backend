@@ -13,7 +13,15 @@ class SupplierQuoteRepository:
             .order("date_time", desc=True)
             .execute()
         )
-        return response.data or []
+        rows = response.data or []
+        # item_supplier also stores supplier part-number mappings. When a
+        # mapping exists without a quote, cost/currency are NULL and must not
+        # be exposed through the quotes endpoint.
+        return [
+            row
+            for row in rows
+            if row.get("cost") is not None and row.get("currency_id") is not None
+        ]
 
     def create(self, data: dict) -> dict:
         try:

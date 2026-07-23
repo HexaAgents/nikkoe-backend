@@ -73,13 +73,38 @@ class TestSupplierQuoteRepositoryCreate:
 class TestSupplierQuoteRepositoryFindByItemId:
     @patch("app.repositories.supplier_quote.supabase")
     def test_returns_rows(self, mock_sb):
-        rows = [{"id": 1}, {"id": 2}]
+        rows = [
+            {"id": 1, "cost": 2.1, "currency_id": 1},
+            {"id": 2, "cost": 0, "currency_id": 2},
+        ]
         (
             mock_sb.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value
         ) = MagicMock(data=rows)
 
         result = SupplierQuoteRepository().find_by_item_id(1)
         assert result == rows
+
+    @patch("app.repositories.supplier_quote.supabase")
+    def test_excludes_mapping_only_rows_without_quote_values(self, mock_sb):
+        rows = [
+            {
+                "id": 103636,
+                "item_id": 86592,
+                "supplier_id": 16,
+                "cost": None,
+                "currency_id": None,
+                "supplier_part_number": "592791",
+            },
+            {"id": 95005, "item_id": 86592, "cost": 2.1, "currency_id": 1},
+            {"id": 3, "item_id": 86592, "cost": 1.5, "currency_id": None},
+        ]
+        (
+            mock_sb.table.return_value.select.return_value.eq.return_value.order.return_value.execute.return_value
+        ) = MagicMock(data=rows)
+
+        result = SupplierQuoteRepository().find_by_item_id(86592)
+
+        assert result == [{"id": 95005, "item_id": 86592, "cost": 2.1, "currency_id": 1}]
 
     @patch("app.repositories.supplier_quote.supabase")
     def test_returns_empty_list_when_none(self, mock_sb):
