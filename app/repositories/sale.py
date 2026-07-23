@@ -277,9 +277,7 @@ class SaleRepository:
             available = 0
 
             if resolved_stock_id:
-                stock_row = (
-                    supabase.table("stock").select("quantity").eq("id", resolved_stock_id).single().execute()
-                )
+                stock_row = supabase.table("stock").select("quantity").eq("id", resolved_stock_id).single().execute()
                 available = (stock_row.data or {}).get("quantity") or 0
             elif item_id and location_id:
                 existing = (

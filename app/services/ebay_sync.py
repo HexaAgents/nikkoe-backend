@@ -64,7 +64,11 @@ class EbaySyncService:
             sync_to = datetime.now(timezone.utc).isoformat()
             error_message = "; ".join(oversold_messages) if oversold_messages else None
             if error_message:
-                logger.warning("eBay sync completed with %d oversold order(s): %s", len(oversold_messages), error_message)
+                logger.warning(
+                    "eBay sync completed with %d oversold order(s): %s",
+                    len(oversold_messages),
+                    error_message,
+                )
 
             result = self.sync_log_repo.complete(
                 log_id,

@@ -117,7 +117,8 @@ class TestStockReconciliationCsv:
 
 class TestApplyStockAdjustmentBatchMigration:
     def test_rpc_migration_contains_required_safety_checks(self):
-        path = Path(__file__).resolve().parents[1] / "supabase/migrations/20260502000003_apply_stock_adjustment_batch.sql"
+        migration = "supabase/migrations/20260502000003_apply_stock_adjustment_batch.sql"
+        path = Path(__file__).resolve().parents[1] / migration
         sql = path.read_text()
 
         assert "FOR UPDATE" in sql
