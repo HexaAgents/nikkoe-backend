@@ -1,190 +1,155 @@
 # CI/CD Gap Analysis
 
-Audit of both `nikkoe-backend` and `nikkoe-frontend` against the full CI/CD checklist. Items are grouped by what's already done, what was just fixed in CI files, and what still requires manual setup.
+Current audit of the Nikkoe frontend/backend delivery path.
 
----
+## Canonical production
 
-## Already Covered
+The supported production path is:
 
-- [x] Every code change triggers automated CI (both repos)
-- [x] Lint and format checks on every PR
-- [x] Frontend type checking (`tsc --noEmit`)
-- [x] Frontend build verification (`npm run build`)
-- [x] Backend unit tests (pytest, mocked dependencies)
-- [x] Frontend unit tests (vitest) + integration tests on push
-- [x] Dependency vulnerability scanning (pip-audit / npm audit)
-- [x] OIDC-based deploy auth (short-lived credentials, no static keys)
-- [x] Concurrency controls cancel stale CI runs
-- [x] Secrets stored in GitHub, not in code
-- [x] Migrations are version-controlled (`supabase/migrations/`)
-
----
-
-## Fixed in CI Pipeline
-
-These were addressed in the updated `.github/workflows/ci.yml`:
-
-- [x] Backend split into parallel jobs (lint, test, security, build, migrations)
-- [x] Lint and format scope expanded to include `tests/` directory
-- [x] Docker build verified in CI (catches missing deps, bad Dockerfile)
-- [x] Migration files validated (naming convention + non-empty check)
-- [x] Deploy gated behind `environment: production` (supports approval rules)
-- [x] Post-deploy health check verifies the app is alive after deploy
-- [x] Deploy requires all CI jobs to pass (`needs: [lint, test, security, build, migrations]`)
-
----
-
-## Requires Manual GitHub Setup
-
-These items cannot be configured via CI files. They must be set in the GitHub web UI.
-
-### Branch protection rules
-
-**Where:** GitHub > Repository Settings > Branches > Add rule for `main`
-
-- [ ] Require pull request before merging
-- [ ] Require at least 1 approval
-- [ ] Require status checks to pass before merging (select: `lint`, `test`, `security`, `build`, `migrations`)
-- [ ] Require branches to be up to date before merging
-- [ ] Do not allow bypassing the above settings
-
-Do this for both `nikkoe-backend` and `nikkoe-frontend`.
-
-### Create `production` environment
-
-**Where:** GitHub > Repository Settings > Environments > New environment
-
-- [ ] Create environment named `production` in `nikkoe-backend`
-- [ ] Optionally add required reviewers (for deploy approval gate)
-- [ ] Optionally restrict to `main` branch only
-
-Without this environment created, the deploy job will still run but without the approval gate.
-
----
-
-## Requires Infrastructure / Tooling Setup
-
-These require work beyond CI configuration files.
-
-### Preview environments (per PR)
-
-**Effort:** Medium | **Impact:** High
-
-Enables reviewers to test real workflows before merge. Options:
-
-- **Cloud Run revisions per PR:** Deploy a tagged revision on PR open, tear down on close. Requires a new workflow job + service account permissions.
-- **Vercel (frontend):** If the frontend moves to Vercel, preview deploys are automatic per PR.
-
-Action items:
-- [ ] Decide on preview environment strategy
-- [ ] Implement PR-triggered preview deploy workflow
-- [ ] Add preview URL as a PR comment
-
-### E2E tests
-
-**Effort:** High | **Impact:** High
-
-No end-to-end tests exist in either repo. Critical flows to cover:
-
-- [ ] User login
-- [ ] Create a sale (with line items)
-- [ ] Create a receipt
-- [ ] Data appears correctly in UI
-- [ ] Void a sale/receipt
-- [ ] Permissions enforced (no cross-company access)
-
-Recommended tool: **Playwright** (fast, reliable, good CI support). This is a separate project-level effort.
-
-### Database CI (migrations against test DB)
-
-**Effort:** Medium | **Impact:** Medium
-
-Currently, migrations are only validated for file naming/emptiness. To actually test them:
-
-- [ ] Option A: Use `supabase start` in CI to spin up a local Supabase instance, apply migrations, run integration tests
-- [ ] Option B: Use a disposable PostgreSQL container in CI, apply raw SQL migrations
-- [ ] Test constraints (e.g. no invalid sales data, foreign keys enforced)
-- [ ] Test RLS policies if applicable
-
-### Post-deploy monitoring and alerting
-
-**Effort:** Medium | **Impact:** High
-
-- [ ] Set up error tracking (e.g. Sentry) for both frontend and backend
-- [ ] Configure alerts for deploy failures (GitHub Actions > Notifications, or Slack webhook)
-- [ ] Set up Cloud Run monitoring dashboards (latency, error rate, instance count)
-- [ ] Configure uptime monitoring for `/api/health`
-
-### Frontend deployment
-
-**Effort:** Low-Medium | **Impact:** High
-
-The frontend repo has no deploy step. Options:
-
-- [ ] **Vercel:** Connect repo, get automatic deploys + preview environments for free
-- [ ] **Cloud Run / Cloud Storage:** Add a deploy job similar to the backend
-- [ ] **GitHub Pages:** If the app is a static SPA with no SSR
-
-### Scheduled / background CI tasks
-
-**Effort:** Low | **Impact:** Medium
-
-Add a separate workflow triggered on a schedule:
-
-- [ ] Weekly dependency vulnerability scan (catches new CVEs between PRs)
-- [ ] Weekly `pip-audit` / `npm audit` against latest advisories
-- [ ] Optional: Dependabot or Renovate for automated dependency update PRs
-
-Example workflow trigger:
-```yaml
-on:
-  schedule:
-    - cron: '0 9 * * 1'  # Every Monday at 9am UTC
+```text
+platform.hexaagents.com
+  -> Vercel project nikkoe-frontend
+  -> https://nikkoe-backend.vercel.app/api
+  -> Vercel project nikkoe-backend
 ```
 
----
+Both projects deploy from their GitHub `main` branches through Vercel Git
+integration. GitHub Actions validates changes but does not deploy to Google
+Cloud.
 
-## Rollback & Recovery
+## Already covered
 
-These are operational procedures, not CI file changes.
+- [x] Backend lint and format checks on pushes and pull requests.
+- [x] Backend pytest suite with a 60% coverage floor.
+- [x] Backend dependency vulnerability scanning with `pip-audit`.
+- [x] Backend Docker build verification.
+- [x] Migration filename and empty-file validation.
+- [x] Frontend lint, type checking, tests, and production build verification.
+- [x] Vercel production deployments from GitHub.
+- [x] Vercel preview deployments for non-production branches.
+- [x] Custom frontend domain `platform.hexaagents.com`.
+- [x] Backend health endpoint.
+- [x] CI concurrency controls.
 
-### Cloud Run rollback
+## Deployment configuration checks
 
-If a bad deploy reaches production, roll back to the previous revision:
+### Vercel environment variables
 
-```bash
-# List revisions
-gcloud run revisions list --service nikkoe-backend --region us-central1
+- [ ] Confirm `VITE_API_URL` on Vercel project `nikkoe-frontend` is scoped to
+  Production and equals `https://nikkoe-backend.vercel.app/api`.
+- [ ] Check Preview variables and branch overrides for conflicting API URLs.
+- [ ] Record required backend variable names and their Production/Preview scopes
+  without copying secret values into source control.
 
-# Route 100% traffic to a known-good revision
-gcloud run services update-traffic nikkoe-backend \
-  --region us-central1 \
-  --to-revisions GOOD_REVISION=100
-```
+`VITE_API_URL` is embedded at frontend build time. Any value change requires a
+new frontend build and verification of the resulting JavaScript.
+
+### Duplicate frontend project
+
+Vercel projects `nikkoe-frontend` and `nikkoe-frontend-1` both deploy the same
+GitHub repository. Only `nikkoe-frontend` owns `platform.hexaagents.com`.
+
+- [ ] Confirm `nikkoe-frontend-1` has no unique domains, variables, or consumers.
+- [ ] Disable its Git integration or delete it only after separate approval.
+
+No duplicate project cleanup is part of the current CI consolidation.
+
+## Legacy Google Cloud infrastructure
+
+### `nikkoe-api`
+
+Google Cloud project `nikkoe-backend` (`492947344915`) contains Cloud Run
+service `nikkoe-api` in `europe-west1`.
+
+- It is deployed from the separate private repository
+  `HexaAgents/nikkoe-api`.
+- That repository has only three commits from 1 April 2026.
+- Its Cloud Build history contains those commit builds plus a retry.
+- Its API and CORS behavior do not match the maintained backend.
+- The production frontend does not reference it.
+
+Leave the service and Cloud Build trigger untouched until consumers, runtime
+configuration, data access, and rollback requirements are audited.
+
+### `valid-cedar-492118-d6`
+
+The backend workflow previously targeted project `valid-cedar-492118-d6`
+(`218784664685`), service `nikkoe-backend`, in `us-central1`.
+
+- [x] Remove this stale deploy path from GitHub Actions.
+- [ ] Review the project separately before any billing, IAM, or deletion action.
+
+## Manual GitHub setup
+
+### Branch protection
+
+Configure both repositories' `main` branches to:
+
+- [ ] Require a pull request before merging.
+- [ ] Require at least one approval.
+- [ ] Require all CI jobs to pass.
+- [ ] Require branches to be up to date.
+- [ ] Prevent bypass except for documented emergencies.
+
+## Remaining test and observability gaps
+
+### Browser-level end-to-end tests
+
+Component interaction tests exist, but a deployed browser test should cover:
+
+- [ ] Login and token refresh.
+- [ ] Item search and item detail.
+- [ ] Stock transfer.
+- [ ] Create and void sale/receipt.
+- [ ] Invoice parsing/streaming.
+- [ ] Change password.
+
+### Database migration CI
+
+Migration files are structurally validated but not applied to a disposable
+database.
+
+- [ ] Apply migrations to a temporary Supabase/Postgres environment in CI.
+- [ ] Test constraints, RPCs, and row-level security policies.
+
+### Monitoring
+
+- [ ] Configure alerts for Vercel backend 5xx rates.
+- [ ] Configure uptime monitoring for `/api/health`.
+- [ ] Add browser/runtime error tracking with release identifiers.
+- [ ] Define a post-deployment observation window and owner.
+
+## Rollback and recovery
+
+### Application rollback
+
+1. Record the current READY Vercel deployment before release.
+2. If production regresses, restore the previous deployment alias using Vercel
+   Instant Rollback.
+3. If alias rollback is unavailable, revert the responsible Git commit and
+   redeploy.
+4. Repeat health, OpenAPI, CORS, bundle-target, and browser smoke tests.
+
+Do not delete the failed deployment until the incident is understood.
 
 ### Database rollback
 
-- [ ] Document forward-fix strategy (new migration to undo changes) vs snapshot restore
-- [ ] Ensure Supabase daily backups are enabled (check Supabase dashboard > Settings > Database)
-- [ ] Test restore process at least once
+- [ ] Document when to use a forward-fix migration versus snapshot restore.
+- [ ] Confirm Supabase backup retention and recovery access.
+- [ ] Test a restore procedure in a non-production project.
 
----
-
-## Checklist Summary
+## Current status
 
 | Category | Status |
-|----------|--------|
-| Core CI (lint, test, build, security) | Done |
-| Parallel jobs with granular feedback | Done |
-| Docker build verification | Done |
-| Migration validation | Done |
-| Deploy gating (environment protection) | Done (needs GitHub env created) |
-| Post-deploy health check | Done |
-| Branch protection rules | Manual setup needed |
-| Preview environments | Infrastructure needed |
-| E2E tests | New project effort |
-| Database CI (test migrations) | Infrastructure needed |
-| Monitoring and alerting | Tooling needed |
-| Frontend deployment | Decision needed |
-| Scheduled scans | Low-effort addition |
-| Rollback procedures | Documented above |
+| --- | --- |
+| Backend CI quality gates | In place |
+| Frontend CI quality gates | In place |
+| Production hosting | Vercel |
+| Production backend target | `nikkoe-backend.vercel.app` |
+| Preview deployments | Vercel Git integration |
+| Google Cloud services | Legacy, not production |
+| Branch protection | Manual verification required |
+| Browser E2E | Gap |
+| Migration execution in CI | Gap |
+| Monitoring and alerts | Gap |
+| Rollback procedure | Documented; exercise still required |
