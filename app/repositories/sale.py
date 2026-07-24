@@ -228,7 +228,6 @@ class SaleRepository:
         return result
 
     def create(self, sale: dict, lines: list[dict]) -> dict:
-        import json
         from datetime import datetime, timezone
 
         if not sale.get("date"):
@@ -252,7 +251,7 @@ class SaleRepository:
         try:
             resp = supabase.rpc(
                 "create_sale_tx",
-                {"p_sale": json.dumps(sale_payload), "p_lines": json.dumps(rpc_lines)},
+                {"p_sale": sale_payload, "p_lines": rpc_lines},
             ).execute()
             sale_id = resp.data
             sale_row = supabase.table("sale").select("*").eq("id", sale_id).single().execute()

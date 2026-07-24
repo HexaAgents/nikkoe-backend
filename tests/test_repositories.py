@@ -411,6 +411,67 @@ class TestSaleRepositorySchemaProbe:
 
 
 # =====================================================================
+# Transactional RPC payloads — native JSON, not JSON strings
+# =====================================================================
+
+
+class TestTransactionalRpcPayloads:
+    @patch("app.repositories.sale.supabase")
+    def test_sale_create_passes_native_json_to_rpc(self, mock_sb):
+        mock_sb.rpc.return_value.execute.return_value = MagicMock(data=42)
+        mock_sb.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data={"id": 42})
+        )
+
+        result = SaleRepository().create(
+            {"date": "2026-07-24T10:00:00Z", "channel_id": 2},
+            [{"item_id": 3, "location_id": 4, "quantity": 1, "unit_price": 5.5, "currency_id": 1}],
+        )
+
+        _, payload = mock_sb.rpc.call_args.args
+        assert payload["p_sale"] == {"date": "2026-07-24T10:00:00Z", "channel_id": 2}
+        assert payload["p_lines"] == [
+            {"item_id": 3, "location_id": 4, "quantity": 1, "unit_price": 5.5, "currency_id": 1}
+        ]
+        assert result == {"id": 42}
+
+    @patch("app.repositories.receipt.supabase")
+    def test_receipt_create_passes_native_json_to_rpc(self, mock_sb):
+        mock_sb.rpc.return_value.execute.return_value = MagicMock(data=84)
+        mock_sb.table.return_value.select.return_value.eq.return_value.single.return_value.execute.return_value = (
+            MagicMock(data={"id": 84})
+        )
+
+        result = ReceiptRepository().create(
+            {"dateTime": "2026-07-24T10:00:00Z", "supplier_id": 7},
+            [
+                {
+                    "item_id": 3,
+                    "location_id": 4,
+                    "quantity": 2,
+                    "unit_price": 1.25,
+                    "currency_id": 1,
+                    "supplier_id": 7,
+                }
+            ],
+        )
+
+        _, payload = mock_sb.rpc.call_args.args
+        assert payload["p_receipt"] == {"dateTime": "2026-07-24T10:00:00Z", "supplier_id": 7}
+        assert payload["p_lines"] == [
+            {
+                "item_id": 3,
+                "location_id": 4,
+                "quantity": 2,
+                "unit_price": 1.25,
+                "currency_id": 1,
+                "supplier_id": 7,
+            }
+        ]
+        assert result == {"id": 84}
+
+
+# =====================================================================
 # SaleRepository._create_fallback — oversell precheck
 # =====================================================================
 
