@@ -7,6 +7,8 @@ mocked so no database or network calls are made.
 
 from unittest.mock import MagicMock, patch
 
+import httpx
+
 from app.errors import NotFoundError
 from app.middleware.auth import UserProfile
 
@@ -199,6 +201,16 @@ class TestAuthRefresh:
             mock_httpx.post.return_value = mock_resp
             resp = client.post("/api/auth/refresh", json={"refresh_token": "expired"})
         assert resp.status_code == 401
+
+    def test_refresh_timeout_returns_503(self, client):
+        with patch(
+            "app.routers.auth.httpx.post",
+            side_effect=httpx.ReadTimeout("Supabase auth timed out"),
+        ):
+            resp = client.post("/api/auth/refresh", json={"refresh_token": "slow"})
+
+        assert resp.status_code == 503
+        assert "timed out" in resp.json()["error"]
 
 
 # =====================================================================

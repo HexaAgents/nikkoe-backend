@@ -13,6 +13,27 @@ class RefreshInput(BaseModel):
     refresh_token: str
 
 
+_AUTH_TIMEOUT = httpx.Timeout(20.0, connect=5.0)
+
+
+def _auth_post(url: str, **kwargs) -> httpx.Response:
+    try:
+        return httpx.post(url, timeout=_AUTH_TIMEOUT, **kwargs)
+    except httpx.TimeoutException as exc:
+        raise AppError(503, "Authentication service timed out — please try again") from exc
+    except httpx.RequestError as exc:
+        raise AppError(503, "Authentication service is temporarily unavailable") from exc
+
+
+def _auth_put(url: str, **kwargs) -> httpx.Response:
+    try:
+        return httpx.put(url, timeout=_AUTH_TIMEOUT, **kwargs)
+    except httpx.TimeoutException as exc:
+        raise AppError(503, "Authentication service timed out — please try again") from exc
+    except httpx.RequestError as exc:
+        raise AppError(503, "Authentication service is temporarily unavailable") from exc
+
+
 router = APIRouter(prefix="/api/auth", tags=["auth"])
 
 
@@ -75,7 +96,7 @@ def signup(body: SignupInput):
 
 @router.post("/refresh")
 def refresh_token(body: RefreshInput):
-    resp = httpx.post(
+    resp = _auth_post(
         f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=refresh_token",
         json={"refresh_token": body.refresh_token},
         headers={"apikey": settings.SUPABASE_ANON_KEY},
@@ -114,7 +135,7 @@ def get_me(user: CurrentUser = Depends(get_current_user)):
 @router.post("/change-password")
 def change_password(body: ChangePasswordInput, user: CurrentUser = Depends(get_current_user)):
     # Verify current password via direct GoTrue REST call (bypasses SDK quirks).
-    verify_resp = httpx.post(
+    verify_resp = _auth_post(
         f"{settings.SUPABASE_URL}/auth/v1/token?grant_type=password",
         json={"email": user.email, "password": body.current_password},
         headers={"apikey": settings.SUPABASE_ANON_KEY},
@@ -123,7 +144,7 @@ def change_password(body: ChangePasswordInput, user: CurrentUser = Depends(get_c
         raise AppError(400, "Current password is incorrect")
 
     # Update password via GoTrue admin endpoint.
-    update_resp = httpx.put(
+    update_resp = _auth_put(
         f"{settings.SUPABASE_URL}/auth/v1/admin/users/{user.id}",
         json={"password": body.new_password},
         headers={
