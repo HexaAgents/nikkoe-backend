@@ -4,10 +4,14 @@ Verifies that the cache reduces redundant Supabase calls during request
 bursts without breaking auth correctness.
 """
 
+from unittest.mock import AsyncMock, MagicMock, patch
+
 import pytest
 from cachetools import TTLCache
+from fastapi import HTTPException
+from starlette.requests import Request
 
-from app.middleware.auth import CurrentUser, UserProfile, _auth_cache
+from app.middleware.auth import CurrentUser, UserProfile, _auth_cache, get_current_user
 
 
 @pytest.fixture(autouse=True)
@@ -68,3 +72,63 @@ class TestAuthCacheDoesNotCacheErrors:
         _auth_cache["valid-token"] = CurrentUser(id="ok", email="ok@test.com", profile=None)
         assert len(_auth_cache) == 1
         assert "invalid-token" not in _auth_cache
+
+
+def _request_with_token(token: str) -> Request:
+    return Request(
+        {
+            "type": "http",
+            "method": "GET",
+            "path": "/api/items/",
+            "headers": [(b"authorization", f"Bearer {token}".encode())],
+        }
+    )
+
+
+class TestAuthTransientFailures:
+    @pytest.mark.asyncio
+    async def test_transient_user_lookup_is_retried(self):
+        auth_user = MagicMock(id="auth-id", email="retry@test.com")
+        with (
+            patch("app.middleware.auth.supabase_auth") as mock_auth,
+            patch("app.middleware.auth.supabase") as mock_db,
+            patch("app.middleware.auth.asyncio.sleep", new_callable=AsyncMock) as mock_sleep,
+        ):
+            mock_auth.auth.get_user.side_effect = [
+                Exception("Server disconnected"),
+                MagicMock(user=auth_user),
+            ]
+            profile_query = mock_db.table.return_value.select.return_value.eq.return_value.maybe_single.return_value
+            profile_query.execute.return_value = MagicMock(data=None)
+
+            user = await get_current_user(_request_with_token("retry-token"))
+
+        assert user.id == "auth-id"
+        assert mock_auth.auth.get_user.call_count == 2
+        mock_sleep.assert_awaited_once()
+
+    @pytest.mark.asyncio
+    async def test_exhausted_transient_user_lookup_returns_503(self):
+        with (
+            patch("app.middleware.auth.supabase_auth") as mock_auth,
+            patch("app.middleware.auth.asyncio.sleep", new_callable=AsyncMock),
+        ):
+            mock_auth.auth.get_user.side_effect = Exception("The read operation timed out")
+
+            with pytest.raises(HTTPException) as exc_info:
+                await get_current_user(_request_with_token("timeout-token"))
+
+        assert exc_info.value.status_code == 503
+        assert mock_auth.auth.get_user.call_count == 3
+        assert "timeout-token" not in _auth_cache
+
+    @pytest.mark.asyncio
+    async def test_non_transient_user_lookup_failure_remains_401(self):
+        with patch("app.middleware.auth.supabase_auth") as mock_auth:
+            mock_auth.auth.get_user.side_effect = Exception("invalid JWT")
+
+            with pytest.raises(HTTPException) as exc_info:
+                await get_current_user(_request_with_token("invalid-token"))
+
+        assert exc_info.value.status_code == 401
+        assert mock_auth.auth.get_user.call_count == 1

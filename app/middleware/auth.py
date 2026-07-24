@@ -1,11 +1,14 @@
+import asyncio
 from dataclasses import dataclass
 
 from cachetools import TTLCache
-from fastapi import Request
+from fastapi import HTTPException, Request
 
 from app.dependencies import supabase, supabase_auth
+from app.repositories.base import _is_transient
 
 _auth_cache: TTLCache = TTLCache(maxsize=128, ttl=60)
+_AUTH_RETRIES = 2
 
 
 @dataclass
@@ -34,10 +37,18 @@ async def get_current_user(request: Request) -> CurrentUser:
     if cached is not None:
         return cached
 
-    try:
-        user_response = supabase_auth.auth.get_user(token)
-    except Exception:
-        return _unauthorized("Invalid or expired token")
+    for attempt in range(_AUTH_RETRIES + 1):
+        try:
+            user_response = supabase_auth.auth.get_user(token)
+            break
+        except Exception as exc:
+            if not _is_transient(exc):
+                return _unauthorized("Invalid or expired token")
+            if attempt == _AUTH_RETRIES:
+                raise HTTPException(
+                    status_code=503, detail="Authentication service is temporarily unavailable"
+                ) from exc
+            await asyncio.sleep(0.25 * (attempt + 1))
 
     user = user_response.user
     if not user:
@@ -70,6 +81,4 @@ async def get_current_user(request: Request) -> CurrentUser:
 
 
 def _unauthorized(message: str):
-    from fastapi import HTTPException
-
     raise HTTPException(status_code=401, detail=message)
