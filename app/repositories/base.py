@@ -14,6 +14,8 @@ _TRANSIENT_MARKERS = (
     "errno 54",
     "connection reset",
     "server disconnected",
+    "timed out",
+    "timeout",
     "remoteerror",
     "remoteprotocolerror",
 )

@@ -274,7 +274,6 @@ class ReceiptRepository:
         return result
 
     def create(self, receipt: dict, lines: list[dict]) -> dict:
-        import json
         from datetime import datetime, timezone
 
         if not receipt.get("dateTime"):
@@ -297,7 +296,7 @@ class ReceiptRepository:
         try:
             resp = supabase.rpc(
                 "create_receipt_tx",
-                {"p_receipt": json.dumps(receipt_payload), "p_lines": json.dumps(rpc_lines)},
+                {"p_receipt": receipt_payload, "p_lines": rpc_lines},
             ).execute()
             receipt_id = resp.data
             receipt_row = supabase.table("receipt").select("*").eq("id", receipt_id).single().execute()
