@@ -150,6 +150,7 @@ class ReceiptRepository:
 
         return lines
 
+    @retry_transient()
     def find_by_item_id(self, item_id: int) -> list:
         stock_resp = supabase.table("stock").select("id, location_id").eq("item_id", item_id).execute()
         stocks = stock_resp.data or []

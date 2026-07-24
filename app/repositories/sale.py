@@ -29,7 +29,11 @@ def _get_list_select() -> str:
         _list_select_cache = _LIST_SELECT_NEW
         _FK_CHANNEL = "channel_id"
         _FK_CUSTOMER = "customer_id"
-    except Exception:
+    except Exception as exc:
+        message = str(exc)
+        legacy_fk_missing = "PGRST200" in message and ("channel_id" in message or "customer_id" in message)
+        if not legacy_fk_missing:
+            raise
         _list_select_cache = _LIST_SELECT_OLD
         _FK_CHANNEL = "channel_id_id"
         _FK_CUSTOMER = "customer_id_id"
@@ -159,6 +163,7 @@ class SaleRepository:
 
         return lines
 
+    @retry_transient()
     def find_by_item_id(self, item_id: int) -> list:
         stock_resp = supabase.table("stock").select("id, location_id").eq("item_id", item_id).execute()
         stocks = stock_resp.data or []

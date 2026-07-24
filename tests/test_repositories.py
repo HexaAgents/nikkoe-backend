@@ -10,10 +10,12 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+import app.repositories.sale as sale_module
 from app.errors import AppError
 from app.repositories.base import _is_transient, retry_transient
 from app.repositories.inventory import InventoryRepository
 from app.repositories.location import LocationRepository
+from app.repositories.receipt import ReceiptRepository
 from app.repositories.sale import SaleRepository
 from app.repositories.supplier_quote import SupplierQuoteRepository
 
@@ -360,6 +362,8 @@ class TestRepositoriesUseRetryDecorator:
             (InventoryRepository, "stock_valuation"),
             (LocationRepository, "find_all"),
             (LocationRepository, "find_by_id"),
+            (ReceiptRepository, "find_by_item_id"),
+            (SaleRepository, "find_by_item_id"),
             (SupplierQuoteRepository, "find_by_item_id"),
         ],
     )
@@ -368,6 +372,42 @@ class TestRepositoriesUseRetryDecorator:
         assert hasattr(method, "__wrapped__"), (
             f"{repo_cls.__name__}.{method_name} must be decorated with @retry_transient"
         )
+
+
+# =====================================================================
+# SaleRepository schema probing — transient connection safety
+# =====================================================================
+
+
+class TestSaleRepositorySchemaProbe:
+    @patch("app.repositories.sale.supabase")
+    def test_transient_probe_error_bubbles_for_outer_retry(self, mock_sb, monkeypatch):
+        monkeypatch.setattr(sale_module, "_list_select_cache", None)
+        monkeypatch.setattr(sale_module, "_FK_CHANNEL", "channel_id")
+        monkeypatch.setattr(sale_module, "_FK_CUSTOMER", "customer_id")
+        mock_sb.table.return_value.select.return_value.limit.return_value.execute.side_effect = Exception(
+            "Server disconnected"
+        )
+
+        with pytest.raises(Exception, match="Server disconnected"):
+            sale_module._get_list_select()
+
+        assert sale_module._list_select_cache is None
+        assert sale_module._FK_CHANNEL == "channel_id"
+        assert sale_module._FK_CUSTOMER == "customer_id"
+
+    @patch("app.repositories.sale.supabase")
+    def test_missing_new_relationship_uses_legacy_schema(self, mock_sb, monkeypatch):
+        monkeypatch.setattr(sale_module, "_list_select_cache", None)
+        mock_sb.table.return_value.select.return_value.limit.return_value.execute.side_effect = Exception(
+            "PGRST200: Could not find a relationship using channel_id"
+        )
+
+        result = sale_module._get_list_select()
+
+        assert result == sale_module._LIST_SELECT_OLD
+        assert sale_module._FK_CHANNEL == "channel_id_id"
+        assert sale_module._FK_CUSTOMER == "customer_id_id"
 
 
 # =====================================================================
