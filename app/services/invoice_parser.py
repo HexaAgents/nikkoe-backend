@@ -133,33 +133,39 @@ def _call_llm(file_bytes: bytes) -> dict:
 
     pdf_b64 = base64.b64encode(file_bytes).decode("ascii")
     client = OpenAI(api_key=settings.OPENAI_API_KEY)
-    response = client.responses.create(
-        model=_MODEL,
-        instructions=_SYSTEM_PROMPT,
-        input=[
-            {
-                "role": "user",
-                "content": [
-                    {
-                        "type": "input_text",
-                        "text": (
-                            "Parse this invoice and return ONLY the JSON object "
-                            "described in the system instructions. Remember: return "
-                            "NET prices plus a per-line vat_rate; the backend will "
-                            "compute gross."
-                        ),
-                    },
-                    {
-                        "type": "input_file",
-                        "filename": "invoice.pdf",
-                        "file_data": f"data:application/pdf;base64,{pdf_b64}",
-                    },
-                ],
-            }
-        ],
-        text={"format": {"type": "json_object"}},
-        temperature=0,
-    )
+    try:
+        response = client.responses.create(
+            model=_MODEL,
+            instructions=_SYSTEM_PROMPT,
+            input=[
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "input_text",
+                            "text": (
+                                "Parse this invoice and return ONLY the JSON object "
+                                "described in the system instructions. Remember: return "
+                                "NET prices plus a per-line vat_rate; the backend will "
+                                "compute gross."
+                            ),
+                        },
+                        {
+                            "type": "input_file",
+                            "filename": "invoice.pdf",
+                            "file_data": f"data:application/pdf;base64,{pdf_b64}",
+                        },
+                    ],
+                }
+            ],
+            text={"format": {"type": "json_object"}},
+            temperature=0,
+        )
+    except Exception as exc:
+        # OpenAI exceptions can include a masked credential and upstream response
+        # details in their string representation. Never return that text to the
+        # browser; retain the original exception only as the server-side cause.
+        raise AppError(502, "Invoice parsing service is temporarily unavailable") from exc
 
     raw = (response.output_text or "").strip() or "{}"
     return json.loads(raw)
@@ -361,8 +367,10 @@ def parse_invoice_stream(file_bytes: bytes):
 
     except AppError as e:
         yield _sse("error", {"error": e.message})
-    except Exception as e:
-        yield _sse("error", {"error": str(e) or "Internal server error"})
+    except Exception:
+        # Unexpected exception text can contain provider request details. Keep the
+        # streaming response useful without exposing internals or credentials.
+        yield _sse("error", {"error": "Invoice parsing failed. Please try again."})
 
 
 def parse_invoice(file_bytes: bytes) -> ParseInvoiceResponse:

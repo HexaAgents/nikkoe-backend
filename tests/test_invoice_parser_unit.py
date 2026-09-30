@@ -407,4 +407,18 @@ class TestParseInvoiceStream:
     @patch("app.services.invoice_parser._call_llm", side_effect=RuntimeError("boom"))
     def test_yields_error_on_unexpected_exception(self, _llm):
         events = list(parse_invoice_stream(b"bad"))
-        assert any("boom" in e for e in events)
+        assert any("Invoice parsing failed. Please try again." in e for e in events)
+        assert all("boom" not in e for e in events)
+
+    @patch("app.services.invoice_parser.OpenAI")
+    def test_openai_error_does_not_expose_provider_message_or_key(self, mock_openai):
+        mock_openai.return_value.responses.create.side_effect = RuntimeError(
+            "Incorrect API key provided: sk-proj-secret-suffix"
+        )
+
+        with patch("app.services.invoice_parser.settings.OPENAI_API_KEY", "test-key"):
+            events = list(parse_invoice_stream(b"pdf-bytes"))
+
+        assert any("Invoice parsing service is temporarily unavailable" in event for event in events)
+        assert all("sk-proj" not in event for event in events)
+        assert all("Incorrect API key" not in event for event in events)
