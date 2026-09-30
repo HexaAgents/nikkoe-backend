@@ -132,8 +132,8 @@ def _call_llm(file_bytes: bytes) -> dict:
         raise AppError(400, "Empty PDF file")
 
     pdf_b64 = base64.b64encode(file_bytes).decode("ascii")
-    client = OpenAI(api_key=settings.OPENAI_API_KEY)
     try:
+        client = OpenAI(api_key=settings.OPENAI_API_KEY)
         response = client.responses.create(
             model=_MODEL,
             instructions=_SYSTEM_PROMPT,
