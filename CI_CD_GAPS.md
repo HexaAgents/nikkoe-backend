@@ -153,3 +153,13 @@ Do not delete the failed deployment until the incident is understood.
 | Migration execution in CI | Gap |
 | Monitoring and alerts | Gap |
 | Rollback procedure | Documented; exercise still required |
+
+## 2026-09-30 routing compatibility
+
+Vercel CLI 61.1.0 now passes internal rewrite destinations to backend frameworks.
+The legacy catch-all rewrite to `/api/index` consequently returned FastAPI 404s
+for `/api/health` and other routes. Use the FastAPI framework preset and its
+native `app/main.py` entrypoint without a catch-all rewrite. Verify preview
+health and an authenticated-route 401 before promoting to production.
+
+*(2026-09-30 · Codex)*
